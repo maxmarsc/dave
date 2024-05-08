@@ -1,0 +1,21 @@
+If:
+  PathMatch: source/utils/types.cc
+Diagnostics:
+  Suppress:
+    - "err_unknown_type"
+    - "unknown_type"
+    - "unknown_typename"
+    - "unknown_typename_suggest"
+    - "note_previous_decl"
+    - "fatal_too_many_errors"
+
+
+---
+If:
+  PathMatch: extras/clangd/llvm_arm_neon.h
+Diagnostics:
+  Suppress: '*'
+
+---
+CompileFlags:
+  Add: [-D__CLANGD__]
