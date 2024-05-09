@@ -14,19 +14,23 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 
 
 from gave.gui import DebuggerGUI
-from gave.buffer_1D import *
+from gave.container_1D import *
+from .container_model import ContainerModel
 
 MSG_QUEUE = queue.Queue()
 GUI = DebuggerGUI(MSG_QUEUE)
 
 
 def exit_handler(event):
-    print("[LOG] exit_handler")
     if GUI.is_alive():
-        print("[LOG] joining in the GUI thread")
         GUI.should_stop()
         GUI.join()
-        print("[LOG] join successfull")
+
+
+def stop_handler(event: gdb.StopEvent):
+    print(f"Stop event detected {event}")
+    if GUI.is_alive():
+        GUI.gdb_update_callback()
 
 
 class GaveCommand(gdb.Command):
@@ -78,7 +82,9 @@ class GaveCommand(gdb.Command):
 
         var_name = args[0]
         var = gdb.parse_and_eval(var_name)
-        buffer = BufferFactory().build(var, var_name)
+        container = ContainerFactory().build(var, var_name)
+        container_model = ContainerModel(container, 44100)
+        MSG_QUEUE.put(container_model)
 
     def carray(self, args):
         if len(args) != 1:

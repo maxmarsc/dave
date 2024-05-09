@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 import gdb  # type: ignore
 import gdb.types  # type: ignore
@@ -15,94 +16,64 @@ from abc import ABC, abstractmethod
 
 from . import future_gdb
 from .singleton import SingletonMeta
-from .buffer import Buffer
+from .container import Container
+from .container_model import ContainerModel
+from .data_model import DataModel
+from .views import get_views_for_data_model
 
 
-# class BufferHandler:
-#     def __init__(self, buffer: Buffer):
-#         self.__buffer = buffer
-class Setting:
-    pass
-
-
-class AudioView(ABC):
-    def __init__(self, samplerate: float) -> None:
-        self.__sr = samplerate
-
-    @abstractmethod
-    @property
-    def name(self) -> str:
-        pass
-
-    @abstractmethod
-    def render_view(self, axes: Axes, data: np.ndarray):
-        pass
-
-    @abstractmethod
-    def get_settings(self) -> List[Setting]:
-        pass
-
-
-class WaveformView(AudioView):
-    @property
-    def name(self) -> str:
-        return "Waveform"
-
-    def render_view(self, axes: Axes, data: np.ndarray):
-        axes.plot(data)
-
-    def get_settings(self) -> List[Setting]:
-        return []
-
-
-class BufferView:
-    def __init__(self, buffer: Buffer):
-        self.__buffer = buffer
-        self.__data: np.ndarray = None
-        # self.__settings = None
-
-
-# class View:
-class ViewFrame:
+class AudioViewsFrame:
     def __init__(self, master):
-        self.__buffer_views = []
+        self.__container_models: List[ContainerModel] = []
         self.__master = master
-        self.__fig = None
-        self.__canva = None
-
-    def __update_figures(self):
         self.__fig = Figure()
-        self.__canva = FigureCanvasTkAgg(self.__fig, master=self.__master)
-        # self.__axs = self.__fig.subplots(len(self.__buffer_views))
-        for i, buffer_view in enumerate(self.__buffer_views):
-            axes: Axes = self.__fig.add_subplot(len(self.__buffers), 1, i)
-            buffer_view.draw(axes)
+        self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__master)
+        self.__canvas_widget = self.__canvas.get_tk_widget()
+        self.__canvas_widget.pack(fill=tk.BOTH, expand=True)
+        self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__master)
+        self.__toolbar.update()
+        self.__toolbar.pack()
+
+    def add_audio_view(self, model: ContainerModel):
+        self.__container_models.append(model)
+
+    def update_figures(self):
+        self.__fig.clear()
+        print("update_figures : iterating")
+        for i, model in enumerate(self.__container_models):
+            print(f"add_subplot : {i} : {model}")
+            axes: Axes = self.__fig.add_subplot(len(self.__container_models), 1, i + 1)
+            model.draw_audio_view(axes)
+            axes.set_title(model.variable_name)
+
+        self.__canvas.draw_idle()
 
 
 class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
-    def __init__(self, msg_queue):
+    def __init__(self, msg_queue: queue.Queue):
         threading.Thread.__init__(self)
         self.__msg_queue = msg_queue
         self.__window = None
         self.__should_stop = False
         self.__gui_active = False
-        self.__buffers = []
+        self.__models: List[ContainerModel] = []
+        self.__update_needed = True
+        self.__update_lock = threading.Lock()
 
     def __init_window(self):
         self.__window = tk.Tk()
         self.__window.title("GDB Debugger Information")
         self.__window.minsize(400, 600)
-        # self.__fig = Figure()
-        # self.__canva =
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.__audio_views = AudioViewsFrame(self.__window)
 
-    def __update_figures(self):
-        self.__fig = Figure()
-        self.__canva = FigureCanvasTkAgg(self.__fig, master=self.__window)
-        for i, buffer in enumerate(self.__buffers):
-            ax = self.__fig.add_subplot(len(self.__buffers), 1, i)
-            ax.plot()
-        # self.__fig.add_subplot(len(self.__buffers), 1)
+    def gdb_update_callback(self):
+        if self.__gui_active:
+            self.__update_lock.acquire()
+            for model in self.__models:
+                model.update_from_gdb()
+            self.__update_needed = True
+            self.__update_lock.release()
 
     def run(self):
         print("[LOG] starting thread routine")
@@ -110,11 +81,35 @@ class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
             if self.__gui_active:
                 if self.__window is None:
                     self.__init_window()
+
+                # Check for model update
+                self.__update_lock.acquire()
+                if self.__poll_queue() and self.__update_needed == False:
+                    self.__update_needed = True
+                if self.__update_needed:
+                    self.__audio_views.update_figures()
+                    self.__update_needed = False
+                self.__update_lock.release()
+
+                # Update the GUI
                 self.__window.update_idletasks()
                 self.__window.update()
             else:
                 time.sleep(0.05)
         print("[LOG] stopping thread routine")
+
+    def __poll_queue(self) -> bool:
+        update_needed = False
+        while True:
+            try:
+                new_model = self.__msg_queue.get(block=False)
+                self.__msg_queue.task_done()
+                print("New model received")
+                self.__models.append(new_model)
+                self.__audio_views.add_audio_view(new_model)
+                update_needed = True
+            except queue.Empty:
+                return update_needed
 
     def should_stop(self):
         self.__should_stop = True
@@ -131,6 +126,7 @@ class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
             self.__window.quit()
             self.__window.destroy()
             self.__window = None
+            self.__models = list()
 
 
 # class DebuggerGUI(gdb.Thread):

@@ -1,23 +1,20 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 import re
+from typing import List
 import gdb  # type: ignore
 import gdb.types  # type: ignore
+import numpy as np
 
 
-from .buffer import FloatingPointType, Buffer
-from .buffer_dispatcher import BufferFactory
+from .container import FloatingPointType, Container
+from .container_factory import ContainerFactory
+from .data_model import DataModel
 
 
-class Buffer1D(Buffer):
+class Container1D(Container):
     def __init__(self, gdb_value: gdb.Value, name: str) -> None:
-        super().__init__()
-        self._value = gdb_value
-        self._name = name
-
-    @property
-    def name(self) -> str:
-        return self._name
+        super().__init__(gdb_value, name)
 
     @property
     @abstractmethod
@@ -28,17 +25,18 @@ class Buffer1D(Buffer):
     def byte_size(self) -> int:
         return self.size * self.float_type.byte_size()
 
-    @abstractmethod
-    def data(self) -> int:
-        pass
+    @staticmethod
+    def available_data_models() -> List[DataModel]:
+        return [DataModel.REAL_1D]
 
 
-class CArray1D(Buffer1D):
+class CArray1D(Container1D):
     __REGEX = r"^(?:const\s+)?(float|double)\s*\[(\d+)\]$"
 
     def __init__(self, gdb_value: gdb.Value, name: str):
         super().__init__(gdb_value, name)
-        re_match = self.regex_name().match(str(gdb_value.type))
+        typename = str(gdb.types.get_basic_type(gdb_value.type))
+        re_match = self.regex_name().match(typename)
         if re_match is None:
             raise TypeError(f"{gdb_value.type} is not a valid CArray type")
 
@@ -57,9 +55,16 @@ class CArray1D(Buffer1D):
     def size(self) -> int:
         return self.__size
 
-    def data(self) -> int:
+    def read_from_gdb(self) -> np.ndarray:
         ptr_type = gdb.lookup_type(self.float_type.value).pointer().const()
-        return int(self._value.cast(ptr_type))
+        ptr = int(self._value.cast(ptr_type))
+        inferior = gdb.selected_inferior()
+        dtype = np.float32
+        array = np.frombuffer(inferior.read_memory(ptr, self.byte_size), dtype=dtype)
+        print(f"dtype : {array.dtype}")
+        print(f"shape : {array.shape}")
+        # print(f"array : {array}")
+        return array
 
 
-BufferFactory().register(CArray1D)
+ContainerFactory().register(CArray1D)
