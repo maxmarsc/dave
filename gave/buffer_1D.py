@@ -5,32 +5,15 @@ import gdb  # type: ignore
 import gdb.types  # type: ignore
 
 
-class FloatingPointType(Enum):
-    FLOAT = "float"
-    DOUBLE = "double"
-
-    def byte_size(self) -> int:
-        if self == FloatingPointType.FLOAT:
-            return 4
-        else:
-            return 8
+from .buffer import FloatingPointType, Buffer
+from .buffer_dispatcher import BufferFactory
 
 
-class Buffer1D(ABC):
+class Buffer1D(Buffer):
     def __init__(self, gdb_value: gdb.Value, name: str) -> None:
         super().__init__()
         self._value = gdb_value
         self._name = name
-
-    @classmethod
-    @abstractmethod
-    def regex_name(cls) -> re.Pattern:
-        pass
-
-    @property
-    @abstractmethod
-    def float_type(self) -> FloatingPointType:
-        pass
 
     @property
     def name(self) -> str:
@@ -77,3 +60,6 @@ class CArray1D(Buffer1D):
     def data(self) -> int:
         ptr_type = gdb.lookup_type(self.float_type.value).pointer().const()
         return int(self._value.cast(ptr_type))
+
+
+BufferFactory().register(CArray1D)

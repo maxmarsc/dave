@@ -59,20 +59,6 @@ class GaveCommand(gdb.Command):
         if not GUI.is_gui_active():
             GUI.activate_gui()
 
-        # if self.gui_thread is None:
-        #     self.gui_thread = DebuggerGUI(self.msg_queue)
-        #     self.gui_thread.start()
-        # elif not self.gui_thread.is_alive():
-        #     del self.gui_thread
-        #     self.gui_thread = DebuggerGUI(self.msg_queue)
-        #     self.gui_thread.start()
-        #     print("[LOG] creating gui")
-        #     self.gui_thread = DebuggerGUI(self.msg_queue)
-        #     print("[LOG] created gui")
-        # if not self.gui_thread.is_gui_active():
-        #     print("[LOG] starting gui")
-        #     self.gui_thread.start_gui()
-
         subcommand = args[0]
         # self.msg_queue.put(args[1])
         if subcommand == "p":
@@ -81,8 +67,18 @@ class GaveCommand(gdb.Command):
             self.print_attribute(args[1:])
         elif subcommand == "carray":
             self.carray(args[1:])
+        elif subcommand == "show":
+            self.show(args[1:])
         else:
             print(f"Unknown subcommand '{subcommand}'")
+
+    def show(self, args):
+        if len(args) != 1:
+            raise gdb.GdbError("Usage: gave show <variable>")
+
+        var_name = args[0]
+        var = gdb.parse_and_eval(var_name)
+        buffer = BufferFactory().build(var, var_name)
 
     def carray(self, args):
         if len(args) != 1:

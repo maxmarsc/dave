@@ -1,3 +1,4 @@
+from typing import List
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
@@ -5,33 +6,103 @@ import threading
 import queue
 import tkinter as tk
 import time
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import numpy as np
+
+from abc import ABC, abstractmethod
 
 from . import future_gdb
+from .singleton import SingletonMeta
+from .buffer import Buffer
 
 
-class DebuggerGUI(future_gdb.Thread):
+# class BufferHandler:
+#     def __init__(self, buffer: Buffer):
+#         self.__buffer = buffer
+class Setting:
+    pass
+
+
+class AudioView(ABC):
+    def __init__(self, samplerate: float) -> None:
+        self.__sr = samplerate
+
+    @abstractmethod
+    @property
+    def name(self) -> str:
+        pass
+
+    @abstractmethod
+    def render_view(self, axes: Axes, data: np.ndarray):
+        pass
+
+    @abstractmethod
+    def get_settings(self) -> List[Setting]:
+        pass
+
+
+class WaveformView(AudioView):
+    @property
+    def name(self) -> str:
+        return "Waveform"
+
+    def render_view(self, axes: Axes, data: np.ndarray):
+        axes.plot(data)
+
+    def get_settings(self) -> List[Setting]:
+        return []
+
+
+class BufferView:
+    def __init__(self, buffer: Buffer):
+        self.__buffer = buffer
+        self.__data: np.ndarray = None
+        # self.__settings = None
+
+
+# class View:
+class ViewFrame:
+    def __init__(self, master):
+        self.__buffer_views = []
+        self.__master = master
+        self.__fig = None
+        self.__canva = None
+
+    def __update_figures(self):
+        self.__fig = Figure()
+        self.__canva = FigureCanvasTkAgg(self.__fig, master=self.__master)
+        # self.__axs = self.__fig.subplots(len(self.__buffer_views))
+        for i, buffer_view in enumerate(self.__buffer_views):
+            axes: Axes = self.__fig.add_subplot(len(self.__buffers), 1, i)
+            buffer_view.draw(axes)
+
+
+class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
     def __init__(self, msg_queue):
         threading.Thread.__init__(self)
         self.__msg_queue = msg_queue
         self.__window = None
-        # self.__alive = True
         self.__should_stop = False
         self.__gui_active = False
-
-    # def __del__(self):
-    #     super(future_gdb.Thread, self).__del__()
-    #     self.__should_stop = True
+        self.__buffers = []
 
     def __init_window(self):
         self.__window = tk.Tk()
         self.__window.title("GDB Debugger Information")
         self.__window.minsize(400, 600)
-        self.label = tk.Label(self.__window, text="Waiting for data...")
-        self.label.pack(pady=20, padx=20)
-        tk.Button(self.__window, text="Close", command=self.on_closing).pack(pady=10)
+        # self.__fig = Figure()
+        # self.__canva =
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def __update_figures(self):
+        self.__fig = Figure()
+        self.__canva = FigureCanvasTkAgg(self.__fig, master=self.__window)
+        for i, buffer in enumerate(self.__buffers):
+            ax = self.__fig.add_subplot(len(self.__buffers), 1, i)
+            ax.plot()
+        # self.__fig.add_subplot(len(self.__buffers), 1)
 
     def run(self):
         print("[LOG] starting thread routine")
