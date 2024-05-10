@@ -1,36 +1,22 @@
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
-# print(f"Type: {gdb.types.get_basic_type(var.type)}")
-
-from abc import ABC, abstractmethod
-from enum import Enum
-import re
-import threading
-import queue
-import tkinter as tk
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-
-
-from gave.gui import DebuggerGUI
-from gave.container_1D import *
+from .process import GaveProcess
+from .container_1D import *
 from .container_model import ContainerModel
-
-MSG_QUEUE = queue.Queue()
-GUI = DebuggerGUI(MSG_QUEUE)
 
 
 def exit_handler(event):
-    if GUI.is_alive():
-        GUI.should_stop()
-        GUI.join()
+    if GaveProcess().is_alive():
+        # pass
+        GaveProcess().should_stop()
+        GaveProcess().join()
 
 
 def stop_handler(event: gdb.StopEvent):
     print(f"Stop event detected {event}")
-    if GUI.is_alive():
-        GUI.gdb_update_callback()
+    if GaveProcess().is_alive():
+        GaveProcess().gdb_update_callback()
 
 
 class GaveCommand(gdb.Command):
@@ -57,11 +43,8 @@ class GaveCommand(gdb.Command):
             print("Error: no processus detected")
             return
 
-        if not GUI.is_alive():
-            GUI.start()
-
-        if not GUI.is_gui_active():
-            GUI.activate_gui()
+        if not GaveProcess().is_alive():
+            GaveProcess().start()
 
         subcommand = args[0]
         # self.msg_queue.put(args[1])
@@ -83,8 +66,7 @@ class GaveCommand(gdb.Command):
         var_name = args[0]
         var = gdb.parse_and_eval(var_name)
         container = ContainerFactory().build(var, var_name)
-        container_model = ContainerModel(container, 44100)
-        MSG_QUEUE.put(container_model)
+        GaveProcess().add_container(container)
 
     def carray(self, args):
         if len(args) != 1:

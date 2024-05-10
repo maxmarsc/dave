@@ -6,6 +6,7 @@ from typing import List
 from .data_model import DataModel
 import numpy as np
 import gdb
+import uuid
 
 
 class FloatingPointType(Enum):
@@ -23,10 +24,15 @@ class Container(ABC):
     def __init__(self, gdb_value: gdb.Value, name: str) -> None:
         self._value = gdb_value
         self._name = name
+        self.__uuid = uuid.uuid4()
 
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def id(self) -> uuid.uuid4:
+        return self.__uuid
 
     @classmethod
     @abstractmethod
