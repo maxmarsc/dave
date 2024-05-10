@@ -22,6 +22,12 @@ from .data_model import DataModel
 from .views import get_views_for_data_model
 
 
+class SettingsFrame:
+    def __init__(self, master):
+        self.__container_models: List[ContainerModel] = []
+        self.__master = master
+
+
 class AudioViewsFrame:
     def __init__(self, master):
         self.__container_models: List[ContainerModel] = []
@@ -39,9 +45,7 @@ class AudioViewsFrame:
 
     def update_figures(self):
         self.__fig.clear()
-        print("update_figures : iterating")
         for i, model in enumerate(self.__container_models):
-            print(f"add_subplot : {i} : {model}")
             axes: Axes = self.__fig.add_subplot(len(self.__container_models), 1, i + 1)
             model.draw_audio_view(axes)
             axes.set_title(model.variable_name)
@@ -59,8 +63,9 @@ class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
         self.__models: List[ContainerModel] = []
         self.__update_needed = True
         self.__update_lock = threading.Lock()
+        self.__update_tk_id = ""
 
-    def __init_window(self):
+    def __init_gui(self):
         self.__window = tk.Tk()
         self.__window.title("GDB Debugger Information")
         self.__window.minsize(400, 600)
@@ -75,25 +80,39 @@ class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
             self.__update_needed = True
             self.__update_lock.release()
 
+    def tkinter_update_callback(self):
+        if self.__should_stop:
+            self.on_closing()
+            return
+        self.__update_lock.acquire()
+        if self.__poll_queue() or self.__update_needed:
+            self.__audio_views.update_figures()
+            self.__update_needed = False
+        self.__update_lock.release()
+        self.__update_tk_id = self.__window.after(20, self.tkinter_update_callback)
+
     def run(self):
-        print("[LOG] starting thread routine")
         while not self.__should_stop:
             if self.__gui_active:
                 if self.__window is None:
-                    self.__init_window()
+                    self.__init_gui()
 
-                # Check for model update
-                self.__update_lock.acquire()
-                if self.__poll_queue() and self.__update_needed == False:
-                    self.__update_needed = True
-                if self.__update_needed:
-                    self.__audio_views.update_figures()
-                    self.__update_needed = False
-                self.__update_lock.release()
+                self.__update_tk_id = self.__window.after(
+                    20, self.tkinter_update_callback
+                )
+                self.__window.mainloop()
+                # # Check for model update
+                # self.__update_lock.acquire()
+                # if self.__poll_queue() and self.__update_needed == False:
+                #     self.__update_needed = True
+                # if self.__update_needed:
+                #     self.__audio_views.update_figures()
+                #     self.__update_needed = False
+                # self.__update_lock.release()
 
-                # Update the GUI
-                self.__window.update_idletasks()
-                self.__window.update()
+                # # Update the GUI
+                # self.__window.update_idletasks()
+                # self.__window.update()
             else:
                 time.sleep(0.05)
         print("[LOG] stopping thread routine")
@@ -124,6 +143,8 @@ class DebuggerGUI(future_gdb.Thread, metaclass=SingletonMeta):
         self.__gui_active = False
         if self.__window:
             self.__window.quit()
+            if self.__update_tk_id:
+                self.__window.after_cancel(self.__update_tk_id)
             self.__window.destroy()
             self.__window = None
             self.__models = list()

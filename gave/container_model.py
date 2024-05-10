@@ -1,9 +1,10 @@
 from matplotlib.axes import Axes
 from .container import Container
 from .data_model import DataModel
-from .views import get_views_for_data_model, AudioView
+from .views import get_views_for_data_model, AudioView, get_view_from_name
 
 import gdb
+import tkinter as tk
 
 
 class ContainerModel:
@@ -17,6 +18,10 @@ class ContainerModel:
         self.__view: AudioView = get_views_for_data_model(self.__data_model)[0](
             self.__sr
         )
+
+    # def view_var_callback(self, *args):
+    #     new_view = self.__view_var.get()
+    #     self.__view =
 
     @property
     def variable_name(self) -> str:

@@ -14,9 +14,9 @@ class AudioView(ABC):
     def __init__(self, samplerate: float) -> None:
         self.__sr = samplerate
 
-    @property
+    @staticmethod
     @abstractmethod
-    def name(self) -> str:
+    def name() -> str:
         pass
 
     @abstractmethod
@@ -33,9 +33,25 @@ class WaveformView(AudioView):
         super().__init__(samplerate)
         self.__line = None
 
-    @property
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "Waveform"
+
+    def render_view(self, axes: Axes, data: np.ndarray):
+        axes.plot(data)
+        axes.grid()
+
+    def get_settings(self) -> List[Setting]:
+        return []
+
+
+class CurveView(AudioView):
+    def __init__(self, samplerate: float) -> None:
+        super().__init__(samplerate)
+
+    @staticmethod
+    def name() -> str:
+        return "Curve"
 
     def render_view(self, axes: Axes, data: np.ndarray):
         axes.plot(data)
@@ -44,8 +60,15 @@ class WaveformView(AudioView):
         return []
 
 
+VIEWS = {WaveformView.name(): WaveformView, CurveView.name(): CurveView}
+
+
+def get_view_from_name(name: str):
+    return VIEWS[name]
+
+
 def get_views_for_data_model(model: DataModel) -> List:
     if model == DataModel.REAL_1D:
-        return [WaveformView]
+        return [WaveformView, CurveView]
     else:
         return []
