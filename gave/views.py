@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 
 from matplotlib.axes import Axes
-from .data_model import DataModel
+from .data_layout import DataLayout
 
 
 class Setting:
@@ -38,7 +38,7 @@ class WaveformView(AudioView):
         return "Waveform"
 
     def render_view(self, axes: Axes, data: np.ndarray):
-        axes.plot(data)
+        axes.plot(data, "blue")
         axes.grid()
 
     def get_settings(self) -> List[Setting]:
@@ -54,7 +54,7 @@ class CurveView(AudioView):
         return "Curve"
 
     def render_view(self, axes: Axes, data: np.ndarray):
-        axes.plot(data)
+        axes.plot(data, "red")
 
     def get_settings(self) -> List[Setting]:
         return []
@@ -67,8 +67,8 @@ def get_view_from_name(name: str):
     return VIEWS[name]
 
 
-def get_views_for_data_model(model: DataModel) -> List:
-    if model == DataModel.REAL_1D:
+def get_views_for_data_layout(model: DataLayout) -> List:
+    if model == DataLayout.REAL_1D:
         return [WaveformView, CurveView]
     else:
         return []

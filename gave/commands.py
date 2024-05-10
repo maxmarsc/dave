@@ -66,7 +66,7 @@ class GaveCommand(gdb.Command):
         var_name = args[0]
         var = gdb.parse_and_eval(var_name)
         container = ContainerFactory().build(var, var_name)
-        GaveProcess().add_container(container)
+        GaveProcess().add_to_model(container)
 
     def carray(self, args):
         if len(args) != 1:
@@ -76,10 +76,6 @@ class GaveCommand(gdb.Command):
         try:
             var = gdb.parse_and_eval(var_name)
             array = CArray1D(var, var_name)
-            print(f"gdb.Value : {var}")
-            print(f"data() : {hex(array.data())}")
-            print(f"size : {array.size}")
-            print(f"ftype : {array.float_type}")
         except (gdb.error, RuntimeError) as e:
             print(f"Error accessing variable '{var_name}': {str(e)}")
 

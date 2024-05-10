@@ -44,8 +44,8 @@ class GaveProcess(metaclass=SingletonMeta):
             self.__msg_queue.put(ContainerModel.Update(id, data))
             print(f"update sent {id} {data.shape}")
 
-    def add_container(self, container: ContainerModel):
+    def add_to_model(self, container: Container):
         self.__containers.append(container)
-        model = ContainerModel(container, 44100)
-        print(f"model sent {model.id, model.variable_name}")
-        self.__msg_queue.put(model)
+        # model = ContainerModel(container, 44100)
+        # print(f"model sent {model.id, model.variable_name}")
+        self.__msg_queue.put(container.as_raw())

@@ -9,7 +9,7 @@ import numpy as np
 
 from .container import FloatingPointType, Container
 from .container_factory import ContainerFactory
-from .data_model import DataModel
+from .data_layout import DataLayout
 
 
 class Container1D(Container):
@@ -26,8 +26,8 @@ class Container1D(Container):
         return self.size * self.float_type.byte_size()
 
     @staticmethod
-    def available_data_models() -> List[DataModel]:
-        return [DataModel.REAL_1D]
+    def available_data_layouts() -> List[DataLayout]:
+        return [DataLayout.REAL_1D]
 
 
 class CArray1D(Container1D):
