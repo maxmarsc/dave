@@ -31,17 +31,28 @@ class ContainerSettingsFrame:
         self.__model = model
         self.__master = master
         self.__frame = tk.Frame(self.__master, bd=2, relief=tk.RAISED, pady=5)
+        # Label
+        self.__name_label = tk.Label(
+            self.__frame, text=f"{self.__model.variable_name} : ", font="bold"
+        )
+        self.__name_label.pack(side=tk.LEFT, fill="y")
+        # View selection
         self.__view_menu = None
+        self.__view_var = tk.StringVar(value=self.__model.selected_view)
+        self.__view_var.trace_add("write", self.view_var_callback)
+
+        self.update()
         self.__frame.pack(side=tk.TOP, fill="x")
 
+    def view_var_callback(self, *_):
+        self.__model.update_view_type(self.__view_var.get())
+
     def update(self):
-        # self.__frame.pack(fill=tk.X, expand=True)
-        # for child in self.__frame.winfo_children():
-        #     child.destroy()
-        if self.__view_menu:
-            self.__view_menu.destroy()
-        self.__view_menu = self.__model.create_views_menu(self.__frame)
-        self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
+        if not self.__view_menu:
+            self.__view_menu = tk.OptionMenu(
+                self.__frame, self.__view_var, *self.__model.possible_views
+            )
+            self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
 
 
 class SettingsTab:
@@ -58,21 +69,8 @@ class SettingsTab:
         )
 
     def update_ui(self):
-        # Delete previous items
-        # for child in self.__master.winfo_children():
-        #     child.destroy()
-        # for model in self.container_models.values():
-        #     self.update_model_frame(model)
         for settings_frame in self.containers_settings.values():
             settings_frame.update()
-
-    # def update_model_frame(self, model: ContainerModel):
-    #     # Create a frame for each model
-    #     model_frame = tk.Frame(self.__master, bd=2, relief=tk.RAISED, pady=5)
-    #     model_frame.pack(fill=tk.X, expand=True)
-
-    #     option_menu = model.create_views_menu(model_frame)
-    #     option_menu.pack(side=tk.LEFT, padx=10, pady=10)
 
 
 class AudioViewsTab:
@@ -170,26 +168,15 @@ class GaveGUI:
     def tkinter_update_callback(self):
         self.__update_tk_id = ""
 
-        update_needed = self.__poll_queue() or self.__check_model_for_updates()
-        # update_needed = False
-        # while True:
-        #     try:
-        #         msg = self.__msg_queue.get(block=False)
-        #         if isinstance(msg, StopMessage):
-        #             self.on_closing()
-        #         elif isinstance(msg, Container.Raw):
-        #             new_model = ContainerModel(msg, 44100)
-        #             self.__models[msg.id] = new_model
-        #             self.__audio_views.add_audio_view(new_model)
-        #             update_needed = True
-        #         elif isinstance(msg, ContainerModel.Update):
-        #             self.__models[msg.id].update_data(msg.data)
-        #             update_needed = True
-        #     except queue.Empty:
-        #         break
-
-        if update_needed:
+        # Check for new containers
+        if self.__poll_queue():
             self.__audio_views_tab.update_figures()
             self.__settings_tab.update_ui()
+        elif self.__check_model_for_updates():
+            self.__audio_views_tab.update_figures()
+        # update_needed = self.__poll_queue() or self.__check_model_for_updates()
+        # if update_needed:
+        #     self.__audio_views_tab.update_figures()
+        #     self.__settings_tab.update_ui()
 
         self.__update_tk_id = self.__window.after(20, self.tkinter_update_callback)
