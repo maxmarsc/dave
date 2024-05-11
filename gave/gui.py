@@ -1,6 +1,6 @@
 from enum import Enum
 from tkinter import ttk
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 import uuid
@@ -26,31 +26,53 @@ from .container import Container
 #         self.__master = master
 
 
+class ContainerSettingsFrame:
+    def __init__(self, master: tk.Misc, model: ContainerModel) -> None:
+        self.__model = model
+        self.__master = master
+        self.__frame = tk.Frame(self.__master, bd=2, relief=tk.RAISED, pady=5)
+        self.__view_menu = None
+        self.__frame.pack(side=tk.TOP, fill="x")
+
+    def update(self):
+        # self.__frame.pack(fill=tk.X, expand=True)
+        # for child in self.__frame.winfo_children():
+        #     child.destroy()
+        if self.__view_menu:
+            self.__view_menu.destroy()
+        self.__view_menu = self.__model.create_views_menu(self.__frame)
+        self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
+
+
 class SettingsTab:
     def __init__(self, master):
         self.__master = master
-        self.container_models: Dict[uuid.uuid4, ContainerModel] = dict()
-        self.frames: Dict[uuid.uuid4, tk.Frame]
+        self.containers_settings: Dict[uuid.uuid4, ContainerSettingsFrame] = dict()
+        # self.frames: Dict[uuid.uuid4, tk.Frame]
         self.update_ui()
 
     def add_container(self, container: ContainerModel):
-        assert container.id not in self.container_models
-        self.container_models[container.id] = container
+        assert container.id not in self.containers_settings
+        self.containers_settings[container.id] = ContainerSettingsFrame(
+            self.__master, container
+        )
 
     def update_ui(self):
         # Delete previous items
         # for child in self.__master.winfo_children():
         #     child.destroy()
-        for model in self.container_models.values():
-            self.update_model_frame(model)
+        # for model in self.container_models.values():
+        #     self.update_model_frame(model)
+        for settings_frame in self.containers_settings.values():
+            settings_frame.update()
 
-    def update_model_frame(self, model: ContainerModel):
-        # Create a frame for each model
-        model_frame = tk.Frame(self.__master, bd=2, relief=tk.RAISED, pady=5)
-        model_frame.pack(fill=tk.X, expand=True)
+    # def update_model_frame(self, model: ContainerModel):
+    #     # Create a frame for each model
+    #     model_frame = tk.Frame(self.__master, bd=2, relief=tk.RAISED, pady=5)
+    #     model_frame.pack(fill=tk.X, expand=True)
 
-        option_menu = model.create_views_menu(model_frame)
-        option_menu.pack(side=tk.LEFT, padx=10, pady=10)
+    #     option_menu = model.create_views_menu(model_frame)
+    #     option_menu.pack(side=tk.LEFT, padx=10, pady=10)
 
 
 class AudioViewsTab:

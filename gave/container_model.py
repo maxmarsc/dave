@@ -40,7 +40,6 @@ class ContainerModel:
         self.__update_pending = False
 
     def view_var_callback(self, *args):
-        print(f"view_var_callback {args}")
         new_view_name = self.__view_var.get()
         possibles_views = get_views_for_data_layout(self.__data_layout)
         for view_type in possibles_views:

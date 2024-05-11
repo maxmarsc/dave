@@ -20,4 +20,6 @@ paths = (
 sys.path = paths + sys.path
 end
 source gave_gdb_init.py
+b std.cpp:17
+b std.cpp:27
 # set pagination on
