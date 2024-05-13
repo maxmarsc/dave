@@ -35,8 +35,16 @@ class ContainerModel:
 
     # ==============================================================================
     @property
+    def possible_layouts(self) -> List[DataLayout]:
+        return self.__raw.container_cls.available_data_layouts()
+
+    @property
+    def selected_layout(self) -> DataLayout:
+        return self.__data_layout
+
+    @property
     def possible_views(self) -> List[str]:
-        print(f"possible_view : {get_views_for_data_layout(self.__data_layout)}")
+        # print(f"possible_view : {get_views_for_data_layout(self.__data_layout)}")
         return [view.name() for view in get_views_for_data_layout(self.__data_layout)]
 
     @property
@@ -68,6 +76,14 @@ class ContainerModel:
     # ==============================================================================
     def update_data(self, new_data: np.ndarray):
         self.__raw.data = new_data
+        self.__update_pending = True
+
+    def update_layout(self, new_layout: DataLayout):
+        assert new_layout in self.possible_layouts
+        self.__data_layout = new_layout
+        self.__view: AudioView = get_views_for_data_layout(self.__data_layout)[0](
+            self.__sr
+        )
         self.__update_pending = True
 
     def update_view_type(self, view_name: str):

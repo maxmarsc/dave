@@ -61,7 +61,7 @@ class ScalarCArray1D(Container):
 
     @staticmethod
     def available_data_layouts() -> List[DataLayout]:
-        return [DataLayout.REAL_1D]
+        return [DataLayout.REAL_1D, DataLayout.CPX_1D]
 
     def read_from_gdb(self) -> np.ndarray:
         ptr_type = gdb.lookup_type(self.float_type.value).pointer().const()
@@ -106,7 +106,7 @@ class ComplexCArray1D(Container):
 
     @staticmethod
     def available_data_layouts() -> List[DataLayout]:
-        return [DataLayout.CPX_1D]
+        return [DataLayout.CPX_1D, DataLayout.REAL_1D]
 
     def read_from_gdb(self) -> np.ndarray:
         ptr_type = gdb.lookup_type("complex " + self.float_type.value).pointer().const()

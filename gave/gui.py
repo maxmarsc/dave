@@ -15,7 +15,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
 
-
+from .data_layout import DataLayout
 from .container_model import ContainerModel
 from .container import Container
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
@@ -37,34 +37,72 @@ class ContainerSettingsFrame:
             self.__frame, text=f"{self.__model.variable_name} : ", font="bold"
         )
         self.__name_label.pack(side=tk.LEFT, fill="y")
+        ttk.Separator(self.__frame, orient="vertical").pack(side=tk.LEFT, fill="y")
+        # Layout selection
+        self.__layout_menu = None
+        self.__layout_separator = None
+        self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
+        self.__layout_var.trace_add("write", self.layout_var_callback)
         # View selection
         self.__view_menu = None
+        self.__view_separator = None
         self.__view_var = tk.StringVar(value=self.__model.selected_view)
         self.__view_var.trace_add("write", self.view_var_callback)
         # Settings selection
-        self.__view_settings_frame = tk.Frame(self.__frame)
-        self.__view_settings = ViewSettingsFrame(self.__view_settings_frame, model)
+        self.__view_settings_frame = None
+        self.__view_settings = None
 
         self.update()
         self.__frame.pack(side=tk.TOP, fill="x")
-        self.__view_settings_frame.pack(side=tk.LEFT, fill="both")
 
     def view_var_callback(self, *_):
-        print(f"view_var_callback : {_}")
+        # Update the model
         self.__model.update_view_type(self.__view_var.get())
-        for child in self.__view_settings_frame.winfo_children():
-            child.destroy()
-        self.__view_settings = ViewSettingsFrame(
-            self.__view_settings_frame, self.__model
-        )
+        # Reset the settings of the view
+        self.__view_settings_frame.destroy()
+        self.__view_settings_frame = None
+        self.__view_settings = None
+        # Trigger a redraw
+        self.update()
+
+    def layout_var_callback(self, *_):
+        # Update the model
+        self.__model.update_layout(DataLayout(self.__layout_var.get()))
+        # Reset the view selector
+        self.__view_menu.destroy()
+        self.__view_separator.destroy()
+        self.__view_menu = None
+        # Update the view type -> this will trigger the view_var_callback
+        self.__view_var.set(value=self.__model.selected_view)
 
     def update(self):
+        # Create the layout menu
+        if not self.__layout_menu:
+            possible_layouts_name = [
+                layout.value for layout in self.__model.possible_layouts
+            ]
+            self.__layout_menu = tk.OptionMenu(
+                self.__frame, self.__layout_var, *possible_layouts_name
+            )
+            self.__layout_menu.pack(side=tk.LEFT, padx=10, pady=10)
+            self.__layout_separator = ttk.Separator(self.__frame, orient="vertical")
+            self.__layout_separator.pack(side=tk.LEFT, fill="y")
+        # Create the view menu
         if not self.__view_menu:
-            print(self.__model.possible_views)
             self.__view_menu = tk.OptionMenu(
                 self.__frame, self.__view_var, *self.__model.possible_views
             )
             self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
+            self.__view_separator = ttk.Separator(self.__frame, orient="vertical")
+            self.__view_separator.pack(side=tk.LEFT, fill="y")
+        # Create the settings menu
+        if not self.__view_settings_frame:
+            self.__view_settings_frame = tk.Frame(self.__frame)
+            self.__view_settings_frame.pack(side=tk.LEFT, fill="both")
+        if not self.__view_settings:
+            self.__view_settings = ViewSettingsFrame(
+                self.__view_settings_frame, self.__model
+            )
 
 
 class ViewSettingsFrame:
@@ -92,7 +130,7 @@ class ViewSettingsFrame:
         # Create the option menu & the label
         label = tk.Label(self.__master, text=setting.name)
         menu = tk.OptionMenu(self.__master, var, *setting.possible_values())
-        label.pack(side=tk.LEFT)
+        label.pack(side=tk.LEFT, padx=5)
         menu.pack(side=tk.LEFT)
 
     def create_float_selector(self, setting: FloatSetting):
@@ -109,7 +147,7 @@ class ViewSettingsFrame:
             validate="focusout",
             validatecommand=vcmd,
         )
-        label.pack(side=tk.LEFT)
+        label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT)
         var.trace_add("write", self.var_callback)
 
@@ -127,7 +165,7 @@ class ViewSettingsFrame:
             validate="focusout",
             validatecommand=vcmd,
         )
-        label.pack(side=tk.LEFT)
+        label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT)
         var.trace_add("write", self.var_callback)
 
