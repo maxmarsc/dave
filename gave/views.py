@@ -130,7 +130,11 @@ class WaveformView(AudioView):
         axes.plot(data, "blue")
         max_y = np.max(np.abs(data)) * 1.2
         if max_y != 0.0:
-            axes.set_ylim(-max_y, max_y)
+            try:
+                axes.set_ylim(-max_y, max_y)
+            except ValueError:
+                # Can fail with NaN/inf
+                pass
         axes.grid()
 
     def get_settings(self) -> List[Setting]:
@@ -228,12 +232,59 @@ class PSDView(AudioView):
         axes.psd(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
 
 
+# ===========================================================================
+class MagnitudeView(AudioView):
+    def __init__(self, samplerate: float) -> None:
+        super().__init__(samplerate)
+
+    @staticmethod
+    def name() -> str:
+        return "Magnitude"
+
+    def update_setting(self, setting_name: str, setting_value: Any):
+        pass
+
+    def get_settings(self) -> List[Setting]:
+        return []
+
+    def render_view(self, axes: Axes, data: np.ndarray):
+        axes.plot(np.abs(data))
+        axes.grid()
+        axes.set_ylabel("Magnitude")
+
+
+# ===========================================================================
+class PhaseView(AudioView):
+    def __init__(self, samplerate: float) -> None:
+        super().__init__(samplerate)
+
+    @staticmethod
+    def name() -> str:
+        return "Phase"
+
+    def update_setting(self, setting_name: str, setting_value: Any):
+        pass
+
+    def get_settings(self) -> List[Setting]:
+        return []
+
+    def render_view(self, axes: Axes, data: np.ndarray):
+        axes.plot(np.angle(data))
+        axes.grid()
+        axes.set_ylabel("Phase")
+
+
+# ===========================================================================
+
+
 def get_view_from_name(name: str):
     views = {
         WaveformView.name(): WaveformView,
         CurveView.name(): CurveView,
         SpectrogramView.name(): SpectrogramView,
         PSDView.name(): PSDView,
+        MagnitudeView.name(): MagnitudeView,
+        PhaseView.name(): PhaseView,
     }
     return views[name]
 
@@ -241,5 +292,7 @@ def get_view_from_name(name: str):
 def get_views_for_data_layout(model: DataLayout) -> List:
     if model == DataLayout.REAL_1D:
         return [WaveformView, CurveView, SpectrogramView, PSDView]
+    if model == DataLayout.CPX_1D:
+        return [MagnitudeView, PhaseView]
     else:
         return []

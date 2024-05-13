@@ -43,9 +43,6 @@ class GaveCommand(gdb.Command):
             print("Error: no processus detected")
             return
 
-        if not GaveProcess().is_alive():
-            GaveProcess().start()
-
         subcommand = args[0]
         # self.msg_queue.put(args[1])
         if subcommand == "p":
@@ -66,6 +63,8 @@ class GaveCommand(gdb.Command):
         var_name = args[0]
         var = gdb.parse_and_eval(var_name)
         container = ContainerFactory().build(var, var_name)
+        if not GaveProcess().is_alive():
+            GaveProcess().start()
         GaveProcess().add_to_model(container)
 
     def carray(self, args):
@@ -75,7 +74,7 @@ class GaveCommand(gdb.Command):
         var_name = args[0]
         try:
             var = gdb.parse_and_eval(var_name)
-            array = CArray1D(var, var_name)
+            array = ScalarCArray1D(var, var_name)
         except (gdb.error, RuntimeError) as e:
             print(f"Error accessing variable '{var_name}': {str(e)}")
 
@@ -112,8 +111,8 @@ class GaveCommand(gdb.Command):
             else:
                 print(f"Type: {var.type}")
                 print(f"(real) Type: {gdb.types.get_basic_type(var.type)}")
-                print(f"Value: {var}")
-                print(f"(hex) Value: {hex(var)}")
+                # print(f"Value: {var}")
+                # print(f"(hex) Value: {hex(var)}")
                 if var.address is not None:
                     print(f"Address: {var.address}")
                 else:
