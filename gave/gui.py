@@ -1,5 +1,5 @@
 from enum import Enum
-from tkinter import ttk
+from tkinter import StringVar, ttk
 from typing import Dict, List, Tuple
 import gdb  # type: ignore
 import gdb.types  # type: ignore
@@ -18,6 +18,7 @@ import numpy as np
 
 from .container_model import ContainerModel
 from .container import Container
+from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 
 
 # class SettingsFrame:
@@ -40,19 +41,106 @@ class ContainerSettingsFrame:
         self.__view_menu = None
         self.__view_var = tk.StringVar(value=self.__model.selected_view)
         self.__view_var.trace_add("write", self.view_var_callback)
+        # Settings selection
+        self.__view_settings_frame = tk.Frame(self.__frame)
+        self.__view_settings = ViewSettingsFrame(self.__view_settings_frame, model)
 
         self.update()
         self.__frame.pack(side=tk.TOP, fill="x")
+        self.__view_settings_frame.pack(side=tk.LEFT, fill="both")
 
     def view_var_callback(self, *_):
+        print(f"view_var_callback : {_}")
         self.__model.update_view_type(self.__view_var.get())
+        for child in self.__view_settings_frame.winfo_children():
+            child.destroy()
+        self.__view_settings = ViewSettingsFrame(
+            self.__view_settings_frame, self.__model
+        )
 
     def update(self):
         if not self.__view_menu:
+            print(self.__model.possible_views)
             self.__view_menu = tk.OptionMenu(
                 self.__frame, self.__view_var, *self.__model.possible_views
             )
             self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
+
+
+class ViewSettingsFrame:
+    def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
+        self.__master = master
+        self.__container = container
+        self.__container_suffix = "_" + str(container.id)
+        self.__vars: Dict[str, tk.Variable] = dict()
+        for setting in container.view_settings:
+            if isinstance(setting, StringSetting):
+                self.create_string_selector(setting)
+            elif isinstance(setting, IntSetting):
+                self.create_int_selector(setting)
+            elif isinstance(setting, FloatSetting):
+                self.create_float_selector(setting)
+            else:
+                raise NotImplementedError()
+
+    def create_string_selector(self, setting: StringSetting):
+        # Create the StringVar to keep updated of changes
+        var_name = setting.name + self.__container_suffix
+        var = tk.StringVar(value=setting.value, name=var_name)
+        self.__vars[var_name] = var
+        var.trace_add("write", self.var_callback)
+        # Create the option menu & the label
+        label = tk.Label(self.__master, text=setting.name)
+        menu = tk.OptionMenu(self.__master, var, *setting.possible_values())
+        label.pack(side=tk.LEFT)
+        menu.pack(side=tk.LEFT)
+
+    def create_float_selector(self, setting: FloatSetting):
+        # Create the DoubleVar to keep updated of changes
+        var_name = setting.name + self.__container_suffix
+        var = tk.DoubleVar(value=setting.value, name=var_name)
+        self.__vars[var_name] = var
+        vcmd = (self.__master.register(setting.validate), "%P")
+        # Create the entry and the label
+        label = tk.Label(self.__master, text=setting.name)
+        entry = tk.Entry(
+            self.__master,
+            textvariable=var,
+            validate="focusout",
+            validatecommand=vcmd,
+        )
+        label.pack(side=tk.LEFT)
+        entry.pack(side=tk.LEFT)
+        var.trace_add("write", self.var_callback)
+
+    def create_int_selector(self, setting: IntSetting):
+        # Create the DoubleVar to keep updated of changes
+        var_name = setting.name + self.__container_suffix
+        var = tk.IntVar(value=setting.value, name=var_name)
+        self.__vars[var_name] = var
+        vcmd = (self.__master.register(setting.validate), "%P")
+        # Create the entry and the label
+        label = tk.Label(self.__master, text=setting.name)
+        entry = tk.Entry(
+            self.__master,
+            textvariable=var,
+            validate="focusout",
+            validatecommand=vcmd,
+        )
+        label.pack(side=tk.LEFT)
+        entry.pack(side=tk.LEFT)
+        var.trace_add("write", self.var_callback)
+
+    def var_callback(self, var_name: str, *_):
+        assert var_name in self.__vars
+        setting_name = var_name[: -len(self.__container_suffix)]
+        try:
+            self.__container.update_view_settings(
+                setting_name, self.__vars[var_name].get()
+            )
+        except tk.TclError:
+            # Might fail when tk update the var with an empty string
+            pass
 
 
 class SettingsTab:

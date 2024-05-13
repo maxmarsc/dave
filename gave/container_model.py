@@ -1,5 +1,7 @@
-from typing import List
+from typing import Any, List
 from matplotlib.axes import Axes
+
+from .view_setting import Setting
 from .container import Container
 from .data_layout import DataLayout
 from .views import get_views_for_data_layout, AudioView, get_view_from_name
@@ -30,17 +32,20 @@ class ContainerModel:
             self.__sr
         )
         self.__update_pending = True
-        # self.__view_var = tk.StringVar(value=self.__view.name())
-        # self.__view_var.trace_add("write", self.view_var_callback)
 
     # ==============================================================================
     @property
     def possible_views(self) -> List[str]:
+        print(f"possible_view : {get_views_for_data_layout(self.__data_layout)}")
         return [view.name() for view in get_views_for_data_layout(self.__data_layout)]
 
     @property
     def selected_view(self) -> str:
         return self.__view.name()
+
+    @property
+    def view_settings(self) -> List[Setting]:
+        return self.__view.get_settings()
 
     @property
     def variable_name(self) -> str:
@@ -56,25 +61,6 @@ class ContainerModel:
 
     def reset_update_flag(self):
         self.__update_pending = False
-
-    # def view_var_callback(self, *args):
-    #     new_view_name = self.__view_var.get()
-    #     possibles_views = get_views_for_data_layout(self.__data_layout)
-    #     for view_type in possibles_views:
-    #         if view_type.name() == new_view_name:
-    #             # print("\tUpdating to ")
-    #             self.__view = view_type(self.__sr)
-    #             self.__update_pending = True
-    #             break
-
-    # def create_views_menu(self, master) -> tk.OptionMenu:
-    #     options = [
-    #         view.name() for view in get_views_for_data_layout(self.__data_layout)
-    #     ]
-    #     return tk.OptionMenu(master, self.__view_var, *options)
-
-    # def get_views_name_for_data_layout(self) -> List[str]:
-    #     return [view.name for view in get_views_for_data_layout(self.__data_layout)]
 
     def draw_audio_view(self, axes: Axes):
         self.__view.render_view(axes, self.__raw.data)
@@ -92,5 +78,9 @@ class ContainerModel:
                 self.__update_pending = True
                 break
 
-    def show_settings(self, master):
-        pass
+    def update_view_settings(self, setting_name: str, setting_value: Any):
+        self.__view.update_setting(setting_name, setting_value)
+        self.__update_pending = True
+
+    # def show_settings(self, master):
+    #     pass

@@ -22,4 +22,5 @@ end
 source gave_gdb_init.py
 b std.cpp:17
 b std.cpp:27
+r
 # set pagination on
