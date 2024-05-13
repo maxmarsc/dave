@@ -79,8 +79,6 @@ import numpy as np
 
 
 # ===========================================================================
-
-
 class AudioView(ABC):
     def __init__(self, samplerate: float) -> None:
         self._sr = samplerate
@@ -103,8 +101,8 @@ class AudioView(ABC):
         pass
 
 
+# ===========================================================================
 class WaveformView(AudioView):
-    # ===========================================================================
     def __init__(self, samplerate: float) -> None:
         super().__init__(samplerate)
         # self.__y_scale = StringSetting("Y scale", ("linear", "log"))
@@ -142,6 +140,7 @@ class WaveformView(AudioView):
         # ]
 
 
+# ===========================================================================
 class CurveView(AudioView):
     def __init__(self, samplerate: float) -> None:
         super().__init__(samplerate)
@@ -169,6 +168,7 @@ class CurveView(AudioView):
         return [self.__x_scale, self.__y_scale]
 
 
+# ===========================================================================
 class SpectrogramView(AudioView):
     def __init__(self, samplerate: float) -> None:
         super().__init__(samplerate)
@@ -198,19 +198,48 @@ class SpectrogramView(AudioView):
         axes.specgram(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
 
 
-VIEWS = {
-    WaveformView.name(): WaveformView,
-    CurveView.name(): CurveView,
-    SpectrogramView.name(): SpectrogramView,
-}
+# ===========================================================================
+class PSDView(AudioView):
+    def __init__(self, samplerate: float) -> None:
+        super().__init__(samplerate)
+        self.__nfft = IntSetting("nfft", 16, 4096, 256)
+        self.__overlap = FloatSetting("overlap", 0.01, 0.99, 0.5)
+        self.__window = StringSetting("window", ("hanning", "none", "blackman"))
+
+    @staticmethod
+    def name() -> str:
+        return "PSD"
+
+    def update_setting(self, setting_name: str, setting_value: Any):
+        if setting_name == self.__nfft.name:
+            self.__nfft.value = setting_value
+        elif setting_name == self.__overlap.name:
+            self.__overlap.value = setting_value
+        elif setting_name == self.__window.name:
+            self.__window.value = setting_value
+        else:
+            raise RuntimeError(f"{setting_name} is not a valid PSD setting")
+
+    def get_settings(self) -> List[Setting]:
+        return (self.__nfft, self.__overlap, self.__window)
+
+    def render_view(self, axes: Axes, data: np.ndarray):
+        overlap = int(self.__overlap.value * self.__nfft.value)
+        axes.psd(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
 
 
 def get_view_from_name(name: str):
-    return VIEWS[name]
+    views = {
+        WaveformView.name(): WaveformView,
+        CurveView.name(): CurveView,
+        SpectrogramView.name(): SpectrogramView,
+        PSDView.name(): PSDView,
+    }
+    return views[name]
 
 
 def get_views_for_data_layout(model: DataLayout) -> List:
     if model == DataLayout.REAL_1D:
-        return [WaveformView, CurveView, SpectrogramView]
+        return [WaveformView, CurveView, SpectrogramView, PSDView]
     else:
         return []

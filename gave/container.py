@@ -6,7 +6,7 @@ from typing import List, Type
 
 from .data_layout import DataLayout
 import numpy as np
-import gdb
+import gdb  # type: ignore
 import uuid
 
 
