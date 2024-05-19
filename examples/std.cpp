@@ -2,7 +2,6 @@
 #include <cmath>
 
 constexpr auto kBlockSize = 4096;
-constexpr auto kTEst      = kBlockSize / 100;
 
 int main() {
   float carray[kBlockSize]{};

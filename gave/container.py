@@ -34,6 +34,7 @@ class Container(ABC):
         data: np.ndarray
         name: str
         container_cls: Type
+        default_layout: DataLayout
 
     def __init__(self, gdb_value: gdb.Value, name: str) -> None:
         self._value = gdb_value
@@ -49,7 +50,9 @@ class Container(ABC):
         return self.__uuid
 
     def as_raw(self) -> Raw:
-        return Container.Raw(self.id, self.read_from_gdb(), self.name, type(self))
+        return Container.Raw(
+            self.id, self.read_from_gdb(), self.name, type(self), self.default_layout()
+        )
 
     @classmethod
     @abstractmethod
@@ -72,7 +75,11 @@ class Container(ABC):
 
     @staticmethod
     @abstractmethod
-    def available_data_layouts(self) -> List[DataLayout]:
+    def available_data_layouts() -> List[DataLayout]:
+        pass
+
+    @abstractmethod
+    def default_layout() -> DataLayout:
         pass
 
     @abstractmethod

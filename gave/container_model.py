@@ -26,10 +26,7 @@ class ContainerModel:
         self.__channels = self.__raw.data.shape[0]
         if not issubclass(raw.container_cls, Container):
             raise RuntimeError(f"{raw.container_cls} is not a valid container class")
-        # First as default
-        self.__data_layout: DataLayout = (
-            self.__raw.container_cls.available_data_layouts()[0]
-        )
+        self.__data_layout: DataLayout = self.__raw.default_layout
         # First as default
         self.__view: AudioView = get_views_for_data_layout(self.__data_layout)[0](
             self.__sr
