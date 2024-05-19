@@ -115,6 +115,7 @@ class ContainerSettingsFrame:
                     validate="focusout",
                     validatecommand=vcmd,
                 )
+                self.__channel_entry.insert(0, f"{self.__model.channels}")
                 self.__channel_label.pack(side=tk.LEFT, padx=5)
                 self.__channel_entry.pack(side=tk.LEFT)
             self.__channel_separator = ttk.Separator(self.__frame, orient="vertical")
