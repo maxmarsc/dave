@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 import re
-from typing import List
+from typing import List, Tuple
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 import numpy as np
@@ -59,9 +59,17 @@ class ScalarCArray1D(Container):
     def byte_size(self) -> int:
         return self.size * self.float_type.byte_size()
 
+    def shape(self) -> Tuple[int, int]:
+        return (1, self.size)
+
     @staticmethod
     def available_data_layouts() -> List[DataLayout]:
-        return [DataLayout.REAL_1D, DataLayout.CPX_1D]
+        return [
+            DataLayout.REAL_1D,
+            DataLayout.REAL_2D,
+            DataLayout.CPX_1D,
+            DataLayout.CPX_2D,
+        ]
 
     def read_from_gdb(self) -> np.ndarray:
         ptr_type = gdb.lookup_type(self.float_type.value).pointer().const()
@@ -72,7 +80,7 @@ class ScalarCArray1D(Container):
         print(f"dtype : {array.dtype}")
         print(f"shape : {array.shape}")
         # print(f"array : {array}")
-        return array
+        return array.reshape(self.shape())
 
 
 class ComplexCArray1D(Container):
@@ -100,13 +108,21 @@ class ComplexCArray1D(Container):
     def size(self) -> int:
         return self.__size
 
+    def shape(self) -> Tuple[int, int]:
+        return (1, self.size)
+
     @property
     def byte_size(self) -> int:
         return self.size * self.float_type.byte_size() * 2
 
     @staticmethod
     def available_data_layouts() -> List[DataLayout]:
-        return [DataLayout.CPX_1D, DataLayout.REAL_1D]
+        return [
+            DataLayout.CPX_1D,
+            DataLayout.CPX_2D,
+            DataLayout.REAL_1D,
+            DataLayout.REAL_2D,
+        ]
 
     def read_from_gdb(self) -> np.ndarray:
         ptr_type = gdb.lookup_type("complex " + self.float_type.value).pointer().const()
@@ -117,7 +133,7 @@ class ComplexCArray1D(Container):
         print(f"dtype : {array.dtype}")
         print(f"shape : {array.shape}")
         # print(f"array : {array}")
-        return array
+        return array.reshape(self.shape())
 
 
 ContainerFactory().register(ScalarCArray1D)

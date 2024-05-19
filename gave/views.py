@@ -290,9 +290,7 @@ def get_view_from_name(name: str):
 
 
 def get_views_for_data_layout(model: DataLayout) -> List:
-    if model == DataLayout.REAL_1D:
+    if model in (DataLayout.REAL_1D, DataLayout.REAL_2D):
         return [WaveformView, CurveView, SpectrogramView, PSDView]
-    if model == DataLayout.CPX_1D:
-        return [MagnitudeView, PhaseView]
     else:
-        return []
+        return [MagnitudeView, PhaseView]

@@ -21,9 +21,6 @@ class GaveProcess(metaclass=SingletonMeta):
                 multiprocessing.set_start_method(old_spawn_method, force=True)
         self.__containers: List[Container] = []
 
-    def __del__(self):
-        print("Calling GaveProcess destructor")
-
     def start(self):
         with blocked_signals():
             self.__process.start()

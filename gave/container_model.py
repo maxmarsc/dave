@@ -23,6 +23,7 @@ class ContainerModel:
     def __init__(self, raw: Container.Raw, samplerate: float):
         self.__raw = raw
         self.__sr = samplerate
+        self.__channels = self.__raw.shape[0]
         if not issubclass(raw.container_cls, Container):
             raise RuntimeError(f"{raw.container_cls} is not a valid container class")
         # First as default
@@ -63,6 +64,42 @@ class ContainerModel:
     def id(self) -> uuid.uuid4:
         return self.__raw.id
 
+    @property
+    def channels(self) -> int:
+        return self.__channels
+
+    @channels.setter
+    def channels(self, value: int):
+        assert not self.is_channel_layout_fixed()
+        self.__channels = value
+        self.__update_pending = True
+
+    def is_layout_2D(self):
+        if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
+            return True
+        return False
+
+    def is_channel_layout_fixed(self):
+        if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
+            if self.__raw.shape[0] == 1:
+                return False
+        return True
+
+    def update_channel(self, value: int) -> bool:
+        if isinstance(value, str):
+            try:
+                value = int(value)
+            except ValueError:
+                return False
+        if (
+            value > 0
+            and value <= self.__raw.shape[1]
+            and self.__raw.shape[1] % value == 0
+        ):
+            self.channels = value
+            return True
+        return False
+
     # ==============================================================================
     def check_for_update(self) -> bool:
         return self.__update_pending
@@ -70,8 +107,10 @@ class ContainerModel:
     def reset_update_flag(self):
         self.__update_pending = False
 
-    def draw_audio_view(self, axes: Axes):
-        self.__view.render_view(axes, self.__raw.data)
+    def draw_audio_view(self, axes: Axes, channel: int):
+        total_samples = self.__raw.shape[0] * self.__raw.shape[1]
+        render_shape = (self.__channels, int(total_samples / self.__channels))
+        self.__view.render_view(axes, self.__raw.data.reshape(render_shape)[channel])
 
     # ==============================================================================
     def update_data(self, new_data: np.ndarray):
@@ -84,6 +123,7 @@ class ContainerModel:
         self.__view: AudioView = get_views_for_data_layout(self.__data_layout)[0](
             self.__sr
         )
+        self.__channels = self.__raw.shape[0]
         self.__update_pending = True
 
     def update_view_type(self, view_name: str):

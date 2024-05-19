@@ -43,6 +43,11 @@ class ContainerSettingsFrame:
         self.__layout_separator = None
         self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
         self.__layout_var.trace_add("write", self.layout_var_callback)
+        # Optionnal channel menu
+        self.__channel_label = None
+        self.__channel_entry = None
+        # self.__channel_var = None
+        self.__channel_separator = None
         # View selection
         self.__view_menu = None
         self.__view_separator = None
@@ -72,6 +77,12 @@ class ContainerSettingsFrame:
         self.__view_menu.destroy()
         self.__view_separator.destroy()
         self.__view_menu = None
+        if self.__channel_label:
+            self.__channel_label.destroy()
+            if self.__channel_entry:
+                self.__channel_entry.destroy()
+            self.__channel_separator.destroy()
+            self.__channel_label = None
         # Update the view type -> this will trigger the view_var_callback
         self.__view_var.set(value=self.__model.selected_view)
 
@@ -87,6 +98,28 @@ class ContainerSettingsFrame:
             self.__layout_menu.pack(side=tk.LEFT, padx=10, pady=10)
             self.__layout_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__layout_separator.pack(side=tk.LEFT, fill="y")
+
+        # Create the channel menu
+        if self.__model.is_layout_2D() and not self.__channel_label:
+            if self.__model.is_channel_layout_fixed():
+                # If the number of channels is fixed, we only display it
+                self.__channel_label = tk.Label(
+                    self.__frame, text=f"channels : {self.__model.channels}"
+                )
+                self.__channel_label.pack(side=tk.LEFT, padx=5)
+            else:
+                vcmd = (self.__master.register(self.__model.update_channel), "%P")
+                self.__channel_label = tk.Label(self.__frame, text=f"channels :")
+                self.__channel_entry = tk.Entry(
+                    self.__frame,
+                    validate="focusout",
+                    validatecommand=vcmd,
+                )
+                self.__channel_label.pack(side=tk.LEFT, padx=5)
+                self.__channel_entry.pack(side=tk.LEFT)
+            self.__channel_separator = ttk.Separator(self.__frame, orient="vertical")
+            self.__channel_separator.pack(side=tk.LEFT, fill="y")
+
         # Create the view menu
         if not self.__view_menu:
             self.__view_menu = tk.OptionMenu(
@@ -216,10 +249,14 @@ class AudioViewsTab:
 
     def update_figures(self):
         self.__fig.clear()
-        for i, model in enumerate(self.__container_models):
-            axes = self.__fig.add_subplot(len(self.__container_models), 1, i + 1)
-            model.draw_audio_view(axes)
-            axes.set_title(model.variable_name)
+        total_figures = sum([model.channels for model in self.__container_models])
+        i = 1
+        for model in self.__container_models:
+            for channel in range(model.channels):
+                axes = self.__fig.add_subplot(total_figures, 1, i)
+                model.draw_audio_view(axes, channel)
+                axes.set_title(model.variable_name + f" channel {channel}")
+                i += 1
 
         self.__canvas.draw_idle()
 
@@ -300,9 +337,5 @@ class GaveGUI:
             self.__settings_tab.update_ui()
         elif self.__check_model_for_updates():
             self.__audio_views_tab.update_figures()
-        # update_needed = self.__poll_queue() or self.__check_model_for_updates()
-        # if update_needed:
-        #     self.__audio_views_tab.update_figures()
-        #     self.__settings_tab.update_ui()
 
         self.__update_tk_id = self.__window.after(20, self.tkinter_update_callback)

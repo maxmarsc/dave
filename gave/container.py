@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import List, Type
+from typing import List, Tuple, Type
 
 from .data_layout import DataLayout
 import numpy as np
@@ -21,6 +21,12 @@ class FloatingPointType(Enum):
             return 8
 
 
+class ChannelSetup(Enum):
+    MONO = "mono"
+    MULTI_KNOWN = "multi_known"
+    MULTI_UNKNOWN = "multi_unknown"
+
+
 class Container(ABC):
     @dataclass
     class Raw:
@@ -28,6 +34,7 @@ class Container(ABC):
         data: np.ndarray
         name: str
         container_cls: Type
+        shape: Tuple[int, int]
 
     def __init__(self, gdb_value: gdb.Value, name: str) -> None:
         self._value = gdb_value
@@ -43,7 +50,9 @@ class Container(ABC):
         return self.__uuid
 
     def as_raw(self) -> Raw:
-        return Container.Raw(self.id, self.read_from_gdb(), self.name, type(self))
+        return Container.Raw(
+            self.id, self.read_from_gdb(), self.name, type(self), self.shape()
+        )
 
     @classmethod
     @abstractmethod
@@ -53,6 +62,10 @@ class Container(ABC):
     @property
     @abstractmethod
     def float_type(self) -> FloatingPointType:
+        pass
+
+    @abstractmethod
+    def shape(self) -> Tuple[int, int]:
         pass
 
     @staticmethod
