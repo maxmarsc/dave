@@ -6,6 +6,7 @@ constexpr auto kTEst      = kBlockSize / 100;
 
 int main() {
   float carray[kBlockSize]{};
+  double carray_d[kBlockSize]{};
   auto array     = std::array<float, kBlockSize>{};
   auto& carray_r = carray;
   auto& array_r  = array;
@@ -18,9 +19,10 @@ int main() {
   auto step  = 2.F * M_PIf / kBlockSize * 16;
   auto phase = 0.F;
   for (auto i = 0; i < kBlockSize; ++i) {
-    auto val  = std::sin(phase);
-    carray[i] = val;
-    array[i]  = -val;
+    auto val    = std::sin(phase);
+    carray[i]   = val;
+    carray_d[i] = val;
+    array[i]    = -val;
     phase += step;
     if (i % 8 == 0)
       step *= 1.01F;

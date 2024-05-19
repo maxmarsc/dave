@@ -61,6 +61,11 @@ class Container(ABC):
     def float_type(self) -> FloatingPointType:
         pass
 
+    @property
+    @abstractmethod
+    def dtype(self) -> np.dtype:
+        pass
+
     @abstractmethod
     def shape(self) -> Tuple[int, int]:
         pass

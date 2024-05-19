@@ -12,24 +12,6 @@ from .container_factory import ContainerFactory
 from .data_layout import DataLayout
 
 
-# class Container1D(Container):
-#     def __init__(self, gdb_value: gdb.Value, name: str) -> None:
-#         super().__init__(gdb_value, name)
-
-#     @property
-#     @abstractmethod
-#     def size(self) -> int:
-#         pass
-
-#     @property
-#     def byte_size(self) -> int:
-#         return self.size * self.float_type.byte_size()
-
-#     @staticmethod
-#     def available_data_layouts() -> List[DataLayout]:
-#         return [DataLayout.REAL_1D]
-
-
 class ScalarCArray1D(Container):
     __REGEX = r"^(?:const\s+)?(float|double)\s*\[(\d+)\]$"
 
@@ -50,6 +32,13 @@ class ScalarCArray1D(Container):
     @property
     def float_type(self) -> FloatingPointType:
         return self.__type
+
+    @property
+    def dtype(self) -> np.dtype:
+        if self.float_type == FloatingPointType.FLOAT:
+            return np.float32
+        else:
+            return np.float64
 
     @property
     def size(self) -> int:
@@ -75,11 +64,11 @@ class ScalarCArray1D(Container):
         ptr_type = gdb.lookup_type(self.float_type.value).pointer().const()
         ptr = int(self._value.cast(ptr_type))
         inferior = gdb.selected_inferior()
-        dtype = np.float32
-        array = np.frombuffer(inferior.read_memory(ptr, self.byte_size), dtype=dtype)
+        array = np.frombuffer(
+            inferior.read_memory(ptr, self.byte_size), dtype=self.dtype
+        )
         print(f"dtype : {array.dtype}")
         print(f"shape : {array.shape}")
-        # print(f"array : {array}")
         return array.reshape(self.shape())
 
 
@@ -105,6 +94,13 @@ class ComplexCArray1D(Container):
         return self.__type
 
     @property
+    def dtype(self) -> np.dtype:
+        if self.float_type == FloatingPointType.FLOAT:
+            return np.complex64
+        else:
+            return np.complex128
+
+    @property
     def size(self) -> int:
         return self.__size
 
@@ -128,8 +124,9 @@ class ComplexCArray1D(Container):
         ptr_type = gdb.lookup_type("complex " + self.float_type.value).pointer().const()
         ptr = int(self._value.cast(ptr_type))
         inferior = gdb.selected_inferior()
-        dtype = np.complex64
-        array = np.frombuffer(inferior.read_memory(ptr, self.byte_size), dtype=dtype)
+        array = np.frombuffer(
+            inferior.read_memory(ptr, self.byte_size), dtype=self.dtype
+        )
         print(f"dtype : {array.dtype}")
         print(f"shape : {array.shape}")
         # print(f"array : {array}")
