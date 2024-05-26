@@ -7,13 +7,13 @@ import gdb.types  # type: ignore
 import numpy as np
 
 
-from .container import FloatingPointType, Container
+from .container import SampleType, Container
 from .container_factory import ContainerFactory
 from .data_layout import DataLayout
 
 
 class CArray1D(Container):
-    __REGEX = r"^(?:const\s+)?(complex\s+)?(float|double)\s*\[(\d+)\]$"
+    __REGEX = r"^(?:const\s+)?([a-z,A-Z,_,:,<,>]+)\s*\[(\d+)\]$"
 
     def __init__(self, gdb_value: gdb.Value, name: str):
         super().__init__(gdb_value, name)
@@ -22,31 +22,20 @@ class CArray1D(Container):
         if re_match is None:
             raise TypeError(f"{gdb_value.type} is not a valid CArray1D type")
 
-        self.__complex = bool(re_match.group(1))
-        self.__type = FloatingPointType(re_match.group(2))
-        self.__size = int(re_match.group(3))
+        self.__type = SampleType.parse(re_match.group(1))
+        self.__size = int(re_match.group(2))
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     @property
-    def float_type(self) -> FloatingPointType:
+    def float_type(self) -> SampleType:
         return self.__type
 
     @property
     def dtype(self) -> np.dtype:
-        if self.float_type == FloatingPointType.FLOAT:
-            if self.__complex:
-                return np.complex64
-            else:
-                return np.float32
-        else:
-            #
-            if self.__complex:
-                return np.complex128
-            else:
-                return np.float64
+        return self.__type.dtype()
 
     @property
     def size(self) -> int:
@@ -57,13 +46,10 @@ class CArray1D(Container):
 
     @property
     def byte_size(self) -> int:
-        if self.__complex:
-            return self.size * self.float_type.byte_size() * 2
-        else:
-            return self.size * self.float_type.byte_size()
+        return self.__type.byte_size() * self.__size
 
     def default_layout(self) -> DataLayout:
-        if self.__complex:
+        if self.__type.is_complex():
             return DataLayout.CPX_1D
         else:
             return DataLayout.REAL_1D
@@ -79,18 +65,17 @@ class CArray1D(Container):
 
     def read_from_gdb(self) -> np.ndarray:
         str_type = self.float_type.value
-        if self.__complex:
-            str_type = "complex " + str_type
         ptr_type = gdb.lookup_type(str_type).pointer().const()
         ptr = int(self._value.cast(ptr_type))
         inferior = gdb.selected_inferior()
         array = np.frombuffer(
             inferior.read_memory(ptr, self.byte_size), dtype=self.dtype
         )
-        print(f"dtype : {array.dtype}")
-        print(f"shape : {array.shape}")
-        # print(f"array : {array}")
         return array.reshape(self.shape())
+
+
+class StdArray(Container):
+    pass
 
 
 ContainerFactory().register(CArray1D)

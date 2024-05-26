@@ -10,15 +10,41 @@ import gdb  # type: ignore
 import uuid
 
 
-class FloatingPointType(Enum):
+class SampleType(Enum):
     FLOAT = "float"
     DOUBLE = "double"
+    CPX_F = "complex float"
+    CPX_D = "complex double"
+
+    @staticmethod
+    def parse(name: str):
+        if name == "std::complex<float>":
+            return SampleType("complex float")
+        elif name == "std::complex<double>":
+            return SampleType("complex double")
+        else:
+            return SampleType(name)
 
     def byte_size(self) -> int:
-        if self == FloatingPointType.FLOAT:
-            return 4
-        else:
-            return 8
+        return {
+            SampleType.FLOAT: 4,
+            SampleType.DOUBLE: 8,
+            SampleType.CPX_F: 8,
+            SampleType.CPX_D: 16,
+        }[self]
+
+    def dtype(self) -> np.dtype:
+        return {
+            SampleType.FLOAT: np.float32,
+            SampleType.DOUBLE: np.float64,
+            SampleType.CPX_F: np.complex64,
+            SampleType.CPX_D: np.complex128,
+        }[self]
+
+    def is_complex(self) -> bool:
+        if self in (SampleType.CPX_F, SampleType.CPX_D):
+            return True
+        return False
 
 
 class ChannelSetup(Enum):
@@ -61,7 +87,7 @@ class Container(ABC):
 
     @property
     @abstractmethod
-    def float_type(self) -> FloatingPointType:
+    def float_type(self) -> SampleType:
         pass
 
     @property
