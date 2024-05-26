@@ -17,6 +17,10 @@ class SampleType(Enum):
     CPX_D = "complex double"
 
     @staticmethod
+    def regex() -> str:
+        return r"(float|double|complex\s+float|complex\s+double|std::complex<float>|std::complex<double>)"
+
+    @staticmethod
     def parse(name: str):
         if name == "std::complex<float>":
             return SampleType("complex float")
