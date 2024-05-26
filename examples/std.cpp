@@ -1,6 +1,7 @@
 #include <array>
 #include <cmath>
 #include <complex>
+#include <span>
 #include <vector>
 
 constexpr auto kBlockSize = 4096;
@@ -9,11 +10,14 @@ int main() {
   float carray[kBlockSize]{};
   double carray_d[kBlockSize]{};
   std::complex<float> carray_cpx[kBlockSize]{};
-  auto array     = std::array<float, kBlockSize>{};
-  auto cpx_array = std::array<std::complex<float>, kBlockSize>{};
-  auto vector    = std::vector<float>(kBlockSize);
-  auto& carray_r = carray;
-  auto& array_r  = array;
+  auto array      = std::array<float, kBlockSize>{};
+  auto cpx_array  = std::array<std::complex<float>, kBlockSize>{};
+  auto vector     = std::vector<float>(kBlockSize);
+  auto cpx_vector = std::vector<std::complex<float>>(kBlockSize);
+  auto span       = std::span(vector);
+  auto cpx_span   = std::span(cpx_vector);
+  auto& carray_r  = carray;
+  auto& array_r   = array;
 
   // Fill with zeros
   std::fill(carray, carray + kBlockSize, 0.F);

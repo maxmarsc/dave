@@ -37,13 +37,16 @@ class SampleType(Enum):
             SampleType.CPX_D: 16,
         }[self]
 
-    def dtype(self) -> np.dtype:
+    def numpy_type(self) -> np.dtype:
         return {
             SampleType.FLOAT: np.float32,
             SampleType.DOUBLE: np.float64,
             SampleType.CPX_F: np.complex64,
             SampleType.CPX_D: np.complex128,
         }[self]
+
+    def gdb_type(self):
+        return gdb.lookup_type(self.value)
 
     def is_complex(self) -> bool:
         if self in (SampleType.CPX_F, SampleType.CPX_D):
