@@ -141,7 +141,7 @@ class StdVector(Container):
         re_match = self.regex_name().match(typename)
         if re_match is None:
             raise TypeError(
-                f"Could not parse {gdb_value.type} as a valid std::array type"
+                f"Could not parse {gdb_value.type} as a valid std::vector type"
             )
 
         self.__type = SampleType.parse(re_match.group(1))
@@ -205,12 +205,11 @@ class StdSpan(Container):
         re_match = self.regex_name().match(typename)
         if re_match is None:
             raise TypeError(
-                f"Could not parse {gdb_value.type} as a valid std::array type"
+                f"Could not parse {gdb_value.type} as a valid std::span type"
             )
 
         self.__type = SampleType.parse(re_match.group(1))
         self.__extent = int(re_match.group(2))
-        print(f"extent : {self.__extent}")
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
