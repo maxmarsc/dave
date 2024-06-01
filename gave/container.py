@@ -69,9 +69,10 @@ class Container(ABC):
         container_cls: Type
         default_layout: DataLayout
 
-    def __init__(self, gdb_value: gdb.Value, name: str) -> None:
+    def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
         self._value = gdb_value
         self._name = name
+        self.__type = data_type
         self.__uuid = uuid.uuid4()
 
     @property
@@ -87,20 +88,13 @@ class Container(ABC):
             self.id, self.read_from_gdb(), self.name, type(self), self.default_layout()
         )
 
-    @classmethod
-    @abstractmethod
-    def regex_name(cls) -> re.Pattern:
-        pass
-
     @property
-    @abstractmethod
     def float_type(self) -> SampleType:
-        pass
+        return self.__type
 
     @property
-    @abstractmethod
     def dtype(self) -> np.dtype:
-        pass
+        return self.__type.numpy_type()
 
     @abstractmethod
     def shape(self) -> Tuple[int, int]:
@@ -117,4 +111,50 @@ class Container(ABC):
 
     @abstractmethod
     def read_from_gdb(self) -> np.ndarray:
+        pass
+
+
+class Container1D(Container):
+    def __init__(
+        self, gdb_value: gdb.Value, name: str, data_type: SampleType, size: int
+    ) -> None:
+        super().__init__(gdb_value, name, data_type)
+        self._size = size
+
+    @property
+    def size(self) -> int:
+        return self._size
+
+    def shape(self) -> Tuple[int, int]:
+        return (1, self.size)
+
+    @property
+    def byte_size(self) -> int:
+        return self.float_type.byte_size() * self.size
+
+    def default_layout(self) -> DataLayout:
+        if self.float_type.is_complex():
+            return DataLayout.CPX_1D
+        else:
+            return DataLayout.REAL_1D
+
+    @staticmethod
+    def available_data_layouts() -> List[DataLayout]:
+        return [
+            DataLayout.CPX_1D,
+            DataLayout.CPX_2D,
+            DataLayout.REAL_1D,
+            DataLayout.REAL_2D,
+        ]
+
+    @classmethod
+    @abstractmethod
+    def regex_name(cls) -> re.Pattern:
+        pass
+
+
+class Container2D(Container):
+    @classmethod
+    @abstractmethod
+    def regex_name(cls, pattern_1D: str) -> re.Pattern:
         pass
