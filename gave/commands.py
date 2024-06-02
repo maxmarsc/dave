@@ -57,12 +57,16 @@ class GaveCommand(gdb.Command):
             print(f"Unknown subcommand '{subcommand}'")
 
     def show(self, args):
-        if len(args) != 1:
-            raise gdb.GdbError("Usage: gave show <variable>")
+        if len(args) < 1 or len(args) > 2:
+            raise gdb.GdbError("Usage: gave show <variable> [dim1 [,dim2]]")
 
         var_name = args[0]
+        if len(args) > 1:
+            dims = [int(val) for val in args[1].split(",")]
+        else:
+            dims = list()
         var = gdb.parse_and_eval(var_name)
-        container = ContainerFactory().build(var, var_name)
+        container = ContainerFactory().build(var, var_name, dims)
         if not GaveProcess().is_alive():
             GaveProcess().start()
         GaveProcess().add_to_model(container)
@@ -111,7 +115,7 @@ class GaveCommand(gdb.Command):
             else:
                 print(f"Type: {var.type}")
                 print(f"(real) Type: {gdb.types.get_basic_type(var.type)}")
-                # print(f"Value: {var}")
+                print(f"Value: {var}")
                 # print(f"(hex) Value: {hex(var)}")
                 if var.address is not None:
                     print(f"Address: {var.address}")

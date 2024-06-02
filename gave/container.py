@@ -154,6 +154,12 @@ class Container1D(Container):
 
 
 class Container2D(Container):
+    def __init__(
+        self, gdb_value: gdb.Value, name: str, data_type: SampleType, size: int
+    ) -> None:
+        super().__init__(gdb_value, name, data_type)
+        self._size = size
+
     @classmethod
     @abstractmethod
     def regex_name(cls, pattern_1D: str) -> re.Pattern:

@@ -15,7 +15,7 @@ from .data_layout import DataLayout
 class CArray1D(Container1D):
     __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\[(\d+)\]$"
 
-    def __init__(self, gdb_value: gdb.Value, name: str):
+    def __init__(self, gdb_value: gdb.Value, name: str, _):
         typename = str(gdb.types.get_basic_type(gdb_value.type))
         re_match = self.regex_name().match(typename)
         if re_match is None:
@@ -37,10 +37,38 @@ class CArray1D(Container1D):
         return array.reshape(self.shape())
 
 
+class Pointer(Container1D):
+    __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\*$"
+
+    def __init__(self, gdb_value: gdb.Value, name: str, dims: List[int]):
+        print(dims)
+        if len(dims) != 1:
+            raise gdb.GdbError("Pointer container requires exactly one dimension")
+        typename = str(gdb.types.get_basic_type(gdb_value.type))
+        re_match = self.regex_name().match(typename)
+        if re_match is None:
+            raise TypeError(f"Could not parse {gdb_value.type} as a valid C array type")
+
+        data_type = SampleType.parse(re_match.group(1))
+        size = dims[0]
+        super().__init__(gdb_value, name, data_type, size)
+
+    @classmethod
+    def regex_name(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    def read_from_gdb(self) -> np.ndarray:
+        inferior = gdb.selected_inferior()
+        array = np.frombuffer(
+            inferior.read_memory(self._value, self.byte_size), dtype=self.dtype
+        )
+        return array.reshape(self.shape())
+
+
 class StdArray(Container1D):
     __REGEX = rf"^(?:const\s+)?std::array<{SampleType.regex()},\s*(\d+)>\s*$"
 
-    def __init__(self, gdb_value: gdb.Value, name: str):
+    def __init__(self, gdb_value: gdb.Value, name: str, _):
         typename = str(gdb.types.get_basic_type(gdb_value.type))
         re_match = self.regex_name().match(typename)
         if re_match is None:
@@ -67,7 +95,7 @@ class StdArray(Container1D):
 class StdVector(Container1D):
     __REGEX = rf"^(?:const\s+)?std::vector<{SampleType.regex()},\s*.*<\1\s?>\s*>\s*$"
 
-    def __init__(self, gdb_value: gdb.Value, name: str):
+    def __init__(self, gdb_value: gdb.Value, name: str, _):
         typename = str(gdb.types.get_basic_type(gdb_value.type))
         re_match = self.regex_name().match(typename)
         if re_match is None:
@@ -100,7 +128,7 @@ class StdVector(Container1D):
 class StdSpan(Container1D):
     __REGEX = rf"^(?:const\s+)?std::span<{SampleType.regex()},\s*(\d+)>\s*$"
 
-    def __init__(self, gdb_value: gdb.Value, name: str):
+    def __init__(self, gdb_value: gdb.Value, name: str, _):
         typename = str(gdb.types.get_basic_type(gdb_value.type))
         re_match = self.regex_name().match(typename)
         if re_match is None:
@@ -138,3 +166,4 @@ ContainerFactory().register(CArray1D)
 ContainerFactory().register(StdArray)
 ContainerFactory().register(StdVector)
 ContainerFactory().register(StdSpan)
+ContainerFactory().register(Pointer)

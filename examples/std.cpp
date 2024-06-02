@@ -18,6 +18,8 @@ int main() {
   auto cpx_span   = std::span(cpx_vector);
   auto& carray_r  = carray;
   auto& array_r   = array;
+  auto* ptr       = carray;
+  auto* cpx_ptr   = cpx_array.data();
 
   // Fill with zeros
   std::fill(carray, carray + kBlockSize, 0.F);
