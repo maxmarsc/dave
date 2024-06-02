@@ -2,6 +2,8 @@ import multiprocessing
 
 from .gui import GaveGUI, StopMessage
 from .container_1D import *
+from .container_2D import *
+from .container import Container
 from .future_gdb import blocked_signals
 from .container_model import ContainerModel
 from .singleton import SingletonMeta

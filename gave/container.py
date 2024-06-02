@@ -113,6 +113,11 @@ class Container(ABC):
     def read_from_gdb(self) -> np.ndarray:
         pass
 
+    @classmethod
+    @abstractmethod
+    def regex_name(cls) -> re.Pattern:
+        pass
+
 
 class Container1D(Container):
     def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
@@ -145,20 +150,20 @@ class Container1D(Container):
             DataLayout.REAL_2D,
         ]
 
-    @classmethod
-    @abstractmethod
-    def regex_name(cls) -> re.Pattern:
-        pass
-
 
 class Container2D(Container):
-    def __init__(
-        self, gdb_value: gdb.Value, name: str, data_type: SampleType, size: int
-    ) -> None:
+    def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
         super().__init__(gdb_value, name, data_type)
-        self._size = size
 
-    @classmethod
-    @abstractmethod
-    def regex_name(cls, pattern_1D: str) -> re.Pattern:
-        pass
+    def default_layout(self) -> DataLayout:
+        if self.float_type.is_complex():
+            return DataLayout.CPX_2D
+        else:
+            return DataLayout.REAL_2D
+
+    @staticmethod
+    def available_data_layouts() -> List[DataLayout]:
+        return [
+            DataLayout.CPX_2D,
+            DataLayout.REAL_2D,
+        ]

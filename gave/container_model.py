@@ -2,7 +2,7 @@ from typing import Any, List
 from matplotlib.axes import Axes
 
 from .view_setting import Setting
-from .container import Container
+from .container import Container, Container2D
 from .data_layout import DataLayout
 from .views import get_views_for_data_layout, AudioView, get_view_from_name
 
@@ -79,10 +79,13 @@ class ContainerModel:
         return False
 
     def is_channel_layout_fixed(self):
-        if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
-            if self.__raw.data.shape[0] == 1:
-                return False
-        return True
+        # if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
+        #     if self.__raw.data.shape[0] == 1:
+        #         return False
+        # return True
+        if issubclass(self.__raw.container_cls, Container2D):
+            return True
+        return False
 
     # ==============================================================================
     def check_for_update(self) -> bool:

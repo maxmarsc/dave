@@ -21,12 +21,6 @@ from .container import Container
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 
 
-# class SettingsFrame:
-#     def __init__(self, master):
-#         self.__container_models: List[ContainerModel] = []
-#         self.__master = master
-
-
 class ContainerSettingsFrame:
     def __init__(self, master: tk.Misc, model: ContainerModel) -> None:
         self.__model = model

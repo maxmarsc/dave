@@ -7,9 +7,8 @@ import gdb.types  # type: ignore
 import numpy as np
 
 
-from .container import SampleType, Container, Container1D
+from .container import SampleType, Container1D
 from .container_factory import ContainerFactory
-from .data_layout import DataLayout
 
 
 class CArray1D(Container1D):
@@ -41,7 +40,7 @@ class CArray1D(Container1D):
         return array.reshape(self.shape())
 
 
-class Pointer(Container1D):
+class Pointer1D(Container1D):
     __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\*$"
 
     def __init__(self, gdb_value: gdb.Value, name: str, dims: List[int]):
@@ -175,4 +174,4 @@ ContainerFactory().register(CArray1D)
 ContainerFactory().register(StdArray)
 ContainerFactory().register(StdVector)
 ContainerFactory().register(StdSpan)
-ContainerFactory().register(Pointer)
+ContainerFactory().register(Pointer1D)
