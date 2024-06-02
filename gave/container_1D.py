@@ -22,8 +22,12 @@ class CArray1D(Container1D):
             raise TypeError(f"Could not parse {gdb_value.type} as a valid C array type")
 
         data_type = SampleType.parse(re_match.group(1))
-        size = int(re_match.group(2))
-        super().__init__(gdb_value, name, data_type, size)
+        self.__size = int(re_match.group(2))
+        super().__init__(gdb_value, name, data_type)
+
+    @property
+    def size(self) -> int:
+        return self.__size
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
@@ -41,7 +45,6 @@ class Pointer(Container1D):
     __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\*$"
 
     def __init__(self, gdb_value: gdb.Value, name: str, dims: List[int]):
-        print(dims)
         if len(dims) != 1:
             raise gdb.GdbError("Pointer container requires exactly one dimension")
         typename = str(gdb.types.get_basic_type(gdb_value.type))
@@ -50,12 +53,16 @@ class Pointer(Container1D):
             raise TypeError(f"Could not parse {gdb_value.type} as a valid C array type")
 
         data_type = SampleType.parse(re_match.group(1))
-        size = dims[0]
-        super().__init__(gdb_value, name, data_type, size)
+        self.__size = dims[0]
+        super().__init__(gdb_value, name, data_type)
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @property
+    def size(self) -> int:
+        return self.__size
 
     def read_from_gdb(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
@@ -77,8 +84,12 @@ class StdArray(Container1D):
             )
 
         data_type = SampleType.parse(re_match.group(1))
-        size = int(re_match.group(2))
-        super().__init__(gdb_value, name, data_type, size)
+        self.__size = int(re_match.group(2))
+        super().__init__(gdb_value, name, data_type)
+
+    @property
+    def size(self) -> int:
+        return self.__size
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
@@ -104,17 +115,17 @@ class StdVector(Container1D):
             )
 
         datatype = SampleType.parse(re_match.group(1))
-        size = self.read_size(gdb_value)
-        super().__init__(gdb_value, name, datatype, size)
+        super().__init__(gdb_value, name, datatype)
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_size(self, gdb_val: gdb.Value = None) -> int:
-        if gdb_val is None:
-            gdb_val = self._value
-        return int(gdb_val["_M_impl"]["_M_finish"] - gdb_val["_M_impl"]["_M_start"])
+    @property
+    def size(self) -> int:
+        return int(
+            self._value["_M_impl"]["_M_finish"] - self._value["_M_impl"]["_M_start"]
+        )
 
     def read_from_gdb(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
@@ -138,20 +149,18 @@ class StdSpan(Container1D):
 
         self.__extent = int(re_match.group(2))
         datatype = SampleType.parse(re_match.group(1))
-        size = self.read_size(gdb_value)
-        super().__init__(gdb_value, name, datatype, size)
+        super().__init__(gdb_value, name, datatype)
 
     @classmethod
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_size(self, gdb_val: gdb.Value = None) -> int:
-        if gdb_val is None:
-            gdb_val = self._value
+    @property
+    def size(self) -> int:
         if self.__extent != 18446744073709551615:
             return self.__extent
         else:
-            return int(gdb_val["_M_extent"]["_M_extent_value"])
+            return int(self._value["_M_extent"]["_M_extent_value"])
 
     def read_from_gdb(self) -> np.ndarray:
         inferior = gdb.selected_inferior()

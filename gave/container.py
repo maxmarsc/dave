@@ -115,15 +115,13 @@ class Container(ABC):
 
 
 class Container1D(Container):
-    def __init__(
-        self, gdb_value: gdb.Value, name: str, data_type: SampleType, size: int
-    ) -> None:
+    def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
         super().__init__(gdb_value, name, data_type)
-        self._size = size
 
     @property
+    @abstractmethod
     def size(self) -> int:
-        return self._size
+        pass
 
     def shape(self) -> Tuple[int, int]:
         return (1, self.size)
