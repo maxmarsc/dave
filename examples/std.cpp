@@ -8,15 +8,40 @@ constexpr auto kBlockSize = 4096;
 constexpr auto kChannels  = 2;
 
 int main() {
+  //============================================================================
   float carray[kBlockSize]{};
   float carray_carray[kChannels][kBlockSize]{};
   float* carray_ptr[kChannels]{carray_carray[0], carray_carray[1]};
-  std::vector<float> carray_vector[kChannels]{std::vector<float>(kBlockSize),
-                                              std::vector<float>(kBlockSize)};
-  std::array<float, kBlockSize> carray_array[kChannels]{};
-  std::span<float> carray_span[kChannels]{carray_array[1], carray_vector[1]};
-  double carray_d[kBlockSize]{};
-  std::complex<float> carray_cpx[kBlockSize]{};
+  auto** ptr_ptr = carray_ptr;
+
+  //============================================================================
+  std::vector<float> carray_vector[kChannels] = {
+      std::vector<float>(kBlockSize), std::vector<float>(kBlockSize)};
+  std::array<float, kBlockSize> carray_array[kChannels] = {};
+  std::span<float> carray_span[kChannels] = {carray_array[1], carray_vector[1]};
+  double carray_d[kBlockSize]             = {};
+  std::complex<float> carray_cpx[kBlockSize] = {};
+
+  //==============================================================================
+  auto array_array  = std::array<std::array<float, kBlockSize>, kChannels>{};
+  auto array_vector = std::array<std::vector<float>, kChannels>{
+      std::vector<float>(kBlockSize), std::vector<float>(kBlockSize)};
+  auto array_span =
+      std::array<std::span<float>, kChannels>{array_vector[0], array_array[0]};
+
+  //==============================================================================
+  auto vector_array  = std::vector<std::array<float, kBlockSize>>{kChannels};
+  auto vector_vector = std::vector<std::vector<float>>{
+      std::vector<float>(kBlockSize), std::vector<float>(kBlockSize)};
+  auto vector_span =
+      std::vector<std::span<float>>{vector_vector[0], vector_array[0]};
+
+  //==============================================================================
+  auto span_array  = std::span{array_array};
+  auto span_vector = std::span{vector_vector};
+  auto span_span   = std::span{vector_span};
+
+  //============================================================================
   auto array      = std::array<float, kBlockSize>{};
   auto cpx_array  = std::array<std::complex<float>, kBlockSize>{};
   auto vector     = std::vector<float>(kBlockSize);

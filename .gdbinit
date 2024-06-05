@@ -20,9 +20,9 @@ paths = (
 sys.path = paths + sys.path
 end
 source gave_gdb_init.py
-b std.cpp:38
-b std.cpp:55
-b std.cpp:62
+b std.cpp:61
+b std.cpp:80
+b std.cpp:87
 r
 # b c_example.c:29
 # b c_example.c:37

@@ -58,7 +58,7 @@ class GaveCommand(gdb.Command):
 
     def show(self, args):
         if len(args) < 1 or len(args) > 2:
-            raise gdb.GdbError("Usage: gave show <variable> [dim1 [,dim2]]")
+            raise gdb.GdbError("Usage: gave show <variable> [dim1[,dim2]]")
 
         var_name = args[0]
         if len(args) > 1:
