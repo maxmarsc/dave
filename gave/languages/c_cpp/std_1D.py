@@ -7,8 +7,8 @@ import gdb.types  # type: ignore
 import numpy as np
 
 
-from .container import SampleType, Container1D
-from .container_factory import ContainerFactory
+from gave.container import SampleType, Container1D
+from gave.container_factory import ContainerFactory
 
 
 class CArray1D(Container1D):
@@ -32,7 +32,7 @@ class CArray1D(Container1D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
         array = np.frombuffer(
             inferior.read_memory(self._value.address, self.byte_size), dtype=self.dtype
@@ -63,7 +63,7 @@ class Pointer1D(Container1D):
     def size(self) -> int:
         return self.__size
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
         array = np.frombuffer(
             inferior.read_memory(self._value, self.byte_size), dtype=self.dtype
@@ -94,7 +94,7 @@ class StdArray(Container1D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
         array = np.frombuffer(
             inferior.read_memory(self._value.address, self.byte_size), dtype=self.dtype
@@ -126,7 +126,7 @@ class StdVector(Container1D):
             self._value["_M_impl"]["_M_finish"] - self._value["_M_impl"]["_M_start"]
         )
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
         data_ptr = self._value["_M_impl"]["_M_start"]
         array = np.frombuffer(
@@ -161,7 +161,7 @@ class StdSpan(Container1D):
         else:
             return int(self._value["_M_extent"]["_M_extent_value"])
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         inferior = gdb.selected_inferior()
         data_ptr = self._value["_M_ptr"]
         array = np.frombuffer(

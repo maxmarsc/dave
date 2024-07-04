@@ -1,9 +1,10 @@
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
-from .process import GaveProcess
-from .container_1D import *
-from .container_model import ContainerModel
+from ...process import GaveProcess
+
+from ...container_factory import ContainerFactory, ContainerError
+from ...container_model import ContainerModel
 
 
 def exit_handler(event):
@@ -19,11 +20,11 @@ def stop_handler(event: gdb.StopEvent):
         GaveProcess().gdb_update_callback()
 
 
-class GaveCommand(gdb.Command):
-    """Custom 'gave' command for advanced debugging tasks."""
+class GdbCommand(gdb.Command):
+    """Custom GDB 'gave' command for advanced debugging tasks."""
 
     def __init__(self):
-        super(GaveCommand, self).__init__("gave", gdb.COMMAND_USER, gdb.COMPLETE_SYMBOL)
+        super(GdbCommand, self).__init__("gave", gdb.COMMAND_USER, gdb.COMPLETE_SYMBOL)
 
     @staticmethod
     def __check_for_running_inferior() -> bool:
@@ -39,7 +40,7 @@ class GaveCommand(gdb.Command):
             print("Usage: gave <subcommand> [args]")
             return
 
-        if not GaveCommand.__check_for_running_inferior():
+        if not GdbCommand.__check_for_running_inferior():
             print("Error: no processus detected")
             return
 
@@ -49,8 +50,6 @@ class GaveCommand(gdb.Command):
             self.print_variable(args[1:])
         elif subcommand == "p2":
             self.print_attribute(args[1:])
-        elif subcommand == "carray":
-            self.carray(args[1:])
         elif subcommand == "show":
             self.show(args[1:])
         else:
@@ -60,27 +59,20 @@ class GaveCommand(gdb.Command):
         if len(args) < 1 or len(args) > 2:
             raise gdb.GdbError("Usage: gave show <variable> [dim1[,dim2]]")
 
-        var_name = args[0]
+        varname = args[0]
         if len(args) > 1:
             dims = [int(val) for val in args[1].split(",")]
         else:
             dims = list()
-        var = gdb.parse_and_eval(var_name)
-        container = ContainerFactory().build(var, var_name, dims)
+        var = gdb.parse_and_eval(varname)
+        typename = str(gdb.types.get_basic_type(var.type))
+        try:
+            container = ContainerFactory().build(var, typename, varname, dims)
+        except (ContainerError, TypeError) as e:
+            raise gdb.GdbError(e.args[0])
         if not GaveProcess().is_alive():
             GaveProcess().start()
         GaveProcess().add_to_model(container)
-
-    def carray(self, args):
-        if len(args) != 1:
-            raise gdb.GdbError("Usage: gave carray <variable>")
-
-        var_name = args[0]
-        try:
-            var = gdb.parse_and_eval(var_name)
-            array = ScalarCArray1D(var, var_name)
-        except (gdb.error, RuntimeError) as e:
-            print(f"Error accessing variable '{var_name}': {str(e)}")
 
     def print_attribute(self, args):
         if len(args) != 2:

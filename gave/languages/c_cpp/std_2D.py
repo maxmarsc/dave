@@ -6,9 +6,8 @@ import gdb  # type: ignore
 import gdb.types  # type: ignore
 import numpy as np
 
-from .container import SampleType, Container2D
-from .container_factory import ContainerFactory
-from .data_layout import DataLayout
+from gave.container import SampleType, Container2D
+from gave.container_factory import ContainerFactory
 
 
 class CArrayAny2D(Container2D):
@@ -29,12 +28,15 @@ class CArrayAny2D(Container2D):
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse then nested type {nested} as a valid container type"
+                f"Could not parse nested type {nested} as a valid container type"
             )
 
         self.__size = int(re_match.group(2))
         self.__nested_containers = [
-            ContainerFactory().build_1D(gdb_value[i], "", _) for i in range(self.__size)
+            ContainerFactory().build_1D(
+                gdb_value[i], str(gdb.types.get_basic_type(gdb_value[i].type)), "", _
+            )
+            for i in range(self.__size)
         ]
         super().__init__(gdb_value, name, self.__nested_containers[0].float_type)
 
@@ -45,10 +47,10 @@ class CArrayAny2D(Container2D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())
         for i in range(self.__size):
-            ret[i][:] = self.__nested_containers[i].read_from_gdb()
+            ret[i][:] = self.__nested_containers[i].read_from_debugger()
         return ret
 
 
@@ -83,7 +85,8 @@ class CarrayCarray2D(Container2D):
     def byte_size(self) -> int:
         return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
+        assert isinstance(self._value, gdb.Value)
         inferior = gdb.selected_inferior()
         array = np.frombuffer(
             inferior.read_memory(self._value[0].address, self.byte_size),
@@ -109,7 +112,7 @@ class Pointer2D(Container2D):
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse then nested type {nested} as a valid container type"
+                f"Could not parse nested type {nested} as a valid container type"
             )
 
         if "*" in nested and len(dims) != 2:
@@ -121,7 +124,12 @@ class Pointer2D(Container2D):
 
         self.__size = dims[0]
         self.__nested_containers = [
-            ContainerFactory().build_1D(gdb_value[i], "", dims[1:])
+            ContainerFactory().build_1D(
+                gdb_value[i],
+                str(gdb.types.get_basic_type(gdb_value[i].type)),
+                "",
+                dims[1:],
+            )
             for i in range(self.__size)
         ]
         super().__init__(gdb_value, name, self.__nested_containers[0].float_type)
@@ -133,10 +141,10 @@ class Pointer2D(Container2D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())
         for i in range(self.__size):
-            ret[i][:] = self.__nested_containers[i].read_from_gdb()
+            ret[i][:] = self.__nested_containers[i].read_from_debugger()
         return ret
 
 
@@ -155,12 +163,17 @@ class StdArray2D(Container2D):
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse then nested type {nested} as a valid container type"
+                f"Could not parse nested type {nested} as a valid container type"
             )
 
         self.__size = int(re_match.group(2))
         self.__nested_containers = [
-            ContainerFactory().build_1D(gdb_value["_M_elems"][i], "", _)
+            ContainerFactory().build_1D(
+                gdb_value["_M_elems"][i],
+                str(gdb.types.get_basic_type(gdb_value["_M_elems"][i].type)),
+                "",
+                _,
+            )
             for i in range(self.__size)
         ]
         super().__init__(gdb_value, name, self.__nested_containers[0].float_type)
@@ -172,10 +185,10 @@ class StdArray2D(Container2D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())
         for i in range(self.__size):
-            ret[i][:] = self.__nested_containers[i].read_from_gdb()
+            ret[i][:] = self.__nested_containers[i].read_from_debugger()
         return ret
 
 
@@ -194,12 +207,17 @@ class StdVector2D(Container2D):
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse then nested type {nested} as a valid container type"
+                f"Could not parse nested type {nested} as a valid container type"
             )
 
         self._value = gdb_value
         self.__nested_containers = [
-            ContainerFactory().build_1D(gdb_value["_M_impl"]["_M_start"][i], "", _)
+            ContainerFactory().build_1D(
+                gdb_value["_M_impl"]["_M_start"][i],
+                str(gdb.types.get_basic_type(gdb_value["_M_impl"]["_M_start"][i].type)),
+                "",
+                _,
+            )
             for i in range(self.size)
         ]
         super().__init__(gdb_value, name, self.__nested_containers[0].float_type)
@@ -217,10 +235,10 @@ class StdVector2D(Container2D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())
         for i in range(self.size):
-            ret[i][:] = self.__nested_containers[i].read_from_gdb()
+            ret[i][:] = self.__nested_containers[i].read_from_debugger()
         return ret
 
 
@@ -239,14 +257,18 @@ class StdSpan2D(Container2D):
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse then nested type {nested} as a valid container type"
+                f"Could not parse nested type {nested} as a valid container type"
             )
 
         self.__extent = int(re_match.group(2))
         self._value = gdb_value
-        print("building nested containers")
         self.__nested_containers = [
-            ContainerFactory().build_1D(gdb_value["_M_ptr"][i], "", _)
+            ContainerFactory().build_1D(
+                gdb_value["_M_ptr"][i],
+                str(gdb.types.get_basic_type(gdb_value["_M_ptr"][i].type)),
+                "",
+                _,
+            )
             for i in range(self.size)
         ]
         print("built")
@@ -266,10 +288,10 @@ class StdSpan2D(Container2D):
     def regex_name(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())
         for i in range(self.size):
-            ret[i][:] = self.__nested_containers[i].read_from_gdb()
+            ret[i][:] = self.__nested_containers[i].read_from_debugger()
         return ret
 
 

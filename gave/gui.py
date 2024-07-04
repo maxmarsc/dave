@@ -1,8 +1,9 @@
 from enum import Enum
 from tkinter import StringVar, ttk
 from typing import Dict, List, Tuple
-import gdb  # type: ignore
-import gdb.types  # type: ignore
+
+# import gdb  # type: ignore
+# import gdb.types  # type: ignore
 import uuid
 
 import threading

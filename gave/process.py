@@ -1,8 +1,7 @@
 import multiprocessing
+from typing import List
 
 from .gui import GaveGUI, StopMessage
-from .container_1D import *
-from .container_2D import *
 from .container import Container
 from .future_gdb import blocked_signals
 from .container_model import ContainerModel
@@ -38,7 +37,7 @@ class GaveProcess(metaclass=SingletonMeta):
 
     def gdb_update_callback(self):
         for container in self.__containers:
-            data = container.read_from_gdb()
+            data = container.read_from_debugger()
             id = container.id
             self.__msg_queue.put(ContainerModel.Update(id, data))
             print(f"update sent {id} {data.shape}")

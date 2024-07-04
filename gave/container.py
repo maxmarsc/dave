@@ -2,11 +2,15 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import List, Tuple, Type
+from typing import Any, List, Tuple, Type
 
 from .data_layout import DataLayout
+
+# from .debuggers.value import AbstractValue
+
 import numpy as np
-import gdb  # type: ignore
+
+# import gdb  # type: ignore
 import uuid
 
 
@@ -45,7 +49,18 @@ class SampleType(Enum):
             SampleType.CPX_D: np.complex128,
         }[self]
 
+    @staticmethod
+    def from_numpy(dtype: np.dtype):
+        return {
+            np.float32: SampleType.FLOAT,
+            np.float64: SampleType.DOUBLE,
+            np.complex64: SampleType.CPX_F,
+            np.complex128: SampleType.CPX_D,
+        }[dtype.type]
+
     def gdb_type(self):
+        import gdb  # type: ignore
+
         return gdb.lookup_type(self.value)
 
     def is_complex(self) -> bool:
@@ -69,8 +84,8 @@ class Container(ABC):
         container_cls: Type
         default_layout: DataLayout
 
-    def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
-        self._value = gdb_value
+    def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
+        self._value = dbg_value
         self._name = name
         self.__type = data_type
         self.__uuid = uuid.uuid4()
@@ -85,7 +100,11 @@ class Container(ABC):
 
     def as_raw(self) -> Raw:
         return Container.Raw(
-            self.id, self.read_from_gdb(), self.name, type(self), self.default_layout()
+            self.id,
+            self.read_from_debugger(),
+            self.name,
+            type(self),
+            self.default_layout(),
         )
 
     @property
@@ -110,7 +129,7 @@ class Container(ABC):
         pass
 
     @abstractmethod
-    def read_from_gdb(self) -> np.ndarray:
+    def read_from_debugger(self) -> np.ndarray:
         pass
 
     @classmethod
@@ -120,8 +139,8 @@ class Container(ABC):
 
 
 class Container1D(Container):
-    def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
-        super().__init__(gdb_value, name, data_type)
+    def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
+        super().__init__(dbg_value, name, data_type)
 
     @property
     @abstractmethod
@@ -152,8 +171,8 @@ class Container1D(Container):
 
 
 class Container2D(Container):
-    def __init__(self, gdb_value: gdb.Value, name: str, data_type: SampleType) -> None:
-        super().__init__(gdb_value, name, data_type)
+    def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
+        super().__init__(dbg_value, name, data_type)
 
     def default_layout(self) -> DataLayout:
         if self.float_type.is_complex():
