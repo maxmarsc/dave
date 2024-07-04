@@ -18,8 +18,11 @@ paths = (
 # Extend GDB's Python's search path
 # sys.path.extend(paths)
 sys.path = paths + sys.path
+try:
+    import gave.debuggers.gdb
+except ModuleNotFoundError:
+    print("[Warning] : dave module not found.")
 end
-source gave_gdb_init.py
 b std.cpp:61
 b std.cpp:80
 b std.cpp:87
