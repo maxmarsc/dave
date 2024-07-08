@@ -13,7 +13,8 @@ Debugger Audio Visualization Extension
 - [ ] CHOC 
 - [ ] One liner BASH installation 
 - [ ] Improve GUI proportions
-- [ ] Save to disc 
+- [ ] Save to disc
+- [ ] llvm libc/libstd
 - [ ] container deletion (GUI + delete command)
 - [ ] out-of-scope detection
 - [ ] add setup instructions to readme
@@ -38,11 +39,18 @@ ModuleNotFoundError: No module named 'lldb'
 This is a [known bug](https://bugs.launchpad.net/ubuntu/+source/llvm-defaults/+bug/1972855). In the meantime you can fix these using a symbolic link :
 ```bash
 sudo mkdir -p /usr/lib/local/lib/python3.10/
-sudo ln -s /usr/lib/llvm-<VERSION>/lib/python3.10/dist-packages /usr/lib/local/lib/python3.10/dist-packages
+sudo ln -s /usr/lib/llvm-${VERSION}/lib/python3.10/dist-packages /usr/lib/local/lib/python3.10/dist-packages
 ```
 
 ### LLDB init
 To always load the .lldbinit file in the current working directory, add the following command to ~/.lldbinit:
 ```
 settings set target.load-cwd-lldbinit true
+```
+
+### LLDB python module linting
+for `venv`
+```bash
+touch venv/lib64/python3.10/site-packages/lldb.pth
+echo "/usr/lib/llvm-${VERSION}/lib/python3.10/dist-packages/" > venv/lib64/python3.10/site-packages/lldb.pth
 ```

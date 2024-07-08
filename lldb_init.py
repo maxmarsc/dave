@@ -1,5 +1,5 @@
 # import .debuggers.lldb
-from gave.debuggers.lldb import ShowCommand, StopHook
+from gave.debuggers.lldb import ShowCommand, StopHook, exit_handler
 import lldb  # type: ignore
 
 

@@ -4,7 +4,7 @@ import gdb.types  # type: ignore
 from ...process import GaveProcess
 
 from ...container_factory import ContainerFactory, ContainerError
-from ...container_model import ContainerModel
+from .value import GdbValue
 
 
 def exit_handler(event):
@@ -64,10 +64,11 @@ class GdbCommand(gdb.Command):
             dims = [int(val) for val in args[1].split(",")]
         else:
             dims = list()
-        var = gdb.parse_and_eval(varname)
-        typename = str(gdb.types.get_basic_type(var.type))
+        var = GdbValue(gdb.parse_and_eval(varname))
+        typename = var.typename()
         try:
             container = ContainerFactory().build(var, typename, varname, dims)
+            print(f"Built {type(container)}")
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not GaveProcess().is_alive():

@@ -1,7 +1,38 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
+import numpy as np
 
 
 class AbstractValue(ABC):
     @abstractmethod
-    def get(self):
+    def typename(self) -> str:
+        pass
+
+    @abstractmethod
+    def byte_size(self) -> int:
+        pass
+
+    @abstractmethod
+    def attr(self, name: str) -> AbstractValue:
+        pass
+
+    # @abstractmethod
+    # def call_method(self, name: str, *args) -> AbstractValue:
+    #     pass
+
+    @abstractmethod
+    def address(self) -> int:
+        pass
+
+    @abstractmethod
+    def __int__(self) -> int:
+        pass
+
+    @abstractmethod
+    def __getitem__(self, key: int) -> AbstractValue:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> np.ndarray:
         pass

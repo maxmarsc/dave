@@ -1,6 +1,6 @@
 command script import lldb_init.py
 target create "build/examples/std"
-b std.cpp:61
-b std.cpp:80
-b std.cpp:87
-r
+#b std.cpp:61
+#b std.cpp:80
+#b std.cpp:87
+#r
