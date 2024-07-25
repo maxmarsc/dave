@@ -13,7 +13,7 @@ Debugger Audio Visualization Extension
 - [ ] JUCE 
 - [ ] CHOC 
 - [ ] One liner BASH installation 
-- [ ] Improve GUI proportions
+- [x] Improve GUI proportions
 - [ ] Save to disc
 - [ ] llvm libc/libstd
 - [ ] container deletion (GUI + delete command)

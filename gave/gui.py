@@ -253,7 +253,10 @@ class AudioViewsTab:
                 model.draw_audio_view(axes, channel)
                 axes.set_title(model.variable_name + f" channel {channel}")
                 i += 1
-
+        roffset = 0.08
+        self.__fig.subplots_adjust(
+            left=roffset, bottom=roffset, right=1.0 - roffset, top=1.0 - roffset
+        )
         self.__canvas.draw_idle()
 
 
