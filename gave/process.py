@@ -1,7 +1,9 @@
+from __future__ import annotations
 import multiprocessing
 from typing import List
+from enum import Enum
 
-from .gui import GaveGUI, StopMessage
+from .gui import GaveGUI
 from .container import Container
 from .future_gdb import blocked_signals
 from .container_model import ContainerModel
@@ -10,32 +12,35 @@ from .singleton import SingletonMeta
 
 class GaveProcess(metaclass=SingletonMeta):
     def __init__(self) -> None:
+        self.__containers: List[Container] = []
         self.__msg_queue = multiprocessing.Queue()
+        self.__process = None
+
+    def start(self, monitor_live_signal: bool = False):
         old_spawn_method = multiprocessing.get_start_method()
         with blocked_signals():
             if old_spawn_method != "spawn":
                 multiprocessing.set_start_method("spawn", force=True)
             self.__process = multiprocessing.Process(
-                target=GaveGUI.create_and_run, args=(self.__msg_queue,)
+                target=GaveGUI.create_and_run,
+                args=(self.__msg_queue, monitor_live_signal),
             )
             if old_spawn_method != "spawn":
                 multiprocessing.set_start_method(old_spawn_method, force=True)
-        self.__containers: List[Container] = []
-
-    def start(self):
-        with blocked_signals():
             self.__process.start()
 
     def is_alive(self) -> bool:
-        return self.__process.is_alive()
+        if self.__process is not None:
+            return self.__process.is_alive()
+        return False
 
     def should_stop(self):
-        self.__msg_queue.put(StopMessage())
+        self.__msg_queue.put(GaveGUI.Message.STOP)
 
     def join(self):
         self.__process.join()
 
-    def gdb_update_callback(self):
+    def dbgr_update_callback(self):
         for container in self.__containers:
             data = container.read_from_debugger()
             id = container.id
@@ -44,6 +49,7 @@ class GaveProcess(metaclass=SingletonMeta):
 
     def add_to_model(self, container: Container):
         self.__containers.append(container)
-        # model = ContainerModel(container, 44100)
-        # print(f"model sent {model.id, model.variable_name}")
         self.__msg_queue.put(container.as_raw())
+
+    def live_signal(self):
+        self.__msg_queue.put(GaveGUI.Message.DBGR_IS_ALIVE)

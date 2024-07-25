@@ -1,6 +1,10 @@
-# import .debuggers.lldb
-from gave.debuggers.lldb import ShowCommand, StopHook, exit_handler
+from gave.debuggers.lldb import (
+    ShowCommand,
+    StopHook,
+    LLDBEventHandler,
+)
 import lldb  # type: ignore
+import sys
 
 
 def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
@@ -13,3 +17,6 @@ def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
 
     # Register stop event hook
     debugger.HandleCommand(f"target stop-hook add -P {__name__}.StopHook")
+
+    # Event handler to handle process stop
+    event_handler = LLDBEventHandler(debugger)

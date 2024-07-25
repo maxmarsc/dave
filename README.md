@@ -20,6 +20,7 @@ Debugger Audio Visualization Extension
 - [ ] add setup instructions to readme
 - [ ] add license
 - [ ] improve logging system
+- [ ] find testing strategy
 
 ## Python support
 ```py

@@ -257,16 +257,23 @@ class AudioViewsTab:
         self.__canvas.draw_idle()
 
 
-class StopMessage:
-    pass
-
-
 class GaveGUI:
-    def __init__(self, msg_queue: multiprocessing.Queue):
+    class Message(Enum):
+        STOP = "stop"
+        DBGR_IS_ALIVE = "dbgr_is_alive"
+
+    def __init__(self, msg_queue: multiprocessing.Queue, monitor_live_signal: bool):
+        # Refresh and quit settings
+        self.__refresh_time_ms = 20
+        self.__monitor_live_signal = monitor_live_signal
+        self.__live_signal_count = 0
+        self.__live_signal_count_max = 4
         self.__msg_queue = msg_queue
+
+        # GUI settings
         self.__models: Dict[uuid.uuid4, ContainerModel] = dict()
         self.__window = tk.Tk()
-        self.__window.title("GDB Debugger Information")
+        self.__window.title("Dave")
         self.__window.minsize(400, 600)
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
         # self.__audio_views = AudioViewsFrame(self.__window)
@@ -281,8 +288,8 @@ class GaveGUI:
         self.__update_tk_id = ""
 
     @staticmethod
-    def create_and_run(msg_queue: multiprocessing.Queue):
-        gui = GaveGUI(msg_queue)
+    def create_and_run(msg_queue: multiprocessing.Queue, monitor_live_signal: bool):
+        gui = GaveGUI(msg_queue, monitor_live_signal)
         gui.run()
 
     def on_closing(self):
@@ -292,16 +299,23 @@ class GaveGUI:
         self.__models = dict()
 
     def run(self):
-        self.__update_tk_id = self.__window.after(20, self.tkinter_update_callback)
+        self.__update_tk_id = self.__window.after(
+            self.__refresh_time_ms, self.tkinter_update_callback
+        )
         self.__window.mainloop()
 
     def __poll_queue(self) -> bool:
         update_needed = False
+        if self.__monitor_live_signal:
+            self.__live_signal_count += 1
         while True:
             try:
                 msg = self.__msg_queue.get(block=False)
-                if isinstance(msg, StopMessage):
+
+                if msg == GaveGUI.Message.STOP:
                     self.on_closing()
+                elif msg == GaveGUI.Message.DBGR_IS_ALIVE:
+                    self.__live_signal_count = 0
                 elif isinstance(msg, Container.Raw):
                     new_model = ContainerModel(msg, 44100)
                     self.__models[msg.id] = new_model
@@ -313,6 +327,14 @@ class GaveGUI:
                     update_needed = True
             except queue.Empty:
                 break
+
+        # If the main process didn't sent live signal for too many iteration
+        # we stop
+        if (
+            self.__monitor_live_signal
+            and self.__live_signal_count >= self.__live_signal_count_max
+        ):
+            self.on_closing()
 
         return update_needed
 
@@ -334,4 +356,6 @@ class GaveGUI:
         elif self.__check_model_for_updates():
             self.__audio_views_tab.update_figures()
 
-        self.__update_tk_id = self.__window.after(20, self.tkinter_update_callback)
+        self.__update_tk_id = self.__window.after(
+            self.__refresh_time_ms, self.tkinter_update_callback
+        )

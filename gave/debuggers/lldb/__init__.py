@@ -1,2 +1,2 @@
-from .commands import StopHook, ShowCommand, exit_handler
+from .commands import StopHook, ShowCommand, LLDBEventHandler
 from ...languages.c_cpp import *

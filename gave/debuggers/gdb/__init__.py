@@ -1,4 +1,3 @@
-# from __future__ import annotations
 from ...languages.c_cpp import *
 from .commands import GdbCommand, exit_handler, stop_handler
 

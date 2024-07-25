@@ -33,7 +33,7 @@ def show(var: Any, name: str = "", **kwargs):
 
 def update():
     if GaveProcess().is_alive():
-        GaveProcess().gdb_update_callback()
+        GaveProcess().dbgr_update_callback()
 
 
 # class CustomPyDebugger(pdb.Pdb):
