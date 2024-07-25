@@ -3,7 +3,7 @@ Debugger Audio Visualization Extension
 
 ## Milestones
 - [ ] Mid/Side 
-- [ ] LLDB
+- [x] LLDB
 - [ ] Freeze 
 - [ ] Concatenate 
 - [ ] Play 
