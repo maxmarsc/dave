@@ -17,6 +17,14 @@ class GaveProcess(metaclass=SingletonMeta):
         self.__process = None
 
     def start(self, monitor_live_signal: bool = False):
+        if isinstance(self.__process, multiprocessing.Process):
+            if self.__process.is_alive():
+                raise RuntimeError("Dave process was already started")
+            elif self.__process.exitcode is not None:
+                # Process already ran and exit, needs to reset the object
+                self.__process = None
+                self.__containers = list()
+
         old_spawn_method = multiprocessing.get_start_method()
         with blocked_signals():
             if old_spawn_method != "spawn":

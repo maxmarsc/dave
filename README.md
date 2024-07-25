@@ -4,10 +4,11 @@ Debugger Audio Visualization Extension
 ## Milestones
 - [ ] Mid/Side 
 - [x] LLDB
+- [ ] Document the code
 - [ ] Freeze 
 - [ ] Concatenate 
 - [ ] Play 
-- [ ] Restart dave process 
+- [x] Restart dave process 
 - [ ] GSL 
 - [ ] JUCE 
 - [ ] CHOC 
