@@ -16,12 +16,13 @@ Debugger Audio Visualization Extension
 - [x] Improve GUI proportions
 - [ ] Save to disc
 - [ ] llvm libc/libstd
-- [ ] container deletion (GUI + delete command)
+- [x] container deletion (GUI + delete command)
 - [ ] out-of-scope detection
 - [ ] add setup instructions to readme
 - [ ] add license
 - [ ] improve logging system
 - [ ] find testing strategy
+- [ ] add better documentation to GDB command
 
 ## Python support
 ```py

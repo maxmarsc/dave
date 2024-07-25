@@ -11,13 +11,14 @@ import numpy as np
 
 # import gdb
 import tkinter as tk
-import uuid
+
+# import uuid
 
 
 class ContainerModel:
     @dataclass
     class Update:
-        id: uuid.uuid4
+        id: int
         data: np.ndarray
 
     def __init__(self, raw: Container.Raw, samplerate: float):
@@ -32,6 +33,7 @@ class ContainerModel:
             self.__sr
         )
         self.__update_pending = True
+        self.__deletion_pending = False
 
     # ==============================================================================
     @property
@@ -60,7 +62,7 @@ class ContainerModel:
         return self.__raw.name
 
     @property
-    def id(self) -> uuid.uuid4:
+    def id(self) -> int:
         return self.__raw.id
 
     @property
@@ -88,6 +90,12 @@ class ContainerModel:
         return False
 
     # ==============================================================================
+    def mark_for_deletion(self):
+        self.__deletion_pending = True
+
+    def check_for_deletion(self) -> bool:
+        return self.__deletion_pending
+
     def check_for_update(self) -> bool:
         return self.__update_pending
 

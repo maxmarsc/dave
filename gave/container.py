@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -11,7 +12,7 @@ from .data_layout import DataLayout
 import numpy as np
 
 # import gdb  # type: ignore
-import uuid
+# import uuid
 
 
 class SampleType(Enum):
@@ -76,9 +77,16 @@ class ChannelSetup(Enum):
 
 
 class Container(ABC):
+    __count = -1
+
+    @staticmethod
+    def __new_id() -> int:
+        Container.__count += 1
+        return Container.__count
+
     @dataclass
     class Raw:
-        id: uuid.uuid4
+        id: int
         data: np.ndarray
         name: str
         container_cls: Type
@@ -88,15 +96,15 @@ class Container(ABC):
         self._value = dbg_value
         self._name = name
         self.__type = data_type
-        self.__uuid = uuid.uuid4()
+        self.__id = Container.__new_id()
 
     @property
     def name(self) -> str:
         return self._name
 
     @property
-    def id(self) -> uuid.uuid4:
-        return self.__uuid
+    def id(self) -> int:
+        return self.__id
 
     def as_raw(self) -> Raw:
         return Container.Raw(

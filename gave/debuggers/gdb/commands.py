@@ -52,12 +52,14 @@ class GdbCommand(gdb.Command):
             self.print_attribute(args[1:])
         elif subcommand == "show":
             self.show(args[1:])
+        elif subcommand == "delete":
+            self.delete_container(args[1:])
         else:
             print(f"Unknown subcommand '{subcommand}'")
 
     def show(self, args):
         if len(args) < 1 or len(args) > 2:
-            raise gdb.GdbError("Usage: gave show <variable> [dim1[,dim2]]")
+            raise gdb.GdbError("Usage: gave show VARIABLE [DIM1[,DIM2]]")
 
         varname = args[0]
         if len(args) > 1:
@@ -68,12 +70,22 @@ class GdbCommand(gdb.Command):
         typename = var.typename()
         try:
             container = ContainerFactory().build(var, typename, varname, dims)
-            print(f"Built {type(container)}")
+            print(f"Built {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not GaveProcess().is_alive():
             GaveProcess().start()
         GaveProcess().add_to_model(container)
+
+    def delete_container(self, args):
+        if len(args) != 1:
+            raise gdb.GdbError("Usage: gave delete VARIABLE|CONTAINER_ID")
+
+        if not GaveProcess().is_alive():
+            raise gdb.GdbError("Dave is not started")
+
+        if not GaveProcess().delete_container(args[0]):
+            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def print_attribute(self, args):
         if len(args) != 2:

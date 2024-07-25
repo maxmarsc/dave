@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 from enum import Enum
 from tkinter import StringVar, ttk
 from typing import Dict, List, Tuple
 
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
-import uuid
+# import uuid
 
 import threading
 import multiprocessing
@@ -51,6 +52,10 @@ class ContainerSettingsFrame:
         # Settings selection
         self.__view_settings_frame = None
         self.__view_settings = None
+        # General section
+        self.__general_section_frame = None
+        self.__general_section_separator = None
+        self.__delete_button = None
 
         self.update()
         self.__frame.pack(side=tk.TOP, fill="x")
@@ -80,6 +85,10 @@ class ContainerSettingsFrame:
             self.__channel_label = None
         # Update the view type -> this will trigger the view_var_callback
         self.__view_var.set(value=self.__model.selected_view)
+
+    def delete_button_callback(self):
+        self.__model.mark_for_deletion()
+        self.__frame.destroy()
 
     def update(self):
         # Create the layout menu
@@ -124,6 +133,7 @@ class ContainerSettingsFrame:
             self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
             self.__view_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__view_separator.pack(side=tk.LEFT, fill="y")
+
         # Create the settings menu
         if not self.__view_settings_frame:
             self.__view_settings_frame = tk.Frame(self.__frame)
@@ -133,8 +143,31 @@ class ContainerSettingsFrame:
                 self.__view_settings_frame, self.__model
             )
 
+        # Create the general menu
+        if not self.__general_section_frame:
+            self.__general_section_frame = tk.Frame(self.__frame)
+            self.__delete_button = tk.Button(
+                self.__general_section_frame,
+                text="X",
+                command=self.delete_button_callback,
+            )
+            self.__general_section_separator = ttk.Separator(
+                self.__frame, orient="vertical"
+            )
+            self.__general_section_frame.pack(side=tk.RIGHT, fill="y")
+            self.__general_section_separator.pack(side=tk.RIGHT, fill="y")
+            self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=[2, 2])
+
 
 class ViewSettingsFrame:
+    """
+    A frame containing the selector for every view setting of a model.
+
+    Each type of view has its set of settings. This will create a frame in which
+    the user can define the value for each of the settings of the currently
+    selected view type
+    """
+
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
         self.__master = master
         self.__container = container
@@ -213,24 +246,27 @@ class ViewSettingsFrame:
 class SettingsTab:
     def __init__(self, master):
         self.__master = master
-        self.containers_settings: Dict[uuid.uuid4, ContainerSettingsFrame] = dict()
-        # self.frames: Dict[uuid.uuid4, tk.Frame]
+        self.__containers_settings: Dict[int, ContainerSettingsFrame] = dict()
         self.update_ui()
 
     def add_container(self, container: ContainerModel):
-        assert container.id not in self.containers_settings
-        self.containers_settings[container.id] = ContainerSettingsFrame(
+        assert container.id not in self.__containers_settings
+        self.__containers_settings[container.id] = ContainerSettingsFrame(
             self.__master, container
         )
 
+    def delete_container(self, id: int):
+        self.__containers_settings[id].delete_button_callback()
+        del self.__containers_settings[id]
+
     def update_ui(self):
-        for settings_frame in self.containers_settings.values():
+        for settings_frame in self.__containers_settings.values():
             settings_frame.update()
 
 
 class AudioViewsTab:
-    def __init__(self, master):
-        self.__container_models: List[ContainerModel] = []
+    def __init__(self, master, container_models: Dict[int, ContainerModel]):
+        self.__container_models = container_models
         self.__master = master
         self.__fig = Figure()
         self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__master)
@@ -240,14 +276,13 @@ class AudioViewsTab:
         self.__toolbar.update()
         self.__toolbar.pack()
 
-    def add_audio_view(self, model: ContainerModel):
-        self.__container_models.append(model)
-
     def update_figures(self):
         self.__fig.clear()
-        total_figures = sum([model.channels for model in self.__container_models])
+        total_figures = sum(
+            [model.channels for model in self.__container_models.values()]
+        )
         i = 1
-        for model in self.__container_models:
+        for model in self.__container_models.values():
             for channel in range(model.channels):
                 axes = self.__fig.add_subplot(total_figures, 1, i)
                 model.draw_audio_view(axes, channel)
@@ -265,41 +300,54 @@ class GaveGUI:
         STOP = "stop"
         DBGR_IS_ALIVE = "dbgr_is_alive"
 
-    def __init__(self, msg_queue: multiprocessing.Queue, monitor_live_signal: bool):
+    @dataclass
+    class DeleteMessage:
+        id: int
+
+    def __init__(
+        self,
+        cqueue: multiprocessing.Queue,
+        pqueue: multiprocessing.Queue,
+        monitor_live_signal: bool,
+    ):
         # Refresh and quit settings
         self.__refresh_time_ms = 20
         self.__monitor_live_signal = monitor_live_signal
         self.__live_signal_count = 0
         self.__live_signal_count_max = 4
-        self.__msg_queue = msg_queue
+        self.__cqueue = cqueue
+        self.__pqueue = pqueue
 
         # GUI settings
-        self.__models: Dict[uuid.uuid4, ContainerModel] = dict()
+        self.__models: Dict[int, ContainerModel] = dict()
         self.__window = tk.Tk()
         self.__window.title("Dave")
         self.__window.minsize(400, 600)
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
-        # self.__audio_views = AudioViewsFrame(self.__window)
         self.__notebook = ttk.Notebook(self.__window)
         self.__notebook.pack(fill="both", expand=True)
         self.__audio_tabframe = ttk.Frame(self.__notebook)
         self.__notebook.add(self.__audio_tabframe, text="Views")
         self.__settings_tabframe = ttk.Frame(self.__notebook)
         self.__notebook.add(self.__settings_tabframe, text="Settings")
-        self.__audio_views_tab = AudioViewsTab(self.__audio_tabframe)
+        self.__audio_views_tab = AudioViewsTab(self.__audio_tabframe, self.__models)
         self.__settings_tab = SettingsTab(self.__settings_tabframe)
         self.__update_tk_id = ""
 
     @staticmethod
-    def create_and_run(msg_queue: multiprocessing.Queue, monitor_live_signal: bool):
-        gui = GaveGUI(msg_queue, monitor_live_signal)
+    def create_and_run(
+        cqueue: multiprocessing.Queue,
+        pqueue: multiprocessing.Queue,
+        monitor_live_signal: bool,
+    ):
+        gui = GaveGUI(cqueue, pqueue, monitor_live_signal)
         gui.run()
 
     def on_closing(self):
         if self.__update_tk_id:
             self.__window.after_cancel(self.__update_tk_id)
         self.__window.destroy()
-        self.__models = dict()
+        self.__models.clear()
 
     def run(self):
         self.__update_tk_id = self.__window.after(
@@ -313,16 +361,18 @@ class GaveGUI:
             self.__live_signal_count += 1
         while True:
             try:
-                msg = self.__msg_queue.get(block=False)
+                msg = self.__cqueue.get(block=False)
 
                 if msg == GaveGUI.Message.STOP:
                     self.on_closing()
+                    return False
                 elif msg == GaveGUI.Message.DBGR_IS_ALIVE:
                     self.__live_signal_count = 0
+                elif isinstance(msg, GaveGUI.DeleteMessage):
+                    self.__models[msg.id].mark_for_deletion()
                 elif isinstance(msg, Container.Raw):
                     new_model = ContainerModel(msg, 44100)
                     self.__models[msg.id] = new_model
-                    self.__audio_views_tab.add_audio_view(new_model)
                     self.__settings_tab.add_container(new_model)
                     update_needed = True
                 elif isinstance(msg, ContainerModel.Update):
@@ -338,26 +388,43 @@ class GaveGUI:
             and self.__live_signal_count >= self.__live_signal_count_max
         ):
             self.on_closing()
+            return False
 
         return update_needed
 
     def __check_model_for_updates(self) -> bool:
         update_needed = False
+        to_delete = []
+
+        # We check every container model for update
         for model in self.__models.values():
-            if model.check_for_update():
+            if model.check_for_deletion():
+                update_needed = True
+                to_delete.append(model.id)
+            elif model.check_for_update():
                 update_needed = True
                 model.reset_update_flag()
+
+        # Delete the ones marked for delete
+        for id in to_delete:
+            del self.__models[id]
+            self.__settings_tab.delete_container(id)
+            self.__pqueue.put(GaveGUI.DeleteMessage(id))
+
+        # If no container left we close the gui
+        if len(self.__models) == 0 and len(to_delete) != 0:
+            self.on_closing()
+            return False
+
         return update_needed
 
     def tkinter_update_callback(self):
         self.__update_tk_id = ""
 
-        # Check for new containers
-        if self.__poll_queue():
+        # Check for new containers or model update
+        if self.__poll_queue() or self.__check_model_for_updates():
             self.__audio_views_tab.update_figures()
             self.__settings_tab.update_ui()
-        elif self.__check_model_for_updates():
-            self.__audio_views_tab.update_figures()
 
         self.__update_tk_id = self.__window.after(
             self.__refresh_time_ms, self.tkinter_update_callback
