@@ -2,27 +2,27 @@
 Debugger Audio Visualization Extension
 
 ## Milestones
-- [ ] Mid/Side 
-- [x] LLDB
-- [ ] Document the code
-- [ ] Freeze 
+- [ ] Freeze
 - [ ] Concatenate 
-- [ ] Play 
-- [x] Restart dave process 
-- [ ] GSL 
+- [ ] Save to disc
+- [ ] out-of-scope detection
+- [ ] llvm libc/libstd
+- [ ] GSL
 - [ ] JUCE 
 - [ ] CHOC 
+- [ ] Mid/Side 
+- [ ] improve logging system
+- [ ] Document the code
 - [ ] One liner BASH installation 
-- [x] Improve GUI proportions
-- [ ] Save to disc
-- [ ] llvm libc/libstd
-- [x] container deletion (GUI + delete command)
-- [ ] out-of-scope detection
 - [ ] add setup instructions to readme
 - [ ] add license
-- [ ] improve logging system
-- [ ] find testing strategy
 - [ ] add better documentation to GDB command
+- [ ] find testing strategy
+- [ ] Play 
+- [x] Restart dave process 
+- [x] Improve GUI proportions
+- [x] container deletion (GUI + delete command)
+- [x] LLDB
 
 ## Python support
 ```py
