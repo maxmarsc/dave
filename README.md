@@ -2,10 +2,11 @@
 Debugger Audio Visualization Extension
 
 ## Milestones
-- [ ] Freeze
+- [x] Freeze
 - [ ] Concatenate 
 - [ ] Save to disc
 - [ ] out-of-scope detection
+- [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
 - [ ] GSL
