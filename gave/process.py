@@ -64,6 +64,37 @@ class GaveProcess(metaclass=SingletonMeta):
         self.__containers[container.id] = container
         self.__cqueue.put(container.as_raw())
 
+    def __identify_container(self, id: str) -> int:
+        try:
+            return int(id)
+        except ValueError:
+            for container in self.__containers.values():
+                if container.name == id:
+                    return container.id
+        return -1
+
+    def freeze_container(self, id: str) -> bool:
+        """
+        Freeze/Unfreeze a container. Returns True on success.
+
+        Parameters
+        ----------
+        id : str
+            Either the name or the int id of a container. When using the name, if
+            several container have the same name, the first created will be deleted
+        """
+        # First check for delete messages
+        self.__handle_incoming_messages()
+
+        id = self.__identify_container(id)
+
+        # wtf is this flagged as unreachable
+        if id not in self.__containers:
+            return False
+
+        self.__cqueue.put(GaveGUI.FreezeMessage(id))
+        return True
+
     def delete_container(self, id: str) -> bool:
         """
         Mark a container as to be deleted. Returns True on success.
@@ -80,13 +111,7 @@ class GaveProcess(metaclass=SingletonMeta):
         # First check for delete messages
         self.__handle_incoming_messages()
 
-        try:
-            id = int(id)
-        except ValueError:
-            for container in self.__containers.values():
-                if container.name == id:
-                    id = container.id
-                    break
+        id = self.__identify_container(id)
 
         if id not in self.__containers:
             return False

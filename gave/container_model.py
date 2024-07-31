@@ -159,7 +159,9 @@ class ContainerModel:
             if self.frozen:
                 # Render frozen data on same subplot
                 self.__view.render_view(
-                    axes[0], self.__frozen_data.reshape(render_shape)[channel]
+                    axes[0],
+                    self.__frozen_data.reshape(render_shape)[channel],
+                    "#ff7f0e",
                 )
 
     # ==============================================================================

@@ -308,9 +308,6 @@ class ActionButtonsFrame:
             relief="sunken" if self.__container.frozen else "raised"
         )
 
-    # def destroy(self):
-    #     self.__frame.destroy()
-
 
 class SettingsTab:
     def __init__(self, master):
@@ -412,6 +409,10 @@ class GaveGUI:
     class DeleteMessage:
         id: int
 
+    @dataclass
+    class FreezeMessage:
+        id: int
+
     def __init__(
         self,
         cqueue: multiprocessing.Queue,
@@ -478,6 +479,8 @@ class GaveGUI:
                     self.__live_signal_count = 0
                 elif isinstance(msg, GaveGUI.DeleteMessage):
                     self.__models[msg.id].mark_for_deletion()
+                elif isinstance(msg, GaveGUI.FreezeMessage):
+                    self.__models[msg.id].frozen = not self.__models[msg.id].frozen
                 elif isinstance(msg, Container.Raw):
                     new_model = ContainerModel(msg, 44100)
                     self.__models[msg.id] = new_model

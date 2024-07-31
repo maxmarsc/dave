@@ -1,6 +1,7 @@
 from gave.debuggers.lldb import (
     ShowCommand,
     DeleteCommand,
+    FreezeCommand,
     StopHook,
     LLDBEventHandler,
 )
@@ -17,6 +18,9 @@ def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
     debugger.HandleCommand(f"command script add -c {__name__}.ShowCommand gave show")
     debugger.HandleCommand(
         f"command script add -c {__name__}.DeleteCommand gave delete"
+    )
+    debugger.HandleCommand(
+        f"command script add -c {__name__}.FreezeCommand gave freeze"
     )
 
     # Register stop event hook

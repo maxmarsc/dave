@@ -53,6 +53,8 @@ class GdbCommand(gdb.Command):
             self.show(args[1:])
         elif subcommand == "delete":
             self.delete_container(args[1:])
+        elif subcommand == "freeze":
+            self.freeze_container(args[1:])
         else:
             print(f"Unknown subcommand '{subcommand}'")
 
@@ -84,6 +86,16 @@ class GdbCommand(gdb.Command):
             raise gdb.GdbError("Dave is not started")
 
         if not GaveProcess().delete_container(args[0]):
+            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
+
+    def freeze_container(self, args):
+        if len(args) != 1:
+            raise gdb.GdbError("Usage: gave freeze VARIABLE|CONTAINER_ID")
+
+        if not GaveProcess().is_alive():
+            raise gdb.GdbError("Dave is not started")
+
+        if not GaveProcess().freeze_container(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def print_attribute(self, args):

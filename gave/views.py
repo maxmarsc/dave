@@ -246,7 +246,9 @@ class PSDView(AudioView):
         if color is None:
             color = DEFAULT_COLOR
         overlap = int(self.__overlap.value * self.__nfft.value)
-        axes.psd(data, color, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
+        axes.psd(
+            data, color=color, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap
+        )
 
 
 # ===========================================================================
@@ -264,8 +266,10 @@ class MagnitudeView(AudioView):
     def get_settings(self) -> List[Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray):
-        axes.plot(np.abs(data))
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+        if color is None:
+            color = DEFAULT_COLOR
+        axes.plot(np.abs(data), color)
         axes.grid(visible=True)
         axes.set_ylabel("Magnitude")
 
@@ -285,8 +289,10 @@ class PhaseView(AudioView):
     def get_settings(self) -> List[Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray):
-        axes.plot(np.angle(data))
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+        if color is None:
+            color = DEFAULT_COLOR
+        axes.plot(np.angle(data), color)
         axes.grid(visible=True)
         axes.set_ylabel("Phase")
 
