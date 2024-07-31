@@ -40,12 +40,10 @@ class DataLayout(Enum):
         if data.dtype.kind == "f":
             return data
         else:
-            print("Converting to real")
             return data.view(dtype=DataLayout.__realify(data.dtype))
 
     def __convert_to_cpx(self, data: np.ndarray) -> np.ndarray:
         if data.dtype.kind == "c":
             return data
         else:
-            print("Converting to cpx")
             return data.view(dtype=DataLayout.__complexify(data.dtype))

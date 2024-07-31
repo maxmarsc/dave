@@ -6,6 +6,7 @@ Debugger Audio Visualization Extension
 - [ ] Concatenate 
 - [ ] Save to disc
 - [ ] out-of-scope detection
+- [ ] minimize call to render functions
 - [ ] llvm libc/libstd
 - [ ] GSL
 - [ ] JUCE 

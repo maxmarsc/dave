@@ -15,6 +15,8 @@ from .view_setting import (
 
 import numpy as np
 
+DEFAULT_COLOR = "#1f77b4"
+
 # import matplotlib.pyplot as plt
 # from matplotlib import scale as mscale
 # from matplotlib.scale import ScaleBase
@@ -88,8 +90,12 @@ class AudioView(ABC):
     def name() -> str:
         pass
 
+    @staticmethod
+    def is_superposable() -> bool:
+        return True
+
     @abstractmethod
-    def render_view(self, axes: Axes, data: np.ndarray):
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
         pass
 
     @abstractmethod
@@ -118,7 +124,7 @@ class WaveformView(AudioView):
         # else:
         #     raise RuntimeError(f"{setting_name} is not a valid WaveformView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray):
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
         # # axes.set_yscale(self.__y_scale.value)
         # if self.__y_scale.value == "log":
         #     eps = 1e-5
@@ -127,7 +133,9 @@ class WaveformView(AudioView):
         #     # axes.set_yscale("customsymlog", threshold=1e-5)
         #     axes.set_yscale("function", function=(scale_fwd, scale_inv))
 
-        axes.plot(data, "blue")
+        if color is None:
+            color = DEFAULT_COLOR
+        axes.plot(data, color)
         max_y = np.max(np.abs(data)) * 1.2
         if max_y != 0.0:
             try:
@@ -135,7 +143,7 @@ class WaveformView(AudioView):
             except ValueError:
                 # Can fail with NaN/inf
                 pass
-        axes.grid()
+        axes.grid(visible=True)
 
     def get_settings(self) -> List[Setting]:
         return []
@@ -163,10 +171,13 @@ class CurveView(AudioView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid CurveView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray):
-        axes.plot(data, "red")
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+        if color is None:
+            color = DEFAULT_COLOR
+        axes.plot(data, color)
         axes.set_xscale(self.__x_scale.value)
         axes.set_yscale(self.__y_scale.value)
+        axes.grid(visible=True)
 
     def get_settings(self) -> List[Setting]:
         return [self.__x_scale, self.__y_scale]
@@ -184,6 +195,10 @@ class SpectrogramView(AudioView):
     def name() -> str:
         return "Spectrogram"
 
+    @staticmethod
+    def is_superposable() -> bool:
+        return False
+
     def update_setting(self, setting_name: str, setting_value: Any):
         if setting_name == self.__nfft.name:
             self.__nfft.value = setting_value
@@ -197,7 +212,7 @@ class SpectrogramView(AudioView):
     def get_settings(self) -> List[Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(self, axes: Axes, data: np.ndarray):
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
         overlap = int(self.__overlap.value * self.__nfft.value)
         axes.specgram(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
 
@@ -227,9 +242,11 @@ class PSDView(AudioView):
     def get_settings(self) -> List[Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(self, axes: Axes, data: np.ndarray):
+    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+        if color is None:
+            color = DEFAULT_COLOR
         overlap = int(self.__overlap.value * self.__nfft.value)
-        axes.psd(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
+        axes.psd(data, color, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
 
 
 # ===========================================================================
@@ -249,7 +266,7 @@ class MagnitudeView(AudioView):
 
     def render_view(self, axes: Axes, data: np.ndarray):
         axes.plot(np.abs(data))
-        axes.grid()
+        axes.grid(visible=True)
         axes.set_ylabel("Magnitude")
 
 
@@ -270,7 +287,7 @@ class PhaseView(AudioView):
 
     def render_view(self, axes: Axes, data: np.ndarray):
         axes.plot(np.angle(data))
-        axes.grid()
+        axes.grid(visible=True)
         axes.set_ylabel("Phase")
 
 

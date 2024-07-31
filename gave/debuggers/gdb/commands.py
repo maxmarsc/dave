@@ -15,7 +15,6 @@ def exit_handler(event):
 
 
 def stop_handler(event: gdb.StopEvent):
-    print(f"Stop event detected {event}")
     if GaveProcess().is_alive():
         GaveProcess().dbgr_update_callback()
 

@@ -243,6 +243,75 @@ class ViewSettingsFrame:
             pass
 
 
+class ContainersActionsButtonsFrames:
+    def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
+        self.__master = master
+        self.__container_models = container_models
+        self.__container_buttons_frame: Dict[int, tk.Frame] = dict()
+        self.__container_buttons: Dict[int, ActionButtonsFrame] = dict()
+
+    def update(self):
+        # First delete old occurences
+        to_delete = []
+        for id, buttons_frame in self.__container_buttons_frame.items():
+            if id not in self.__container_models:
+                buttons_frame.destroy()
+                to_delete.append(id)
+
+        for id in to_delete:
+            del self.__container_buttons[id]
+            del self.__container_buttons_frame[id]
+
+        # Then add new containers
+        for id, container in self.__container_models.items():
+            if id not in self.__container_buttons_frame:
+                idx = len(self.__container_buttons)
+                self.__container_buttons_frame[id] = tk.Frame(self.__master)
+                self.__container_buttons[id] = ActionButtonsFrame(
+                    self.__container_buttons_frame[id], container
+                )
+                # Place the new button frame
+                self.__container_buttons_frame[id].grid(row=idx, column=0)
+                self.__master.grid_rowconfigure(index=idx, weight=container.channels)
+
+        # Finally update everyone
+        for widget in self.__container_buttons.values():
+            widget.update()
+
+
+class ActionButtonsFrame:
+    """
+    A widget that holds stuff
+
+    _extended_summary_
+    """
+
+    def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
+        self.__master = master
+        # self.__frame = tk.Frame(self.__master)
+        self.__container = container
+        self.__freeze_button = tk.Button(
+            self.__master,
+            text="F",
+            command=self.__freeze_button_clicked,
+            relief="raised",
+        )
+        # self.__frame.pack(side=tk.TOP, fill=tk.BOTH)
+        self.__freeze_button.pack(anchor=tk.CENTER, fill=tk.X)
+        self.update()
+
+    def __freeze_button_clicked(self):
+        self.__container.frozen = not self.__container.frozen
+
+    def update(self):
+        self.__freeze_button.config(
+            relief="sunken" if self.__container.frozen else "raised"
+        )
+
+    # def destroy(self):
+    #     self.__frame.destroy()
+
+
 class SettingsTab:
     def __init__(self, master):
         self.__master = master
@@ -268,29 +337,68 @@ class AudioViewsTab:
     def __init__(self, master, container_models: Dict[int, ContainerModel]):
         self.__container_models = container_models
         self.__master = master
+        # Audio view rendering
+        self.__view_frame = tk.Frame(self.__master)
         self.__fig = Figure()
-        self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__master)
+        self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__view_frame)
         self.__canvas_widget = self.__canvas.get_tk_widget()
         self.__canvas_widget.pack(fill=tk.BOTH, expand=True)
-        self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__master)
+        self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__view_frame)
         self.__toolbar.update()
         self.__toolbar.pack()
+        # Button rendering
+        self.__buttons_frame = tk.Frame(self.__master, width=30, relief=tk.SUNKEN)
+        self.__buttons_frame.pack_propagate(False)
+        self.__containers_actions_buttons_frame = ContainersActionsButtonsFrames(
+            self.__buttons_frame, self.__container_models
+        )
+        # frame packing
+        self.__buttons_frame.pack(side=tk.RIGHT, fill="y", pady=(0, 45))
+        self.__view_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    def __subplots_hratios(self) -> List[int]:
+        hratios = []
+        for model in self.__container_models.values():
+            if model.frozen and not model.is_view_superposable:
+                # If the view is not superposable, we need a subplot for both
+                # frozen and live signal - we make them thinner
+                hratios.extend([1 for _ in range(model.channels * 2)])
+            else:
+                # If the view is superposable, just a subplot per channel
+                hratios.extend([2 for _ in range(model.channels)])
+
+        return hratios
+
+    def update(self):
+        self.update_figures()
+        self.__containers_actions_buttons_frame.update()
 
     def update_figures(self):
         self.__fig.clear()
-        total_figures = sum(
-            [model.channels for model in self.__container_models.values()]
-        )
-        i = 1
+        hratios = self.__subplots_hratios()
+        nrows = len(hratios)
+        subplots_axes = self.__fig.subplots(
+            nrows=nrows, ncols=1, gridspec_kw={"height_ratios": hratios}
+        )  # type: List[Axes]
+        if isinstance(subplots_axes, Axes):
+            subplots_axes = np.array([subplots_axes])
+        i = 0
         for model in self.__container_models.values():
             for channel in range(model.channels):
-                axes = self.__fig.add_subplot(total_figures, 1, i)
+                if model.frozen and not model.is_view_superposable:
+                    axes = subplots_axes[i : i + 2]
+                    axes[1].set_title(
+                        model.variable_name + f" channel {channel} (frozen)"
+                    )
+                    i += 2
+                else:
+                    axes = subplots_axes[i : i + 1]
+                    i += 1
+                axes[0].set_title(model.variable_name + f" channel {channel}")
                 model.draw_audio_view(axes, channel)
-                axes.set_title(model.variable_name + f" channel {channel}")
-                i += 1
         roffset = 0.08
         self.__fig.subplots_adjust(
-            left=roffset, bottom=roffset, right=1.0 - roffset, top=1.0 - roffset
+            left=roffset, bottom=roffset, right=1.0 - roffset + 0.01, top=1.0 - roffset
         )
         self.__canvas.draw_idle()
 
@@ -423,7 +531,7 @@ class GaveGUI:
 
         # Check for new containers or model update
         if self.__poll_queue() or self.__check_model_for_updates():
-            self.__audio_views_tab.update_figures()
+            self.__audio_views_tab.update()
             self.__settings_tab.update_ui()
 
         self.__update_tk_id = self.__window.after(

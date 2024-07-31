@@ -59,7 +59,6 @@ class GaveProcess(metaclass=SingletonMeta):
             data = container.read_from_debugger()
             id = container.id
             self.__cqueue.put(ContainerModel.Update(id, data))
-            print(f"update sent {id} {data.shape}")
 
     def add_to_model(self, container: Container):
         self.__containers[container.id] = container
