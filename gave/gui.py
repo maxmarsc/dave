@@ -296,16 +296,28 @@ class ActionButtonsFrame:
             command=self.__freeze_button_clicked,
             relief="raised",
         )
-        # self.__frame.pack(side=tk.TOP, fill=tk.BOTH)
+        self.__concat_button = tk.Button(
+            self.__master,
+            text="C",
+            command=self.__concat_button_clicked,
+            relief="raised",
+        )
         self.__freeze_button.pack(anchor=tk.CENTER, fill=tk.X)
+        self.__concat_button.pack(anchor=tk.CENTER, fill=tk.X)
         self.update()
 
     def __freeze_button_clicked(self):
         self.__container.frozen = not self.__container.frozen
 
+    def __concat_button_clicked(self):
+        self.__container.concat = not self.__container.concat
+
     def update(self):
         self.__freeze_button.config(
             relief="sunken" if self.__container.frozen else "raised"
+        )
+        self.__concat_button.config(
+            relief="sunken" if self.__container.concat else "raised"
         )
 
 

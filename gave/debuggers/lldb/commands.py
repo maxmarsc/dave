@@ -9,13 +9,9 @@ import time
 import weakref
 
 
-def test_log():
-    print("test_log")
-
-
 class StopHook:
     def __init__(self, target: lldb.SBTarget, extra_args: lldb.SBStructuredData, _):
-        weakref.finalize(self, test_log)
+        pass
 
     def handle_stop(self, exe_ctx: lldb.SBExecutionContext, stream: lldb.SBStream):
         # Check if the stop reason is a breakpoint
