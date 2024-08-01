@@ -18,7 +18,7 @@ class CArray1D(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid C array type")
 
@@ -31,7 +31,7 @@ class CArray1D(Container1D):
         return self.__size
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> np.ndarray:
@@ -49,7 +49,7 @@ class Pointer1D(Container1D):
         if len(dims) != 1:
             raise TypeError("Pointer container requires exactly one dimension")
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid C array type")
 
@@ -58,7 +58,7 @@ class Pointer1D(Container1D):
         super().__init__(dbg_value, name, data_type)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     @property
@@ -76,7 +76,7 @@ class StdArray(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid std::array type")
 
@@ -89,7 +89,7 @@ class StdArray(Container1D):
         return self.__size
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> np.ndarray:
@@ -105,7 +105,7 @@ class StdVector(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid std::vector type")
 
@@ -113,7 +113,7 @@ class StdVector(Container1D):
         super().__init__(dbg_value, name, datatype)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     @property
@@ -172,7 +172,7 @@ class StdSpan(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid std::span type")
 
@@ -181,7 +181,7 @@ class StdSpan(Container1D):
         super().__init__(dbg_value, name, datatype)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     @property

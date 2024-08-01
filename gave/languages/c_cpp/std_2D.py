@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 # from abc import ABC, abstractmethod
 # from enum import Enum
 import re
-from typing import List, Tuple
+from typing import Callable, List, Tuple
 
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
@@ -10,6 +12,8 @@ import numpy as np
 from gave.container import SampleType, Container2D
 from gave.container_factory import ContainerFactory
 from gave.debuggers.value import AbstractValue
+
+from .template_parser import parse_template
 
 
 class CArrayAny2D(Container2D):
@@ -22,7 +26,7 @@ class CArrayAny2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid C array type")
 
@@ -49,7 +53,7 @@ class CArrayAny2D(Container2D):
         return (self.__size, self.__nested_containers[0].size)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> np.ndarray:
@@ -68,7 +72,7 @@ class CarrayCarray2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid 2D C array type")
 
@@ -81,7 +85,7 @@ class CarrayCarray2D(Container2D):
         return self.__shape
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     @property
@@ -105,7 +109,7 @@ class Pointer2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, dims: List[int]):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid ptr ptr type")
 
@@ -139,7 +143,7 @@ class Pointer2D(Container2D):
         return (self.__size, self.__nested_containers[0].size)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> np.ndarray:
@@ -154,7 +158,7 @@ class StdArray2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid std::array type")
 
@@ -182,7 +186,7 @@ class StdArray2D(Container2D):
         return (self.__size, self.__nested_containers[0].size)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def __data_ptr_value(self) -> AbstractValue:
@@ -215,12 +219,12 @@ class StdVector2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
-        if re_match is None:
+        parsed_types = parse_template(typename)
+        if not StdVector2D.name_parser(typename):
             raise TypeError(f"Could not parse {typename} as a valid std::array type")
 
         # Check if contains a nested valid 1D container
-        nested = re_match.group(1)
+        nested = parsed_types[1]
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
                 f"Could not parse nested type {nested} as a valid container type"
@@ -288,8 +292,15 @@ class StdVector2D(Container2D):
         return (self.size, self.__nested_containers[0].size)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
-        return re.compile(cls.__REGEX)
+    def typename_matcher(cls) -> Callable[[str], bool]:
+        return StdVector2D.name_parser
+
+    @staticmethod
+    def name_parser(typename: str) -> bool:
+        types = parse_template(typename)
+        if types[0] == "std::vector" and len(types) == 3:
+            return True
+        return False
 
     def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())
@@ -303,7 +314,7 @@ class StdSpan2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.regex_name().match(typename)
+        re_match = self.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid std::array type")
 
@@ -369,7 +380,7 @@ class StdSpan2D(Container2D):
         return (self.size, self.__nested_containers[0].size)
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> np.ndarray:

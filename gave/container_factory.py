@@ -1,3 +1,4 @@
+import re
 from typing import Any, List, Dict, Set, Union
 
 from .singleton import SingletonMeta
@@ -35,7 +36,7 @@ class ContainerFactory(metaclass=SingletonMeta):
 
     def check_valid_1D(self, typename: str) -> bool:
         for container_1D_cls in self.__1D_containers:
-            if container_1D_cls.regex_name().match(typename) is not None:
+            if container_1D_cls.typename_matcher().match(typename) is not None:
                 return True
 
         return False
@@ -44,8 +45,11 @@ class ContainerFactory(metaclass=SingletonMeta):
         self, dbg_value: Any, typename: str, varname: str, dims: List[int] = []
     ) -> Container1D:
         for container_1D_cls in self.__1D_containers:
-            if container_1D_cls.regex_name().match(typename) is not None:
-                return container_1D_cls(dbg_value, varname, dims)
+            new_container = self.__build_if_match(
+                container_1D_cls, dbg_value, typename, varname, dims
+            )
+            if new_container is not None:
+                return new_container
 
         raise ContainerError(
             f"Error : {typename} did not match any registered 1D container class"
@@ -62,9 +66,27 @@ class ContainerFactory(metaclass=SingletonMeta):
 
         # Then we check for 2D containers
         for container_2D_cls in self.__2D_containers:
-            if container_2D_cls.regex_name().match(typename) is not None:
-                return container_2D_cls(dbg_value, varname, dims)
+            new_container = self.__build_if_match(
+                container_2D_cls, dbg_value, typename, varname, dims
+            )
+            if new_container is not None:
+                return new_container
 
         raise ContainerError(
             f"Error : {typename} did not match any registered container class"
         )
+
+    def __build_if_match(
+        self,
+        container_cls: Container,
+        dbg_value: Any,
+        typename: str,
+        varname: str,
+        dims: List[int],
+    ):
+        pattern = container_cls.typename_matcher()
+        if (
+            isinstance(pattern, re.Pattern) and pattern.match(typename) is not None
+        ) or (callable(pattern) and pattern(typename)):
+            return container_cls(dbg_value, varname, dims)
+        return None

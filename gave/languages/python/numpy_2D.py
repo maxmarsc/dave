@@ -28,7 +28,7 @@ class NumpyArray(Container2D):
         return (self._value.shape[0], self._value.shape[1])
 
     @classmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> np.ndarray:

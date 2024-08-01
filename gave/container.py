@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 import re
-from typing import Any, List, Tuple, Type
+from typing import Any, Callable, List, Tuple, Type, Union
 
 from .data_layout import DataLayout
 
@@ -142,7 +142,7 @@ class Container(ABC):
 
     @classmethod
     @abstractmethod
-    def regex_name(cls) -> re.Pattern:
+    def typename_matcher(cls) -> Union[re.Pattern, Callable[[str], bool]]:
         pass
 
 
