@@ -3,7 +3,7 @@ Debugger Audio Visualization Extension
 
 ## Milestones
 - [x] Freeze
-- [ ] Concatenate 
+- [x] Concatenate 
 - [ ] Save to disc
 - [ ] out-of-scope detection
 - [ ] command aliases
