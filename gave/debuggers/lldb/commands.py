@@ -201,3 +201,41 @@ class FreezeCommand:
 
     def get_repeat_command(self, command):
         return ""
+
+
+class ConcatCommand:
+    def __init__(self, debugger: lldb.SBDebugger, internal_dict):
+        pass
+
+    def __call__(
+        self,
+        debugger: lldb.SBDebugger,
+        command: str,
+        exe_ctx: lldb.SBExecutionContext,
+        result: lldb.SBCommandReturnObject,
+    ):
+        args = shlex.split(command)
+        result.AppendMessage(f"{args}")
+
+        if len(args) != 1:
+            result.SetError("Usage: gave concat VARIABLE|CONTAINER_ID")
+            return
+
+        # Check for running process
+        if not exe_ctx.GetProcess().IsValid():
+            result.SetError("No processus detected")
+            return
+
+        # Check for running dave
+        if not GaveProcess().is_alive():
+            result.SetError("Dave is not started")
+            return
+
+        if not GaveProcess().concat_container(args[0]):
+            result.SetError(f"{args[0]} is not a valid name or container id")
+
+    def get_short_help(self):
+        return "Usage: gave delete VARIABLE|CONTAINER_ID"
+
+    def get_repeat_command(self, command):
+        return ""

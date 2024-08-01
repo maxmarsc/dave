@@ -55,6 +55,8 @@ class GdbCommand(gdb.Command):
             self.delete_container(args[1:])
         elif subcommand == "freeze":
             self.freeze_container(args[1:])
+        elif subcommand == "concat":
+            self.concat_container(args[1:])
         else:
             print(f"Unknown subcommand '{subcommand}'")
 
@@ -96,6 +98,16 @@ class GdbCommand(gdb.Command):
             raise gdb.GdbError("Dave is not started")
 
         if not GaveProcess().freeze_container(args[0]):
+            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
+
+    def concat_container(self, args):
+        if len(args) != 1:
+            raise gdb.GdbError("Usage: gave concat VARIABLE|CONTAINER_ID")
+
+        if not GaveProcess().is_alive():
+            raise gdb.GdbError("Dave is not started")
+
+        if not GaveProcess().concat_container(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def print_attribute(self, args):

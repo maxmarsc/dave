@@ -2,6 +2,7 @@ from gave.debuggers.lldb import (
     ShowCommand,
     DeleteCommand,
     FreezeCommand,
+    ConcatCommand,
     StopHook,
     LLDBEventHandler,
 )
@@ -21,6 +22,9 @@ def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
     )
     debugger.HandleCommand(
         f"command script add -c {__name__}.FreezeCommand gave freeze"
+    )
+    debugger.HandleCommand(
+        f"command script add -c {__name__}.ConcatCommand gave concat"
     )
 
     # Register stop event hook

@@ -95,6 +95,28 @@ class GaveProcess(metaclass=SingletonMeta):
         self.__cqueue.put(GaveGUI.FreezeMessage(id))
         return True
 
+    def concat_container(self, id: str) -> bool:
+        """
+        Enable/Disable the concatenation feature of a container. Returns True on success.
+
+        Parameters
+        ----------
+        id : str
+            Either the name or the int id of a container. When using the name, if
+            several container have the same name, the first created will be deleted
+        """
+        # First check for delete messages
+        self.__handle_incoming_messages()
+
+        id = self.__identify_container(id)
+
+        # wtf is this flagged as unreachable
+        if id not in self.__containers:
+            return False
+
+        self.__cqueue.put(GaveGUI.ConcatMessage(id))
+        return True
+
     def delete_container(self, id: str) -> bool:
         """
         Mark a container as to be deleted. Returns True on success.

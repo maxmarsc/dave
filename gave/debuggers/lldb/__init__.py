@@ -4,5 +4,6 @@ from .commands import (
     LLDBEventHandler,
     DeleteCommand,
     FreezeCommand,
+    ConcatCommand,
 )
 from ...languages.c_cpp import *

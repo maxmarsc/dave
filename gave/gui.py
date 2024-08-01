@@ -425,6 +425,10 @@ class GaveGUI:
     class FreezeMessage:
         id: int
 
+    @dataclass
+    class ConcatMessage:
+        id: int
+
     def __init__(
         self,
         cqueue: multiprocessing.Queue,
@@ -493,6 +497,8 @@ class GaveGUI:
                     self.__models[msg.id].mark_for_deletion()
                 elif isinstance(msg, GaveGUI.FreezeMessage):
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
+                elif isinstance(msg, GaveGUI.ConcatMessage):
+                    self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, Container.Raw):
                     new_model = ContainerModel(msg, 44100)
                     self.__models[msg.id] = new_model
