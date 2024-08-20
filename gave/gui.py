@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from tkinter import StringVar, ttk
+from tkinter import StringVar, ttk, filedialog, messagebox
 from typing import Dict, List, Tuple
 
 # import gdb  # type: ignore
@@ -12,6 +12,7 @@ import multiprocessing
 import queue
 import tkinter as tk
 import time
+import wave
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
@@ -302,8 +303,12 @@ class ActionButtonsFrame:
             command=self.__concat_button_clicked,
             relief="raised",
         )
+        self.__save_button = tk.Button(
+            self.__master, text="S", command=self.__save_button_clicked, relief="raised"
+        )
         self.__freeze_button.pack(anchor=tk.CENTER, fill=tk.X)
         self.__concat_button.pack(anchor=tk.CENTER, fill=tk.X)
+        self.__save_button.pack(anchor=tk.CENTER, fill=tk.X)
         self.update()
 
     def __freeze_button_clicked(self):
@@ -311,6 +316,44 @@ class ActionButtonsFrame:
 
     def __concat_button_clicked(self):
         self.__container.concat = not self.__container.concat
+
+    def __save_button_clicked(self):
+        filetypes = [("Numpy file", ".npy")]
+        if self.__container.selected_layout.is_real:
+            filetypes.append(("Wave - 16bit PCM", ".wav"))
+        filename: str = filedialog.asksaveasfilename(
+            parent=self.__master, filetypes=filetypes
+        )
+        if not filename:
+            return
+        if filename.endswith(".wav"):
+            self.__save_as_wave(filename)
+        elif filename.endswith(".npy"):
+            self.__save_as_npy(filename)
+        else:
+            raise RuntimeError(f"Unsupported extension : {filename}")
+
+    def __save_as_wave(self, filename: str):
+        data = self.__container.data.T
+        if np.max(np.abs(data)) > 1.0:
+            messagebox.showwarning(
+                title="Saturation detected",
+                message="Values outside the [-1;1] range were detected, values will be truncated",
+            )
+            # Truncate values
+            data[np.where(data < -1.0)] = -1.0
+            data[np.where(data > 1.0)] = 1.0
+        pcm_data = np.int16(data * (2**15 - 1))
+
+        with wave.open(filename, "w") as f:
+            f.setnchannels(self.__container.channels)
+            # 2 bytes per sample.
+            f.setsampwidth(2)
+            f.setframerate(44100)
+            f.writeframes(pcm_data.tobytes())
+
+    def __save_as_npy(self, filename: str):
+        np.save(filename, self.__container.data)
 
     def update(self):
         self.__freeze_button.config(

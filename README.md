@@ -4,7 +4,8 @@ Debugger Audio Visualization Extension
 ## Milestones
 - [x] Freeze
 - [x] Concatenate 
-- [ ] Save to disc
+- [x] Save to disc
+- [ ] Add tooltip hover for action buttons
 - [ ] out-of-scope detection
 - [ ] command aliases
 - [ ] minimize call to render functions

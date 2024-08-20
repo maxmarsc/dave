@@ -39,6 +39,10 @@ class ContainerModel:
 
     # ==============================================================================
     @property
+    def data(self) -> np.ndarray:
+        return self.__compute_render_shape(self.__raw.data)
+
+    @property
     def possible_layouts(self) -> List[DataLayout]:
         return self.__raw.container_cls.available_data_layouts()
 

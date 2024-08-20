@@ -8,6 +8,10 @@ class DataLayout(Enum):
     CPX_1D = "Complex 1D"
     CPX_2D = "Complex 2D"
 
+    @property
+    def is_real(self) -> bool:
+        return self in (DataLayout.REAL_1D, DataLayout.REAL_2D)
+
     @staticmethod
     def __complexify(dtype: np.dtype) -> np.dtype:
         if dtype == np.float32:

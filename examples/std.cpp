@@ -78,7 +78,7 @@ int main() {
 
   // Apply 0.5 gain
   for (auto i = 0; i < kBlockSize; ++i) {
-    carray[i] *= 0.5F;
+    carray[i] *= 1.5F;
     array[i] *= 0.5F;
     vector[i] *= 0.5F;
     carray_cpx[i] *= 0.5F;
