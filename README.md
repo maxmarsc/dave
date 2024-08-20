@@ -5,15 +5,16 @@ Debugger Audio Visualization Extension
 - [x] Freeze
 - [x] Concatenate 
 - [x] Save to disc
-- [ ] Add tooltip hover for action buttons
+- [x] Add tooltip hover for action buttons
 - [ ] out-of-scope detection
+- [ ] Mid/Side
+- [ ] Interleaved 
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
 - [ ] GSL
 - [ ] JUCE 
 - [ ] CHOC 
-- [ ] Mid/Side 
 - [ ] improve logging system
 - [ ] Document the code
 - [ ] One liner BASH installation 

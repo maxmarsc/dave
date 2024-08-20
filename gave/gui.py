@@ -22,6 +22,7 @@ from .data_layout import DataLayout
 from .container_model import ContainerModel
 from .container import Container
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
+from .tooltip import Tooltip
 
 
 class ContainerSettingsFrame:
@@ -100,6 +101,7 @@ class ContainerSettingsFrame:
             self.__layout_menu = tk.OptionMenu(
                 self.__frame, self.__layout_var, *possible_layouts_name
             )
+            Tooltip(self.__layout_menu, text="Select data layout of the container")
             self.__layout_menu.pack(side=tk.LEFT, padx=10, pady=10)
             self.__layout_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__layout_separator.pack(side=tk.LEFT, fill="y")
@@ -131,6 +133,7 @@ class ContainerSettingsFrame:
             self.__view_menu = tk.OptionMenu(
                 self.__frame, self.__view_var, *self.__model.possible_views
             )
+            Tooltip(self.__view_menu, text="Select which view to render")
             self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
             self.__view_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__view_separator.pack(side=tk.LEFT, fill="y")
@@ -291,6 +294,8 @@ class ActionButtonsFrame:
         self.__master = master
         # self.__frame = tk.Frame(self.__master)
         self.__container = container
+
+        # Create buttons
         self.__freeze_button = tk.Button(
             self.__master,
             text="F",
@@ -306,9 +311,17 @@ class ActionButtonsFrame:
         self.__save_button = tk.Button(
             self.__master, text="S", command=self.__save_button_clicked, relief="raised"
         )
+
+        # Create tooltips
+        Tooltip(self.__freeze_button, text="Freeze")
+        Tooltip(self.__concat_button, text="Concatenate")
+        Tooltip(self.__save_button, text="Save to disc")
+
+        # Packing
         self.__freeze_button.pack(anchor=tk.CENTER, fill=tk.X)
         self.__concat_button.pack(anchor=tk.CENTER, fill=tk.X)
         self.__save_button.pack(anchor=tk.CENTER, fill=tk.X)
+
         self.update()
 
     def __freeze_button_clicked(self):
