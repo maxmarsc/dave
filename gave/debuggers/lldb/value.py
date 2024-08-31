@@ -62,6 +62,9 @@ class LldbValue(AbstractValue):
     def __int__(self) -> int:
         return self.__value.GetValueAsSigned()
 
+    def in_scope(self) -> bool:
+        return self.__value.is_in_scope
+
     @staticmethod
     def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> np.ndarray:
         process = lldb.debugger.GetSelectedTarget().GetProcess()  # type: lldb.SBProcess

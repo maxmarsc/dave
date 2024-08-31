@@ -54,11 +54,14 @@ class GaveProcess(metaclass=SingletonMeta):
         # First check for delete messages
         self.__handle_incoming_messages()
 
-        # Then update all the containers
+        # Then update all the containers that are in the current scope
         for container in self.__containers.values():
-            data = container.read_from_debugger()
             id = container.id
-            self.__cqueue.put(ContainerModel.Update(id, data))
+            if not container.in_scope:
+                self.__cqueue.put(ContainerModel.OutScopeUpdate(id))
+            else:
+                data = container.read_from_debugger()
+                self.__cqueue.put(ContainerModel.InScopeUpdate(id, data))
 
     def add_to_model(self, container: Container):
         self.__containers[container.id] = container

@@ -7,7 +7,7 @@ from typing import Any, Callable, List, Tuple, Type, Union
 
 from .data_layout import DataLayout
 
-# from .debuggers.value import AbstractValue
+from .debuggers.value import AbstractValue
 
 import numpy as np
 
@@ -101,6 +101,12 @@ class Container(ABC):
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def in_scope(self) -> bool:
+        if isinstance(self._value, AbstractValue):
+            return self._value.in_scope()
+        return True
 
     @property
     def id(self) -> int:

@@ -69,7 +69,7 @@ class GdbCommand(gdb.Command):
             dims = [int(val) for val in args[1].split(",")]
         else:
             dims = list()
-        var = GdbValue(gdb.parse_and_eval(varname))
+        var = GdbValue(gdb.parse_and_eval(varname), varname)
         typename = var.typename()
         try:
             container = ContainerFactory().build(var, typename, varname, dims)

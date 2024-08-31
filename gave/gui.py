@@ -26,6 +26,16 @@ from .tooltip import Tooltip
 
 
 class ContainerSettingsFrame:
+    """
+    Holds all the settings of a container (not the actions buttons)
+
+    This will always contains, left-to-right :
+    - Layout selector
+    - Channel selector/label
+    - View type selector
+    - View type settings
+    """
+
     def __init__(self, master: tk.Misc, model: ContainerModel) -> None:
         self.__model = model
         self.__master = master
@@ -90,6 +100,9 @@ class ContainerSettingsFrame:
 
     def delete_button_callback(self):
         self.__model.mark_for_deletion()
+        self.__frame.destroy()
+
+    def destroy(self):
         self.__frame.destroy()
 
     def update(self):
@@ -248,6 +261,10 @@ class ViewSettingsFrame:
 
 
 class ContainersActionsButtonsFrames:
+    """
+    Holds the ActionButtonsFrame for every (in scope) container
+    """
+
     def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
         self.__master = master
         self.__container_models = container_models
@@ -258,7 +275,10 @@ class ContainersActionsButtonsFrames:
         # First delete old occurences
         to_delete = []
         for id, buttons_frame in self.__container_buttons_frame.items():
-            if id not in self.__container_models:
+            if (
+                id not in self.__container_models
+                or not self.__container_models[id].in_scope
+            ):
                 buttons_frame.destroy()
                 to_delete.append(id)
 
@@ -268,7 +288,7 @@ class ContainersActionsButtonsFrames:
 
         # Then add new containers
         for id, container in self.__container_models.items():
-            if id not in self.__container_buttons_frame:
+            if id not in self.__container_buttons_frame and container.in_scope:
                 idx = len(self.__container_buttons)
                 self.__container_buttons_frame[id] = tk.Frame(self.__master)
                 self.__container_buttons[id] = ActionButtonsFrame(
@@ -285,14 +305,11 @@ class ContainersActionsButtonsFrames:
 
 class ActionButtonsFrame:
     """
-    A widget that holds stuff
-
-    _extended_summary_
+    Holds the action buttons (Freeze, Concatenate ...) of a single container
     """
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
         self.__master = master
-        # self.__frame = tk.Frame(self.__master)
         self.__container = container
 
         # Create buttons
@@ -378,24 +395,49 @@ class ActionButtonsFrame:
 
 
 class SettingsTab:
-    def __init__(self, master):
+    def __init__(self, master, container_models: Dict[int, ContainerModel]):
         self.__master = master
+        self.__container_models = container_models
         self.__containers_settings: Dict[int, ContainerSettingsFrame] = dict()
+        self.__empty_label = None
         self.update_ui()
 
     def add_container(self, container: ContainerModel):
         assert container.id not in self.__containers_settings
+        assert container.id in self.__container_models
+        assert container.in_scope
         self.__containers_settings[container.id] = ContainerSettingsFrame(
             self.__master, container
         )
 
     def delete_container(self, id: int):
-        self.__containers_settings[id].delete_button_callback()
-        del self.__containers_settings[id]
+        # Warning : This will mark the container for deletion, this should
+        # not be called when just being out of scope
+        if id in self.__containers_settings:
+            self.__containers_settings[id].delete_button_callback()
+            del self.__containers_settings[id]
 
     def update_ui(self):
-        for settings_frame in self.__containers_settings.values():
-            settings_frame.update()
+        for id, container in self.__container_models.items():
+            if id not in self.__containers_settings and container.in_scope:
+                # Back in scope, let's add it
+                self.add_container(container)
+            elif id in self.__containers_settings and not container.in_scope:
+                # Left the scope, let's remove it
+                self.__containers_settings[id].destroy()
+                del self.__containers_settings[id]
+            elif id in self.__containers_settings and container.in_scope:
+                # Still in scope, let's update it
+                self.__containers_settings[id].update()
+
+        if len(self.__containers_settings) == 0 and self.__empty_label is None:
+            self.__empty_label = tk.Label(
+                self.__master, text="No container in scope", font="bold"
+            )
+            self.__empty_label.pack(anchor=tk.CENTER, expand=True)
+        elif len(self.__containers_settings) != 0 and self.__empty_label is not None:
+            self.__empty_label.destroy()
+            self.__empty_label = None
 
 
 class AudioViewsTab:
@@ -424,6 +466,8 @@ class AudioViewsTab:
     def __subplots_hratios(self) -> List[int]:
         hratios = []
         for model in self.__container_models.values():
+            if not model.in_scope:
+                continue
             if model.frozen and not model.is_view_superposable:
                 # If the view is not superposable, we need a subplot for both
                 # frozen and live signal - we make them thinner
@@ -442,6 +486,12 @@ class AudioViewsTab:
         self.__fig.clear()
         hratios = self.__subplots_hratios()
         nrows = len(hratios)
+        if nrows == 0:
+            self.__fig.text(
+                0.5, 0.5, "No container in scope", fontsize=14, ha="center", va="center"
+            )
+            self.__canvas.draw_idle()
+            return
         subplots_axes = self.__fig.subplots(
             nrows=nrows, ncols=1, gridspec_kw={"height_ratios": hratios}
         )  # type: List[Axes]
@@ -449,6 +499,8 @@ class AudioViewsTab:
             subplots_axes = np.array([subplots_axes])
         i = 0
         for model in self.__container_models.values():
+            if not model.in_scope:
+                continue
             for channel in range(model.channels):
                 if model.frozen and not model.is_view_superposable:
                     axes = subplots_axes[i : i + 2]
@@ -512,7 +564,7 @@ class GaveGUI:
         self.__settings_tabframe = ttk.Frame(self.__notebook)
         self.__notebook.add(self.__settings_tabframe, text="Settings")
         self.__audio_views_tab = AudioViewsTab(self.__audio_tabframe, self.__models)
-        self.__settings_tab = SettingsTab(self.__settings_tabframe)
+        self.__settings_tab = SettingsTab(self.__settings_tabframe, self.__models)
         self.__update_tk_id = ""
 
     @staticmethod
@@ -560,8 +612,11 @@ class GaveGUI:
                     self.__models[msg.id] = new_model
                     self.__settings_tab.add_container(new_model)
                     update_needed = True
-                elif isinstance(msg, ContainerModel.Update):
+                elif isinstance(msg, ContainerModel.InScopeUpdate):
                     self.__models[msg.id].update_data(msg.data)
+                    update_needed = True
+                elif isinstance(msg, ContainerModel.OutScopeUpdate):
+                    self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
             except queue.Empty:
                 break
@@ -611,6 +666,7 @@ class GaveGUI:
             self.__audio_views_tab.update()
             self.__settings_tab.update_ui()
 
+        # Queue the next update
         self.__update_tk_id = self.__window.after(
             self.__refresh_time_ms, self.tkinter_update_callback
         )

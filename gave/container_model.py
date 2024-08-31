@@ -17,9 +17,13 @@ import tkinter as tk
 
 class ContainerModel:
     @dataclass
-    class Update:
+    class InScopeUpdate:
         id: int
         data: np.ndarray
+
+    @dataclass
+    class OutScopeUpdate:
+        id: int
 
     def __init__(self, raw: Container.Raw, samplerate: float):
         self.__raw = raw
@@ -27,6 +31,7 @@ class ContainerModel:
         self.__frozen_data = None
         self.__concat = False
         self.__channels = self.__raw.data.shape[0]
+        self.__in_scope = True
         if not issubclass(raw.container_cls, Container):
             raise RuntimeError(f"{raw.container_cls} is not a valid container class")
         self.__data_layout: DataLayout = self.__raw.default_layout
@@ -38,6 +43,10 @@ class ContainerModel:
         self.__deletion_pending = False
 
     # ==============================================================================
+    @property
+    def in_scope(self) -> bool:
+        return self.__in_scope
+
     @property
     def data(self) -> np.ndarray:
         return self.__compute_render_shape(self.__raw.data)
@@ -182,7 +191,11 @@ class ContainerModel:
             self.__raw.data = np.concatenate((self.__raw.data, new_data), -1)
         else:
             self.__raw.data = new_data
+        self.__in_scope = True
         self.__update_pending = True
+
+    def mark_as_out_of_scope(self):
+        self.__in_scope = False
 
     def update_channel(self, value: int) -> bool:
         if isinstance(value, str):

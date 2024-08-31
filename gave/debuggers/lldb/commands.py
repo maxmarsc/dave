@@ -102,10 +102,15 @@ class ShowCommand:
             result.SetError("No valid frame to evaluate variable.")
             return
 
+        # var = frame.EvaluateExpression(varname)  # type: lldb.SBValue
         var = frame.FindVariable(varname)  # type: lldb.SBValue
+        if not var.IsValid():
+            # Try through 'this'
+            var = frame.FindVariable("this").GetChildMemberWithName(varname)
         if not var.IsValid():
             result.SetError(f"Variable '{varname}' not found.")
             return
+
         lldb_value = LldbValue(var)
         typename = lldb_value.typename()
         try:

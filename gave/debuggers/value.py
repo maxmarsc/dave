@@ -32,6 +32,10 @@ class AbstractValue(ABC):
     def __getitem__(self, key: int) -> AbstractValue:
         pass
 
+    @abstractmethod
+    def in_scope(self) -> bool:
+        pass
+
     @staticmethod
     @abstractmethod
     def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> np.ndarray:

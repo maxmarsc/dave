@@ -6,8 +6,9 @@ import numpy as np
 
 
 class GdbValue(AbstractValue):
-    def __init__(self, gdb_value: gdb.Value) -> None:
+    def __init__(self, gdb_value: gdb.Value, varname: str) -> None:
         self.__value = gdb_value
+        self.__varname = varname
 
     def typename(self) -> str:
         return str(gdb.types.get_basic_type(self.__value.type).strip_typedefs())
@@ -17,7 +18,7 @@ class GdbValue(AbstractValue):
 
     def attr(self, name: str) -> GdbValue:
         try:
-            return GdbValue(self.__value[name])
+            return GdbValue(self.__value[name], f"{self.__varname}.{name}")
         except gdb.error as e:
             raise RuntimeError(
                 f"Failed to access member {name} on {self.__value.type.name}"
@@ -46,7 +47,17 @@ class GdbValue(AbstractValue):
         Access value by index. Only available for pointer types
         """
         assert isinstance(key, int)
-        return GdbValue(self.__value[key])
+        return GdbValue(self.__value[key], f"{self.__varname}[{key}]")
+
+    def in_scope(self) -> bool:
+        # Try to reparse the varname
+        try:
+            value = gdb.parse_and_eval(self.__varname)
+            in_scope = value.address == self.__value.address
+        except gdb.error:
+            in_scope = False
+
+        return in_scope
 
     @staticmethod
     def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> ndarray:
