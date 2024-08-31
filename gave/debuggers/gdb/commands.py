@@ -6,6 +6,8 @@ from ...process import GaveProcess
 from ...container_factory import ContainerFactory, ContainerError
 from .value import GdbValue
 
+last_frame = None  # type: gdb.Frame
+
 
 def exit_handler(event):
     if GaveProcess().is_alive():
@@ -17,6 +19,15 @@ def exit_handler(event):
 def stop_handler(event: gdb.StopEvent):
     if GaveProcess().is_alive():
         GaveProcess().dbgr_update_callback()
+
+
+def frame_checker():
+    global last_frame  # type: gdb.Frame
+    current_frame = gdb.selected_frame()
+    if current_frame != last_frame and GaveProcess().is_alive():
+        if last_frame is not None:
+            GaveProcess().dbgr_update_callback()
+        last_frame = current_frame
 
 
 class GdbCommand(gdb.Command):
