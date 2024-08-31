@@ -14,11 +14,11 @@ class StopHook:
         pass
 
     def handle_stop(self, exe_ctx: lldb.SBExecutionContext, stream: lldb.SBStream):
+        stop_reason = exe_ctx.GetProcess().GetSelectedThread().GetStopReason()
+
         # Check if the stop reason is a breakpoint
-        if (
-            exe_ctx.GetProcess().GetSelectedThread().GetStopReason()
-            == lldb.eStopReasonBreakpoint
-        ):
+        if stop_reason in (lldb.eStopReasonBreakpoint, lldb.eStopReasonPlanComplete):
+            print("updating")
             if GaveProcess().is_alive():
                 GaveProcess().dbgr_update_callback()
         return True
