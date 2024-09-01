@@ -7,7 +7,7 @@ Debugger Audio Visualization Extension
 - [x] Save to disc
 - [x] Add tooltip hover for action buttons
 - [x] out-of-scope detection
-- [ ] react to step over/up/down
+- [x] react to step over/up/down
 - [ ] Mid/Side
 - [ ] Interleaved 
 - [ ] command aliases
