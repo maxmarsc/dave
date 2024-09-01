@@ -33,6 +33,7 @@ class ContainerModel:
         self.__channels = self.__raw.data.shape[0]
         self.__in_scope = True
         self.__interleaved = False
+        self.__mid_side = False
         if not issubclass(raw.container_cls, Container):
             raise RuntimeError(f"{raw.container_cls} is not a valid container class")
         self.__data_layout: DataLayout = self.__raw.default_layout
@@ -50,7 +51,7 @@ class ContainerModel:
 
     @property
     def data(self) -> np.ndarray:
-        return self.__compute_render_shape(self.__raw.data)
+        return self.__compute_render_array(self.__raw.data)
 
     @property
     def possible_layouts(self) -> List[DataLayout]:
@@ -133,6 +134,19 @@ class ContainerModel:
             self.__interleaved = value
             self.__update_pending = True
 
+    @property
+    def mid_side(self) -> bool:
+        if self.channels != 2:
+            return False
+        return self.__mid_side
+
+    @mid_side.setter
+    def mid_side(self, value: bool):
+        assert self.channels == 2
+        if self.mid_side != value:
+            self.__mid_side = value
+            self.__update_pending = True
+
     def is_layout_2D(self):
         if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
             return True
@@ -156,14 +170,23 @@ class ContainerModel:
     def reset_update_flag(self):
         self.__update_pending = False
 
-    def __compute_render_shape(self, data: np.ndarray) -> np.ndarray:
+    def __compute_render_array(self, data: np.ndarray) -> np.ndarray:
         total_samples = data.shape[0] * data.shape[1]
         render_shape = (self.__channels, int(total_samples / self.__channels))
         if self.interleaved:
             interleaved_shape = render_shape[::-1]
-            return data.reshape(interleaved_shape).T
+            render_data = data.reshape(interleaved_shape).T
         else:
-            return data.reshape(render_shape)
+            render_data = data.reshape(render_shape)
+
+        if not self.mid_side:
+            return render_data
+        else:
+            # Requires a rewrite in memory
+            mid_side_data = np.array(render_data)
+            mid_side_data[0] = (render_data[0][:] + render_data[1][:]) / 2.0
+            mid_side_data[1] = (render_data[0][:] - render_data[1][:]) / 2.0
+            return mid_side_data
 
     def draw_audio_view(self, axes: List[Axes], channel: int):
         """
@@ -182,9 +205,9 @@ class ContainerModel:
             The channel to draw
         """
         # Compute the rendering shape
-        live_data = self.__compute_render_shape(self.__raw.data)
+        live_data = self.__compute_render_array(self.__raw.data)
         if self.frozen:
-            frozen_data = self.__compute_render_shape(self.__frozen_data)
+            frozen_data = self.__compute_render_array(self.__frozen_data)
 
         if self.frozen and not self.is_view_superposable:
             # Render frozen and live data on different subplots

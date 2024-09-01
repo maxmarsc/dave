@@ -8,7 +8,7 @@ Debugger Audio Visualization Extension
 - [x] Add tooltip hover for action buttons
 - [x] out-of-scope detection
 - [x] react to step over/up/down
-- [ ] Mid/Side
+- [x] Mid/Side
 - [x] Interleaved 
 - [ ] command aliases
 - [ ] minimize call to render functions

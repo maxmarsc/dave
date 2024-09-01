@@ -55,6 +55,7 @@ class ContainerSettingsFrame:
         self.__channel_label = None
         self.__channel_entry = None
         self.__channel_interleaved_button = None
+        self.__channel_mid_side_button = None
         self.__channel_separator = None
         # View selection
         self.__view_menu = None
@@ -72,23 +73,41 @@ class ContainerSettingsFrame:
         self.update()
         self.__frame.pack(side=tk.TOP, fill="x")
 
+    def layout_var_callback(self, *_):
+        # Update the model
+        self.__model.update_layout(DataLayout(self.__layout_var.get()))
+        # Reset the old gui widgets
+        self.reset_channel_menu()
+        self.reset_view_menu()
+        self.reset_view_settings()
+        # Update the view_var with the default view of the layout
+        self.__view_var.set(self.__model.selected_view)
+        # Trigger a redraw
+        self.update()
+
     def view_var_callback(self, *_):
         # Update the model
         self.__model.update_view_type(self.__view_var.get())
         # Reset the settings of the view
-        self.__view_settings_frame.destroy()
-        self.__view_settings_frame = None
-        self.__view_settings = None
+        self.reset_view_settings()
         # Trigger a redraw
         self.update()
 
-    def layout_var_callback(self, *_):
-        # Update the model
-        self.__model.update_layout(DataLayout(self.__layout_var.get()))
+    def reset_view_menu(self):
         # Reset the view selector
-        self.__view_menu.destroy()
-        self.__view_separator.destroy()
-        self.__view_menu = None
+        if self.__view_menu:
+            self.__view_menu.destroy()
+            self.__view_separator.destroy()
+            self.__view_menu = None
+
+    def reset_view_settings(self):
+        # Reset the settings of the view
+        if self.__view_settings_frame:
+            self.__view_settings_frame.destroy()
+            self.__view_settings_frame = None
+            self.__view_settings = None
+
+    def reset_channel_menu(self):
         if self.__channel_label:
             self.__channel_label.destroy()
             if self.__channel_entry:
@@ -98,8 +117,9 @@ class ContainerSettingsFrame:
             if self.__channel_interleaved_button:
                 self.__channel_interleaved_button.destroy()
                 self.__channel_interleaved_button = None
-        # Update the view type -> this will trigger the view_var_callback
-        self.__view_var.set(value=self.__model.selected_view)
+            if self.__channel_mid_side_button:
+                self.__channel_mid_side_button.destroy()
+                self.__channel_mid_side_button = None
 
     def interleaved_button_callback(self, *_):
         # Update the model
@@ -107,6 +127,14 @@ class ContainerSettingsFrame:
         # Update the button
         self.__channel_interleaved_button.config(
             relief=tk.SUNKEN if self.__model.interleaved else tk.RAISED
+        )
+
+    def mid_side_button_callback(self, *_):
+        # Update the model
+        self.__model.mid_side = not self.__model.mid_side
+        # Update the button
+        self.__channel_mid_side_button.config(
+            relief=tk.SUNKEN if self.__model.mid_side else tk.RAISED
         )
 
     def delete_button_callback(self):
@@ -130,6 +158,15 @@ class ContainerSettingsFrame:
             self.__layout_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__layout_separator.pack(side=tk.LEFT, fill="y")
 
+        # If the mid/side button should be added or removed, we force the update
+        # by deleting the channel menu
+        if (self.__model.channels == 2 and self.__channel_mid_side_button is None) or (
+            self.__model.channels != 2 and self.__channel_mid_side_button is not None
+        ):
+            self.reset_channel_menu()
+            self.reset_view_menu()
+            self.reset_view_settings()
+
         # Create the channel menu
         if self.__model.is_layout_2D() and not self.__channel_label:
             if self.__model.is_channel_layout_fixed():
@@ -143,7 +180,7 @@ class ContainerSettingsFrame:
                 vcmd = (self.__master.register(self.__model.update_channel), "%P")
                 self.__channel_label = tk.Label(self.__frame, text=f"channels :")
                 self.__channel_entry = tk.Entry(
-                    self.__frame, validate="focusout", validatecommand=vcmd, width=4
+                    self.__frame, validate="focus", validatecommand=vcmd, width=4
                 )
                 self.__channel_entry.insert(0, f"{self.__model.channels}")
                 self.__channel_interleaved_button = tk.Button(
@@ -154,7 +191,17 @@ class ContainerSettingsFrame:
                 )
                 self.__channel_label.pack(side=tk.LEFT, padx=5)
                 self.__channel_entry.pack(side=tk.LEFT)
-                self.__channel_interleaved_button.pack(side=tk.LEFT, padx=5)
+                self.__channel_interleaved_button.pack(side=tk.LEFT, padx=3)
+
+            if self.__model.channels == 2:
+                self.__channel_mid_side_button = tk.Button(
+                    self.__frame,
+                    text="mid/side",
+                    relief=tk.SUNKEN if self.__model.mid_side else tk.RAISED,
+                    command=self.mid_side_button_callback,
+                )
+                self.__channel_mid_side_button.pack(side=tk.LEFT, padx=3)
+
             self.__channel_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__channel_separator.pack(side=tk.LEFT, fill="y")
 
@@ -519,16 +566,21 @@ class AudioViewsTab:
             if not model.in_scope:
                 continue
             for channel in range(model.channels):
+                title = (
+                    f"{model.variable_name} channel {channel}"
+                    if not model.mid_side
+                    else " {}".format("mid" if channel == 0 else "side")
+                )
+
                 if model.frozen and not model.is_view_superposable:
+                    title += " (frozen)"
                     axes = subplots_axes[i : i + 2]
-                    axes[1].set_title(
-                        model.variable_name + f" channel {channel} (frozen)"
-                    )
+                    axes[1].set_title(title)
                     i += 2
                 else:
                     axes = subplots_axes[i : i + 1]
                     i += 1
-                axes[0].set_title(model.variable_name + f" channel {channel}")
+                axes[0].set_title(title)
                 model.draw_audio_view(axes, channel)
         roffset = 0.08
         self.__fig.subplots_adjust(
