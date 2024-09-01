@@ -54,7 +54,7 @@ class ContainerSettingsFrame:
         # Optionnal channel menu
         self.__channel_label = None
         self.__channel_entry = None
-        # self.__channel_var = None
+        self.__channel_interleaved_button = None
         self.__channel_separator = None
         # View selection
         self.__view_menu = None
@@ -95,8 +95,19 @@ class ContainerSettingsFrame:
                 self.__channel_entry.destroy()
             self.__channel_separator.destroy()
             self.__channel_label = None
+            if self.__channel_interleaved_button:
+                self.__channel_interleaved_button.destroy()
+                self.__channel_interleaved_button = None
         # Update the view type -> this will trigger the view_var_callback
         self.__view_var.set(value=self.__model.selected_view)
+
+    def interleaved_button_callback(self, *_):
+        # Update the model
+        self.__model.interleaved = not self.__model.interleaved
+        # Update the button
+        self.__channel_interleaved_button.config(
+            relief=tk.SUNKEN if self.__model.interleaved else tk.RAISED
+        )
 
     def delete_button_callback(self):
         self.__model.mark_for_deletion()
@@ -128,16 +139,22 @@ class ContainerSettingsFrame:
                 )
                 self.__channel_label.pack(side=tk.LEFT, padx=5)
             else:
+                # If the number of channel is not fixed, it might be interleaved
                 vcmd = (self.__master.register(self.__model.update_channel), "%P")
                 self.__channel_label = tk.Label(self.__frame, text=f"channels :")
                 self.__channel_entry = tk.Entry(
-                    self.__frame,
-                    validate="focusout",
-                    validatecommand=vcmd,
+                    self.__frame, validate="focusout", validatecommand=vcmd, width=4
                 )
                 self.__channel_entry.insert(0, f"{self.__model.channels}")
+                self.__channel_interleaved_button = tk.Button(
+                    self.__frame,
+                    text="interleaved",
+                    relief=tk.SUNKEN if self.__model.interleaved else tk.RAISED,
+                    command=self.interleaved_button_callback,
+                )
                 self.__channel_label.pack(side=tk.LEFT, padx=5)
                 self.__channel_entry.pack(side=tk.LEFT)
+                self.__channel_interleaved_button.pack(side=tk.LEFT, padx=5)
             self.__channel_separator = ttk.Separator(self.__frame, orient="vertical")
             self.__channel_separator.pack(side=tk.LEFT, fill="y")
 

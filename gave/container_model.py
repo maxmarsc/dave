@@ -32,6 +32,7 @@ class ContainerModel:
         self.__concat = False
         self.__channels = self.__raw.data.shape[0]
         self.__in_scope = True
+        self.__interleaved = False
         if not issubclass(raw.container_cls, Container):
             raise RuntimeError(f"{raw.container_cls} is not a valid container class")
         self.__data_layout: DataLayout = self.__raw.default_layout
@@ -80,10 +81,6 @@ class ContainerModel:
         return self.__raw.id
 
     @property
-    def channels(self) -> int:
-        return self.__channels
-
-    @property
     def frozen(self) -> bool:
         return self.__frozen_data is not None
 
@@ -112,11 +109,29 @@ class ContainerModel:
     def is_view_superposable(self) -> bool:
         return self.__view.is_superposable()
 
+    @property
+    def channels(self) -> int:
+        return self.__channels
+
     @channels.setter
     def channels(self, value: int):
         assert not self.is_channel_layout_fixed()
-        self.__channels = value
-        self.__update_pending = True
+        if self.channels != value:
+            self.__channels = value
+            self.__update_pending = True
+
+    @property
+    def interleaved(self) -> bool:
+        if self.is_channel_layout_fixed():
+            return False
+        return self.__interleaved
+
+    @interleaved.setter
+    def interleaved(self, value: bool):
+        assert not self.is_channel_layout_fixed()
+        if self.interleaved != value:
+            self.__interleaved = value
+            self.__update_pending = True
 
     def is_layout_2D(self):
         if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
@@ -124,10 +139,6 @@ class ContainerModel:
         return False
 
     def is_channel_layout_fixed(self):
-        # if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
-        #     if self.__raw.data.shape[0] == 1:
-        #         return False
-        # return True
         if issubclass(self.__raw.container_cls, Container2D):
             return True
         return False
@@ -148,7 +159,11 @@ class ContainerModel:
     def __compute_render_shape(self, data: np.ndarray) -> np.ndarray:
         total_samples = data.shape[0] * data.shape[1]
         render_shape = (self.__channels, int(total_samples / self.__channels))
-        return data.reshape(render_shape)
+        if self.interleaved:
+            interleaved_shape = render_shape[::-1]
+            return data.reshape(interleaved_shape).T
+        else:
+            return data.reshape(render_shape)
 
     def draw_audio_view(self, axes: List[Axes], channel: int):
         """

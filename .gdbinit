@@ -23,14 +23,14 @@ try:
 except ModuleNotFoundError:
     print("[Warning] : dave module not found.")
 end
-# b std.cpp:61
-# b std.cpp:80
-# b std.cpp:87
-b cpp_scope.cpp:11
-b cpp_scope.cpp:13
-b cpp_scope.cpp:28
-b cpp_scope.cpp:38
-b cpp_scope.cpp:45
+b std.cpp:61
+b std.cpp:80
+b std.cpp:87
+# b cpp_scope.cpp:11
+# b cpp_scope.cpp:13
+# b cpp_scope.cpp:28
+# b cpp_scope.cpp:38
+# b cpp_scope.cpp:45
 # b c_example.c:29
 # b c_example.c:37
 # b c_example.c:53

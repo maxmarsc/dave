@@ -9,7 +9,7 @@ Debugger Audio Visualization Extension
 - [x] out-of-scope detection
 - [x] react to step over/up/down
 - [ ] Mid/Side
-- [ ] Interleaved 
+- [x] Interleaved 
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
