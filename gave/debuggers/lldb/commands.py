@@ -16,9 +16,8 @@ class StopHook:
     def handle_stop(self, exe_ctx: lldb.SBExecutionContext, stream: lldb.SBStream):
         stop_reason = exe_ctx.GetProcess().GetSelectedThread().GetStopReason()
 
-        # Check if the stop reason is a breakpoint
+        # Check if the stop reason is a breakpoint or step-over
         if stop_reason in (lldb.eStopReasonBreakpoint, lldb.eStopReasonPlanComplete):
-            print("updating")
             if GaveProcess().is_alive():
                 GaveProcess().dbgr_update_callback()
         return True
@@ -27,8 +26,9 @@ class StopHook:
 class LLDBEventHandler:
     def __init__(self, debugger: lldb.SBDebugger):
         self.__debugger = debugger
-        self.__listener = lldb.SBListener("dave_process_listener")
+        self.__listener = lldb.SBListener("lldb_listener")
         self.attached = False
+        self.__last_frame = None
 
         # Start listening thread
         self.__thread = threading.Thread(target=self.__event_loop)
@@ -42,14 +42,38 @@ class LLDBEventHandler:
             process.broadcaster.AddListener(
                 self.__listener,
                 lldb.SBProcess.eBroadcastBitStateChanged
-                | lldb.SBProcess.eBroadcastBitInterrupt,
+                | lldb.SBProcess.eBroadcastBitInterrupt
+                | lldb.SBProcess.eBroadcastBitStateChanged,
             )
+
+            # Get the broadcaster class name for SBThread
+            thread_broadcaster_class = lldb.SBThread.GetBroadcasterClassName()
+
+            # Start listening for thread events
+            self.__listener.StartListeningForEventClass(
+                self.__debugger,
+                thread_broadcaster_class,
+                lldb.SBThread.eBroadcastBitSelectedFrameChanged
+                | lldb.SBThread.eBroadcastBitStackChanged,
+            )
+
             self.attached = True
 
     def __close_process(self):
         if GaveProcess().is_alive():
             GaveProcess().should_stop()
             GaveProcess().join()
+
+    def __check_frame_change(self):
+        current_frame = (
+            self.__debugger.GetSelectedTarget()
+            .GetProcess()
+            .GetSelectedThread()
+            .GetSelectedFrame()
+        )
+        if GaveProcess().is_alive() and current_frame != self.__last_frame:
+            GaveProcess().dbgr_update_callback()
+            self.__last_frame = current_frame
 
     def __event_loop(self):
         while True:
@@ -67,6 +91,8 @@ class LLDBEventHandler:
                             or event.GetType() == lldb.SBProcess.eBroadcastBitInterrupt
                         ):
                             self.__close_process()
+                    elif lldb.SBThread.EventIsThreadEvent(event):
+                        self.__check_frame_change()
             time.sleep(0.02)
 
 
@@ -102,16 +128,12 @@ class ShowCommand:
             result.SetError("No valid frame to evaluate variable.")
             return
 
-        # var = frame.EvaluateExpression(varname)  # type: lldb.SBValue
-        var = frame.FindVariable(varname)  # type: lldb.SBValue
-        if not var.IsValid():
-            # Try through 'this'
-            var = frame.FindVariable("this").GetChildMemberWithName(varname)
+        var = LldbValue.find_variable_robust(varname, frame)
         if not var.IsValid():
             result.SetError(f"Variable '{varname}' not found.")
             return
 
-        lldb_value = LldbValue(var)
+        lldb_value = LldbValue(var, varname)
         typename = lldb_value.typename()
         try:
             container = ContainerFactory().build(lldb_value, typename, varname, dims)
