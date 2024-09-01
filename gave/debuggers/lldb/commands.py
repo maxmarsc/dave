@@ -108,7 +108,6 @@ class ShowCommand:
         result: lldb.SBCommandReturnObject,
     ):
         args = shlex.split(command)
-        result.AppendMessage(f"{args}")
 
         if len(args) < 1 or len(args) > 2:
             result.SetError("Usage: gave show <variable> [dim1[,dim2]]")
