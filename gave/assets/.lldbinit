@@ -1,3 +1,0 @@
-# --- DAVE BEGIN ---
-command script import lldb_init.py
-# --- DAVE END ---

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="gave",
+    name="dave",
     version="0.0.1",
     author="maxmarsc",
     install_requires=[
@@ -12,5 +12,5 @@ setup(
         "display": ["matplotlib>=2.2.3"],
         "doc": ["sphinx", "sphinx_rtd_theme", "numpydoc"],
     },
-    packages=find_packages(include=["gave"]),
+    packages=find_packages(include=["dave"]),
 )

@@ -5,10 +5,11 @@ Debugger Audio Visualization Extension
 To install dave and its bindings it relatively simple :
 ```bash
 # First install the module itself
-git clone git@github.com:maxmarsc/gave.git
-pip install -e gave
+git clone git@github.com:maxmarsc/gave.git dave
+# If not in a venv you need the --user flag to install it user-wide
+pip install -e dave
 # Then install the bindings for your debugger
-python -m gave install [gdb|lldb|both]
+python -m dave install [gdb|lldb|both]
 ```
 
 Then when starting your debugger you should see the following message :
@@ -17,29 +18,29 @@ Then when starting your debugger you should see the following message :
 ```
 
 And the dave commands should be available :
- - `gave show`
- - `gave delete`
- - `gave freeze`
- - `gave concat`
+ - `dave show`
+ - `dave delete`
+ - `dave freeze`
+ - `dave concat`
 
 ## Update
 If you want/need to update dave, it's done in two steps :
 ```bash
 # Update the module itself
-pip install --upgrade gave
+pip install --upgrade dave
 # Update the bindings for your debugger
-python -m gave update [gdb|lldb|both]
+python -m dave update [gdb|lldb|both]
 ```
 
 ## Uninstallation
 To remove the dave bindings
 ```bash
-python -m gave uninstall [gdb|lldb|both]
+python -m dave uninstall [gdb|lldb|both]
 ```
 
 You can then also remove the python module if you want : 
 ```bash
-pip uninstall gave
+pip uninstall dave
 ```
 
 ## Milestones
@@ -52,7 +53,7 @@ pip uninstall gave
 - [x] Mid/Side
 - [x] Interleaved 
 - [x] Easy installation
-- [ ] Rename every `gave` to `dave`
+- [ ] Rename every `dave` to `dave`
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
@@ -82,12 +83,12 @@ Python support is extremely limited because both python debuggers I have investi
 Only 1D and 2D numpy tensors are supported, and you need to manually import dave
 from the debugger CLI, like this:
 ```py
-import gave.debuggers.pdb as pygave
+import dave.debuggers.pdb as pydave
 ```
 
-pygave provides two functions :
- - `pygave.show` which display a container
- - `pygave.update` which forces the update of the containers data
+pydave provides two functions :
+ - `pydave.show` which display a container
+ - `pydave.update` which forces the update of the containers data
 
 
 ### LLDB on Ubuntu 22.04

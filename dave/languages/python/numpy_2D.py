@@ -2,8 +2,8 @@ import re
 from typing import Tuple
 import numpy as np
 
-from gave.container import SampleType, Container2D
-from gave.container_factory import ContainerFactory
+from dave.container import SampleType, Container2D
+from dave.container_factory import ContainerFactory
 
 
 class NumpyArray(Container2D):

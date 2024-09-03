@@ -154,6 +154,8 @@ def uninstall_lldb(backup=True):
     end = find_line(LLDB_INIT, END_MARKER)
     delete_lines_from_file(LLDB_INIT, start, end - start + 1)
 
+    LLDB_INIT_SCRIPT.unlink()
+
 
 def install_gdb(backup=True):
     if not DAVE_FOLDER.is_dir():

@@ -19,7 +19,7 @@ paths = (
 # sys.path.extend(paths)
 sys.path = paths + sys.path
 try:
-    import gave.debuggers.gdb
+    import dave.debuggers.gdb
 except ModuleNotFoundError:
     print("[dave] module not found. Commands will not be available")
 end

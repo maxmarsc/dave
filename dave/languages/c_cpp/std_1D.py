@@ -8,9 +8,9 @@ from typing import List, Tuple
 import numpy as np
 
 
-from gave.container import SampleType, Container1D
-from gave.container_factory import ContainerFactory
-from gave.debuggers.value import AbstractValue
+from dave.container import SampleType, Container1D
+from dave.container_factory import ContainerFactory
+from dave.debuggers.value import AbstractValue
 
 
 class CArray1D(Container1D):

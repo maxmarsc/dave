@@ -4,14 +4,14 @@ import queue
 from typing import Dict, List, Union
 from enum import Enum
 
-from .gui import GaveGUI
+from .gui import DaveGUI
 from .container import Container
 from .future_gdb import blocked_signals
 from .container_model import ContainerModel
 from .singleton import SingletonMeta
 
 
-class GaveProcess(metaclass=SingletonMeta):
+class DaveProcess(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.__containers: Dict[int, Container] = dict()
         self.__cqueue = multiprocessing.Queue()
@@ -32,7 +32,7 @@ class GaveProcess(metaclass=SingletonMeta):
             if old_spawn_method != "spawn":
                 multiprocessing.set_start_method("spawn", force=True)
             self.__process = multiprocessing.Process(
-                target=GaveGUI.create_and_run,
+                target=DaveGUI.create_and_run,
                 args=(self.__cqueue, self.__pqueue, monitor_live_signal),
             )
             if old_spawn_method != "spawn":
@@ -45,7 +45,7 @@ class GaveProcess(metaclass=SingletonMeta):
         return False
 
     def should_stop(self):
-        self.__cqueue.put(GaveGUI.Message.STOP)
+        self.__cqueue.put(DaveGUI.Message.STOP)
 
     def join(self):
         self.__process.join()
@@ -95,7 +95,7 @@ class GaveProcess(metaclass=SingletonMeta):
         if id not in self.__containers:
             return False
 
-        self.__cqueue.put(GaveGUI.FreezeMessage(id))
+        self.__cqueue.put(DaveGUI.FreezeMessage(id))
         return True
 
     def concat_container(self, id: str) -> bool:
@@ -117,7 +117,7 @@ class GaveProcess(metaclass=SingletonMeta):
         if id not in self.__containers:
             return False
 
-        self.__cqueue.put(GaveGUI.ConcatMessage(id))
+        self.__cqueue.put(DaveGUI.ConcatMessage(id))
         return True
 
     def delete_container(self, id: str) -> bool:
@@ -142,17 +142,17 @@ class GaveProcess(metaclass=SingletonMeta):
             return False
 
         # wtf is this flagged as unreachable
-        self.__cqueue.put(GaveGUI.DeleteMessage(id))
+        self.__cqueue.put(DaveGUI.DeleteMessage(id))
         return True
 
     def live_signal(self):
-        self.__cqueue.put(GaveGUI.Message.DBGR_IS_ALIVE)
+        self.__cqueue.put(DaveGUI.Message.DBGR_IS_ALIVE)
 
     def __handle_incoming_messages(self):
         while True:
             try:
                 msg = self.__pqueue.get_nowait()
-                if isinstance(msg, GaveGUI.DeleteMessage):
+                if isinstance(msg, DaveGUI.DeleteMessage):
                     del self.__containers[msg.id]
             except queue.Empty:
                 break

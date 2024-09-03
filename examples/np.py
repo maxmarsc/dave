@@ -1,5 +1,5 @@
 import numpy as np
-import gave.debuggers.pdb as pygave
+import dave.debuggers.pdb as pydave
 
 
 BLOCK_SIZE = 4096

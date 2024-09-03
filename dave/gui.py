@@ -589,7 +589,7 @@ class AudioViewsTab:
         self.__canvas.draw_idle()
 
 
-class GaveGUI:
+class DaveGUI:
     class Message(Enum):
         STOP = "stop"
         DBGR_IS_ALIVE = "dbgr_is_alive"
@@ -642,7 +642,7 @@ class GaveGUI:
         pqueue: multiprocessing.Queue,
         monitor_live_signal: bool,
     ):
-        gui = GaveGUI(cqueue, pqueue, monitor_live_signal)
+        gui = DaveGUI(cqueue, pqueue, monitor_live_signal)
         gui.run()
 
     def on_closing(self):
@@ -665,16 +665,16 @@ class GaveGUI:
             try:
                 msg = self.__cqueue.get(block=False)
 
-                if msg == GaveGUI.Message.STOP:
+                if msg == DaveGUI.Message.STOP:
                     self.on_closing()
                     return False
-                elif msg == GaveGUI.Message.DBGR_IS_ALIVE:
+                elif msg == DaveGUI.Message.DBGR_IS_ALIVE:
                     self.__live_signal_count = 0
-                elif isinstance(msg, GaveGUI.DeleteMessage):
+                elif isinstance(msg, DaveGUI.DeleteMessage):
                     self.__models[msg.id].mark_for_deletion()
-                elif isinstance(msg, GaveGUI.FreezeMessage):
+                elif isinstance(msg, DaveGUI.FreezeMessage):
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
-                elif isinstance(msg, GaveGUI.ConcatMessage):
+                elif isinstance(msg, DaveGUI.ConcatMessage):
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, Container.Raw):
                     new_model = ContainerModel(msg, 44100)
@@ -718,7 +718,7 @@ class GaveGUI:
         for id in to_delete:
             del self.__models[id]
             self.__settings_tab.delete_container(id)
-            self.__pqueue.put(GaveGUI.DeleteMessage(id))
+            self.__pqueue.put(DaveGUI.DeleteMessage(id))
 
         # If no container left we close the gui
         if len(self.__models) == 0 and len(to_delete) != 0:

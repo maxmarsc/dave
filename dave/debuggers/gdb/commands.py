@@ -1,7 +1,7 @@
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
-from ...process import GaveProcess
+from ...process import DaveProcess
 
 from ...container_factory import ContainerFactory, ContainerError
 from .value import GdbValue
@@ -10,31 +10,31 @@ last_frame = None  # type: gdb.Frame
 
 
 def exit_handler(event):
-    if GaveProcess().is_alive():
+    if DaveProcess().is_alive():
         # pass
-        GaveProcess().should_stop()
-        GaveProcess().join()
+        DaveProcess().should_stop()
+        DaveProcess().join()
 
 
 def stop_handler(event: gdb.StopEvent):
-    if GaveProcess().is_alive():
-        GaveProcess().dbgr_update_callback()
+    if DaveProcess().is_alive():
+        DaveProcess().dbgr_update_callback()
 
 
 def frame_checker():
     global last_frame  # type: gdb.Frame
     current_frame = gdb.selected_frame()
-    if current_frame != last_frame and GaveProcess().is_alive():
+    if current_frame != last_frame and DaveProcess().is_alive():
         if last_frame is not None:
-            GaveProcess().dbgr_update_callback()
+            DaveProcess().dbgr_update_callback()
         last_frame = current_frame
 
 
 class GdbCommand(gdb.Command):
-    """Custom GDB 'gave' command for advanced debugging tasks."""
+    """Custom GDB 'dave' command for advanced debugging tasks."""
 
     def __init__(self):
-        super(GdbCommand, self).__init__("gave", gdb.COMMAND_USER, gdb.COMPLETE_SYMBOL)
+        super(GdbCommand, self).__init__("dave", gdb.COMMAND_USER, gdb.COMPLETE_SYMBOL)
 
     @staticmethod
     def __check_for_running_inferior() -> bool:
@@ -47,7 +47,7 @@ class GdbCommand(gdb.Command):
     def invoke(self, arg, from_tty):
         args = gdb.string_to_argv(arg)
         if len(args) < 1:
-            print("Usage: gave <subcommand> [args]")
+            print("Usage: dave <subcommand> [args]")
             return
 
         if not GdbCommand.__check_for_running_inferior():
@@ -73,7 +73,7 @@ class GdbCommand(gdb.Command):
 
     def show(self, args):
         if len(args) < 1 or len(args) > 2:
-            raise gdb.GdbError("Usage: gave show VARIABLE [DIM1[,DIM2]]")
+            raise gdb.GdbError("Usage: dave show VARIABLE [DIM1[,DIM2]]")
 
         varname = args[0]
         if len(args) > 1:
@@ -87,43 +87,43 @@ class GdbCommand(gdb.Command):
             print(f"Built {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
-        if not GaveProcess().is_alive():
-            GaveProcess().start()
-        GaveProcess().add_to_model(container)
+        if not DaveProcess().is_alive():
+            DaveProcess().start()
+        DaveProcess().add_to_model(container)
 
     def delete_container(self, args):
         if len(args) != 1:
-            raise gdb.GdbError("Usage: gave delete VARIABLE|CONTAINER_ID")
+            raise gdb.GdbError("Usage: dave delete VARIABLE|CONTAINER_ID")
 
-        if not GaveProcess().is_alive():
+        if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not GaveProcess().delete_container(args[0]):
+        if not DaveProcess().delete_container(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def freeze_container(self, args):
         if len(args) != 1:
-            raise gdb.GdbError("Usage: gave freeze VARIABLE|CONTAINER_ID")
+            raise gdb.GdbError("Usage: dave freeze VARIABLE|CONTAINER_ID")
 
-        if not GaveProcess().is_alive():
+        if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not GaveProcess().freeze_container(args[0]):
+        if not DaveProcess().freeze_container(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def concat_container(self, args):
         if len(args) != 1:
-            raise gdb.GdbError("Usage: gave concat VARIABLE|CONTAINER_ID")
+            raise gdb.GdbError("Usage: dave concat VARIABLE|CONTAINER_ID")
 
-        if not GaveProcess().is_alive():
+        if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not GaveProcess().concat_container(args[0]):
+        if not DaveProcess().concat_container(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def print_attribute(self, args):
         if len(args) != 2:
-            raise gdb.GdbError("Usage: gave p2 <variable> <attribute>")
+            raise gdb.GdbError("Usage: dave p2 <variable> <attribute>")
 
         var_name = args[0]
         attr_name = args[1].split(".")
@@ -144,7 +144,7 @@ class GdbCommand(gdb.Command):
 
     def print_variable(self, args):
         if len(args) != 1:
-            raise gdb.GdbError("Usage: gave p <variable>")
+            raise gdb.GdbError("Usage: dave p <variable>")
 
         var_name = args[0]
         try:
