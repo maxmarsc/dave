@@ -1,4 +1,4 @@
-# set pagination off
+# --- DAVE BEGIN ---
 python
 # Update GDB's Python paths with the `sys.path` values of the local
 #  Python installation, whether that is brew'ed Python, a virtualenv,
@@ -21,20 +21,6 @@ sys.path = paths + sys.path
 try:
     import gave.debuggers.gdb
 except ModuleNotFoundError:
-    print("[Warning] : dave module not found.")
+    print("[dave] module not found. Commands will not be available")
 end
-b std.cpp:61
-b std.cpp:80
-b std.cpp:87
-# b cpp_scope.cpp:11
-# b cpp_scope.cpp:13
-# b cpp_scope.cpp:28
-# b cpp_scope.cpp:38
-# b cpp_scope.cpp:45
-# b c_example.c:29
-# b c_example.c:37
-# b c_example.c:53
-r
-# r
-# r
-# set pagination on
+# --- DAVE END ---

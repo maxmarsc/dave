@@ -1,16 +1,20 @@
-from gave.debuggers.lldb import (
-    ShowCommand,
-    DeleteCommand,
-    FreezeCommand,
-    ConcatCommand,
-    StopHook,
-    LLDBEventHandler,
-)
 import lldb  # type: ignore
-import sys
 
 
 def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
+    try:
+        from gave.debuggers.lldb import (
+            ShowCommand,
+            DeleteCommand,
+            FreezeCommand,
+            ConcatCommand,
+            StopHook,
+            LLDBEventHandler,
+        )
+    except ModuleNotFoundError:
+        print("[dave] module not found. Commands will not be available")
+        return
+
     # Register dave commands
     debugger.HandleCommand(
         'command container add -h "A container for my dave commands" gave'
@@ -32,3 +36,5 @@ def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
 
     # Event handler to handle process stop
     event_handler = LLDBEventHandler(debugger)
+
+    print("[dave] Successfully loaded")
