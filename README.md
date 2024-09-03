@@ -53,7 +53,7 @@ pip uninstall dave
 - [x] Mid/Side
 - [x] Interleaved 
 - [x] Easy installation
-- [ ] Rename every `dave` to `dave`
+- [ ] rename commands to fit `display` syntax
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
