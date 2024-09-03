@@ -1,6 +1,47 @@
 # dave
 Debugger Audio Visualization Extension
 
+## Installation
+To install dave and its bindings it relatively simple :
+```bash
+# First install the module itself
+git clone git@github.com:maxmarsc/gave.git
+pip install -e gave
+# Then install the bindings for your debugger
+python -m gave install [gdb|lldb|both]
+```
+
+Then when starting your debugger you should see the following message :
+```
+[dave] Successfully loaded
+```
+
+And the dave commands should be available :
+ - `gave show`
+ - `gave delete`
+ - `gave freeze`
+ - `gave concat`
+
+## Update
+If you want/need to update dave, it's done in two steps :
+```bash
+# Update the module itself
+pip install --upgrade gave
+# Update the bindings for your debugger
+python -m gave update [gdb|lldb|both]
+```
+
+## Uninstallation
+To remove the dave bindings
+```bash
+python -m gave uninstall [gdb|lldb|both]
+```
+
+You can then also remove the python module if you want : 
+```bash
+pip uninstall gave
+```
+
 ## Milestones
 - [x] Freeze
 - [x] Concatenate 
@@ -10,6 +51,8 @@ Debugger Audio Visualization Extension
 - [x] react to step over/up/down
 - [x] Mid/Side
 - [x] Interleaved 
+- [x] Easy installation
+- [ ] Rename every `gave` to `dave`
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
@@ -18,7 +61,6 @@ Debugger Audio Visualization Extension
 - [ ] CHOC 
 - [ ] improve logging system
 - [ ] Document the code
-- [ ] One liner BASH installation 
 - [ ] add setup instructions to readme
 - [ ] add license
 - [ ] add better documentation to GDB command
@@ -29,13 +71,25 @@ Debugger Audio Visualization Extension
 - [x] container deletion (GUI + delete command)
 - [x] LLDB
 
-## Python support
+
+
+## Troubleshooting
+
+### Python support
+Python support is extremely limited because both python debuggers I have investigated
+(pdb and debugpy) does not provide an API complete enough to provide full DAVE support
+
+Only 1D and 2D numpy tensors are supported, and you need to manually import dave
+from the debugger CLI, like this:
 ```py
 import gave.debuggers.pdb as pygave
 ```
 
+pygave provides two functions :
+ - `pygave.show` which display a container
+ - `pygave.update` which forces the update of the containers data
 
-## Troubleshooting
+
 ### LLDB on Ubuntu 22.04
 When starting lldb on ubuntu 22.04 you might get this error :
 ```
