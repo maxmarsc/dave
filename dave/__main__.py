@@ -5,6 +5,11 @@ import sys
 import shutil
 import tempfile
 from typing import List
+import logging
+import os
+
+LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
+logging.basicConfig(level=LOGLEVEL, format="%(levelname)s: %(message)s")
 
 
 HOME = pathlib.Path.home()
@@ -125,9 +130,11 @@ def check_for_gdb_installation() -> bool:
 
 def install_lldb(backup=True):
     if not DAVE_FOLDER.is_dir():
+        logging.debug(f"Missing {DAVE_FOLDER}, creating")
         DAVE_FOLDER.mkdir()
 
     if not LLDB_INIT_SCRIPT.is_file():
+        logging.debug(f"Missing {LLDB_INIT_SCRIPT}, creating")
         shutil.copy(LLDB_INIT_SCRIPT_SRC, LLDB_INIT_SCRIPT)
 
     with open(LLDB_INIT_SRC, "r") as lldb_init_src:
@@ -143,7 +150,7 @@ def install_lldb(backup=True):
 def backup_file(filepath: pathlib.Path):
     backup = str(filepath) + ".davebak"
     shutil.copy(filepath, backup)
-    print(f"Made a backup of {filepath} in {backup}")
+    logging.info(f"Made a backup of {filepath} in {backup}")
 
 
 def uninstall_lldb(backup=True):
@@ -159,6 +166,7 @@ def uninstall_lldb(backup=True):
 
 def install_gdb(backup=True):
     if not DAVE_FOLDER.is_dir():
+        logging.debug(f"Missing {DAVE_FOLDER}, creating")
         DAVE_FOLDER.mkdir()
 
     with open(GDB_INIT_SRC, "r") as gdb_init_src:
@@ -187,33 +195,33 @@ def main():
 
         if args.debugger in ("gdb", "both"):
             if check_for_gdb_installation():
-                print("Error : GDB bindings are already installed", file=sys.stderr)
+                logging.error("GDB bindings are already installed")
             else:
                 install_gdb()
-                print("GDB bindings were installed")
+                logging.info("GDB bindings were installed")
 
         if args.debugger in ("lldb", "both"):
             if check_for_lldb_installation():
-                print("Error : LLDB bindings are already installed", file=sys.stderr)
+                logging.error("Error : LLDB bindings are already installed")
             else:
                 install_lldb()
-                print("LLDB bindings were installed")
+                logging.info("LLDB bindings were installed")
 
     elif args.action == "uninstall":
 
         if args.debugger in ("gdb", "both"):
             if check_for_gdb_installation():
                 uninstall_gdb()
-                print("GDB bindings were uninstalled")
+                logging.info("GDB bindings were uninstalled")
             else:
-                print("Error : GDB bindings are not installed", file=sys.stderr)
+                logging.error("GDB bindings are not installed")
 
         if args.debugger in ("lldb", "both"):
             if check_for_lldb_installation():
                 uninstall_lldb()
-                print("LLDB bindings were uninstalled")
+                logging.info("LLDB bindings were uninstalled")
             else:
-                print("Error : LLDB bindings are not installed", file=sys.stderr)
+                logging.error("LLDB bindings are not installed")
 
     elif args.action == "update":
 
@@ -221,22 +229,20 @@ def main():
             if check_for_gdb_installation():
                 uninstall_gdb()
                 install_gdb(False)
-                print("GDB bindings were updated")
+                logging.info("GDB bindings were updated")
             else:
-                print(
-                    "Could not update GDB bindings as these are not installed",
-                    file=sys.stderr,
+                logging.error(
+                    "Could not update GDB bindings as these are not installed"
                 )
 
         if args.debugger in ("lldb", "both"):
             if check_for_lldb_installation():
                 uninstall_lldb()
                 install_lldb(False)
-                print("LLDB bindings were updated")
+                logging.info("LLDB bindings were updated")
             else:
-                print(
-                    "Could not update LLDB bindings as these are not installed",
-                    file=sys.stderr,
+                logging.error(
+                    "Could not update LLDB bindings as these are not installed"
                 )
     else:
         raise NotImplementedError()

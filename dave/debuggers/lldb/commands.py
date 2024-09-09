@@ -3,10 +3,10 @@ import shlex
 
 from ...process import DaveProcess
 from ...container_factory import ContainerFactory, ContainerError
+from ...logger import Logger
 from .value import LldbValue
 import threading
 import time
-import weakref
 
 
 class StopHook:
@@ -136,7 +136,7 @@ class ShowCommand:
         typename = lldb_value.typename()
         try:
             container = ContainerFactory().build(lldb_value, typename, varname, dims)
-            print(f"Built {varname} : {container.id}")
+            Logger().get().debug(f"Built {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             result.SetError(e.args[0])
             return

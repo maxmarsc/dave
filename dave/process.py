@@ -9,6 +9,7 @@ from .container import Container
 from .future_gdb import blocked_signals
 from .container_model import ContainerModel
 from .singleton import SingletonMeta
+from .logger import Logger
 
 
 class DaveProcess(metaclass=SingletonMeta):
@@ -58,8 +59,10 @@ class DaveProcess(metaclass=SingletonMeta):
         for container in self.__containers.values():
             id = container.id
             if not container.in_scope:
+                Logger().get().debug(f"{container.name} is out of scope")
                 self.__cqueue.put(ContainerModel.OutScopeUpdate(id))
             else:
+                Logger().get().debug(f"{container.name} is in scope")
                 data = container.read_from_debugger()
                 self.__cqueue.put(ContainerModel.InScopeUpdate(id, data))
 
@@ -153,6 +156,9 @@ class DaveProcess(metaclass=SingletonMeta):
             try:
                 msg = self.__pqueue.get_nowait()
                 if isinstance(msg, DaveGUI.DeleteMessage):
+                    Logger().get().debug(
+                        "Debugger process received delete command for {msg.id}"
+                    )
                     del self.__containers[msg.id]
             except queue.Empty:
                 break

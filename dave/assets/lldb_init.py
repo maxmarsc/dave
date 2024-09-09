@@ -1,4 +1,5 @@
 import lldb  # type: ignore
+import logging
 
 try:
     from dave.debuggers.lldb import (
@@ -9,6 +10,7 @@ try:
         StopHook,
         LLDBEventHandler,
     )
+    from dave import Logger
 
     def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
         # Register dave commands
@@ -35,7 +37,12 @@ try:
         # Event handler to handle process stop
         event_handler = LLDBEventHandler(debugger)
 
-        print("[dave] Successfully loaded")
+        Logger().get().info("[dave] Successfully loaded")
 
 except ModuleNotFoundError:
-    print("[dave] module not found. Commands will not be available")
+    import os, sys
+
+    LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
+    logging.basicConfig(level=LOGLEVEL, format="%(levelname)s: %(message)s")
+    logging.warning("[dave] module not found. Commands will not be available")
+    logging.debug(f"sys.path : {sys.path}")

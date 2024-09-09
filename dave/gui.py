@@ -3,9 +3,6 @@ from enum import Enum
 from tkinter import StringVar, ttk, filedialog, messagebox
 from typing import Dict, List, Tuple
 
-# import gdb  # type: ignore
-# import gdb.types  # type: ignore
-# import uuid
 
 import threading
 import multiprocessing
@@ -23,6 +20,7 @@ from .container_model import ContainerModel
 from .container import Container
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 from .tooltip import Tooltip
+from .logger import Logger
 
 
 class ContainerSettingsFrame:
@@ -612,6 +610,10 @@ class DaveGUI:
         pqueue: multiprocessing.Queue,
         monitor_live_signal: bool,
     ):
+        Logger().get().debug(
+            f"Starting GUI process, monitor_live_signal is {monitor_live_signal}"
+        )
+
         # Refresh and quit settings
         self.__refresh_time_ms = 20
         self.__monitor_live_signal = monitor_live_signal
@@ -671,20 +673,26 @@ class DaveGUI:
                 elif msg == DaveGUI.Message.DBGR_IS_ALIVE:
                     self.__live_signal_count = 0
                 elif isinstance(msg, DaveGUI.DeleteMessage):
+                    Logger().get().debug(f"Received delete message : {msg.id}")
                     self.__models[msg.id].mark_for_deletion()
                 elif isinstance(msg, DaveGUI.FreezeMessage):
+                    Logger().get().debug(f"Received freeze message : {msg.id}")
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
                 elif isinstance(msg, DaveGUI.ConcatMessage):
+                    Logger().get().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, Container.Raw):
+                    Logger().get().debug(f"Received new container : {msg.id}")
                     new_model = ContainerModel(msg, 44100)
                     self.__models[msg.id] = new_model
                     self.__settings_tab.add_container(new_model)
                     update_needed = True
                 elif isinstance(msg, ContainerModel.InScopeUpdate):
+                    Logger().get().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg.data)
                     update_needed = True
                 elif isinstance(msg, ContainerModel.OutScopeUpdate):
+                    Logger().get().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
             except queue.Empty:
@@ -696,6 +704,9 @@ class DaveGUI:
             self.__monitor_live_signal
             and self.__live_signal_count >= self.__live_signal_count_max
         ):
+            Logger().get().debug(
+                "No live signal detected from the debugger, closing the GUI"
+            )
             self.on_closing()
             return False
 
@@ -722,6 +733,7 @@ class DaveGUI:
 
         # If no container left we close the gui
         if len(self.__models) == 0 and len(to_delete) != 0:
+            Logger().get().debug("No container left, closing the GUI")
             self.on_closing()
             return False
 

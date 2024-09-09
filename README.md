@@ -1,7 +1,8 @@
 # dave
 Debugger Audio Visualization Extension
 
-## Installation
+## Project setup
+### Installation
 To install dave and its bindings it relatively simple :
 ```bash
 # First install the module itself
@@ -23,7 +24,7 @@ And the dave commands should be available :
  - `dave freeze`
  - `dave concat`
 
-## Update
+### Update
 If you want/need to update dave, it's done in two steps :
 ```bash
 # Update the module itself
@@ -32,7 +33,7 @@ pip install --upgrade dave
 python -m dave update [gdb|lldb|both]
 ```
 
-## Uninstallation
+### Uninstallation
 To remove the dave bindings
 ```bash
 python -m dave uninstall [gdb|lldb|both]
@@ -53,14 +54,14 @@ pip uninstall dave
 - [x] Mid/Side
 - [x] Interleaved 
 - [x] Easy installation
-- [ ] rename commands to fit `display` syntax
+- [x] improve logging system
+- [ ] document commands
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
 - [ ] GSL
 - [ ] JUCE 
 - [ ] CHOC 
-- [ ] improve logging system
 - [ ] Document the code
 - [ ] add setup instructions to readme
 - [ ] add license
@@ -74,7 +75,13 @@ pip uninstall dave
 
 
 
+
+
 ## Troubleshooting
+
+### Set logging level
+When running into an issue, please activate the debug log level, by setting
+the env variable `DAVE_LOGLEVEL` to `debug` before starting the debugger.
 
 ### Python support
 Python support is extremely limited because both python debuggers I have investigated

@@ -5,6 +5,7 @@ from ...process import DaveProcess
 
 from ...container_factory import ContainerFactory, ContainerError
 from .value import GdbValue
+from ...logger import Logger
 
 last_frame = None  # type: gdb.Frame
 
@@ -51,7 +52,7 @@ class GdbCommand(gdb.Command):
             return
 
         if not GdbCommand.__check_for_running_inferior():
-            print("Error: no processus detected")
+            Logger().get().error("no processus detected")
             return
 
         subcommand = args[0]
@@ -69,7 +70,7 @@ class GdbCommand(gdb.Command):
         elif subcommand == "concat":
             self.concat_container(args[1:])
         else:
-            print(f"Unknown subcommand '{subcommand}'")
+            Logger().get().error(f"Unknown subcommand '{subcommand}'")
 
     def show(self, args):
         if len(args) < 1 or len(args) > 2:
@@ -84,7 +85,7 @@ class GdbCommand(gdb.Command):
         typename = var.typename()
         try:
             container = ContainerFactory().build(var, typename, varname, dims)
-            print(f"Built {varname} : {container.id}")
+            Logger().get().debug(f"Built {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():
