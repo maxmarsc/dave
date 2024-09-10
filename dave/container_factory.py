@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Any, List, Dict, Set, Union
 
@@ -58,10 +59,13 @@ class ContainerFactory(metaclass=SingletonMeta):
     def build(
         self, dbg_value: Any, typename: str, varname: str, dims: List[int] = []
     ) -> Container:
+        logging.debug(f"Building {varname}:{typename}")
+      
         # First we check if it is a 1D container
         try:
             return self.build_1D(dbg_value, typename, varname, dims)
         except (ContainerError, TypeError):
+            logging.debug(f"{typename} is not a valid 1D container")
             pass
 
         # Then we check for 2D containers

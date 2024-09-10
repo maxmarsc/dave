@@ -136,7 +136,7 @@ class ShowCommand:
         typename = lldb_value.typename()
         try:
             container = ContainerFactory().build(lldb_value, typename, varname, dims)
-            Logger().get().debug(f"Built {varname} : {container.id}")
+            Logger().get().info(f"Added {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             result.SetError(e.args[0])
             return

@@ -1,5 +1,17 @@
 # dave
-Debugger Audio Visualization Extension
+Dave is a GDB & LLDB extension which provide commands to visualize audio data
+directly from your buffers/classes. No need to recompile your code and/or instrument
+it with nasty macros or fancy libs, just start your debugger !
+
+<p align="center">
+    <b> Dave GUI </b>
+</p>
+<p align="center">
+    <img src=".pictures/phase.png">
+</p>
+
+To get started first follow the `Project Setup` guide below, then you can read 
+the [User Guide](USER_GUIDE.md) to get familiar with Dave
 
 ## Project setup
 ### Installation
@@ -23,6 +35,8 @@ And the dave commands should be available :
  - `dave delete`
  - `dave freeze`
  - `dave concat`
+
+See the [User Guide](USER_GUIDE.md) on how to use these.
 
 ### Update
 If you want/need to update dave, it's done in two steps :
@@ -55,7 +69,7 @@ pip uninstall dave
 - [x] Interleaved 
 - [x] Easy installation
 - [x] improve logging system
-- [ ] document commands
+- [x] document commands
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] llvm libc/libstd
@@ -63,9 +77,7 @@ pip uninstall dave
 - [ ] JUCE 
 - [ ] CHOC 
 - [ ] Document the code
-- [ ] add setup instructions to readme
 - [ ] add license
-- [ ] add better documentation to GDB command
 - [ ] find testing strategy
 - [ ] Play 
 - [x] Restart dave process 

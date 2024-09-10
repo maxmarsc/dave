@@ -85,7 +85,7 @@ class GdbCommand(gdb.Command):
         typename = var.typename()
         try:
             container = ContainerFactory().build(var, typename, varname, dims)
-            Logger().get().debug(f"Built {varname} : {container.id}")
+            Logger().get().info(f"Added {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():
