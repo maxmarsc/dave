@@ -10,6 +10,20 @@ it with nasty macros or fancy libs, just start your debugger !
     <img src=".pictures/phase.png">
 </p>
 
+Currently supported audio containers (both in `float` and `double`) are :
+
+__1D (mono) containers__:
+- std::array
+- std::vector
+- std::span
+- C array
+- pointer
+
+__2D (multichannel) containers__:
+- Any nesting of 1D containers
+
+---
+
 To get started first follow the `Project Setup` guide below, then you can read 
 the [User Guide](USER_GUIDE.md) to get familiar with Dave
 

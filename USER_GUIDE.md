@@ -12,6 +12,20 @@ then you will be inform.
 This can happen because DAVE modify your init script user-wide, but you don't
 necessarely install DAVE user-wide (maybe in a venv)
 
+## Supported containers
+For now Dave support samples as `float`, `double`, `std::complex` and C's `complex`
+
+Supported audio containers are :
+
+__1D (mono) containers__:
+- std::array
+- std::vector
+- std::span
+- C array
+- pointer
+
+__2D (multichannel) containers__:
+- Any nesting of 1D containers
 
 ## Commands
 Dave adds a set of new commands to your debugger
