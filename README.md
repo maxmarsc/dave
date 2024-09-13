@@ -97,6 +97,7 @@ pip uninstall dave
 - [ ] minimize call to render functions
 - [ ] CHOC 
 - [ ] Document the code
+- [ ] Add a way for the user to add custom container support
 - [ ] find testing strategy
 - [ ] Play 
 - [x] Restart dave process 
