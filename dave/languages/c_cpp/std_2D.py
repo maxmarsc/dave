@@ -9,10 +9,11 @@ from typing import Callable, List, Tuple
 # import gdb.types  # type: ignore
 import numpy as np
 
-from dave.container import SampleType, Container2D
-from dave.container_factory import ContainerFactory
-from dave.debuggers.value import AbstractValue
+from ...container import SampleType, Container2D
+from ...container_factory import ContainerFactory
+from ...debuggers.value import AbstractValue
 
+from .std_base import StdVector
 from .template_parser import parse_template
 
 
@@ -231,6 +232,7 @@ class StdVector2D(Container2D):
             )
 
         self._value = dbg_value
+        self.__vec = StdVector(dbg_value)
         self.__nested_containers = [
             ContainerFactory().build_1D(
                 self.__data_ptr_value()[i],
@@ -244,49 +246,10 @@ class StdVector2D(Container2D):
 
     @property
     def size(self) -> int:
-        assert isinstance(self._value, AbstractValue)
-
-        # # via size method
-        # try:
-        #     size = self._value.call_method("size")
-        #     if not size.IsValid() or size.value is None:
-        #         raise RuntimeError
-        #     return int(size)
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
-        try:
-            diff = int(self._value.attr("_M_impl").attr("_M_finish")) - int(
-                self._value.attr("_M_impl").attr("_M_start")
-            )
-            if diff == 0:
-                return 0
-            byte_size = self.__data_ptr_value()[0].byte_size()
-            return int(diff / byte_size)
-        except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve size of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported stdlib version"
-            )
+        return self.__vec.size
 
     def __data_ptr_value(self) -> AbstractValue:
-        assert isinstance(self._value, AbstractValue)
-
-        # # via data method
-        # try:
-        #     return self._value.call_method("data")
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
-        try:
-            return self._value.attr("_M_impl").attr("_M_start")
-        except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve data ptr of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported stdlib version"
-            )
+        return self.__vec.data_ptr_value()
 
     def shape(self) -> Tuple[int, int]:
         return (self.size, self.__nested_containers[0].size)

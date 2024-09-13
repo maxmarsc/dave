@@ -8,9 +8,10 @@ from typing import List, Tuple
 import numpy as np
 
 
-from dave.container import SampleType, Container1D
-from dave.container_factory import ContainerFactory
-from dave.debuggers.value import AbstractValue
+from ...container import SampleType, Container1D
+from ...container_factory import ContainerFactory
+from ...debuggers.value import AbstractValue
+from .std_base import StdVector
 
 
 class CArray1D(Container1D):
@@ -100,7 +101,7 @@ class StdArray(Container1D):
         return array.reshape(self.shape())
 
 
-class StdVector(Container1D):
+class StdVector1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::vector<{SampleType.regex()},.*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
@@ -110,6 +111,7 @@ class StdVector(Container1D):
             raise TypeError(f"Could not parse {typename} as a valid std::vector type")
 
         datatype = SampleType.parse(re_match.group(1))
+        self.__vec = StdVector(dbg_value)
         super().__init__(dbg_value, name, datatype)
 
     @classmethod
@@ -118,46 +120,10 @@ class StdVector(Container1D):
 
     @property
     def size(self) -> int:
-        assert isinstance(self._value, AbstractValue)
-
-        # # via size method
-        # try:
-        #     return int(self._value.call_method("size"))
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
-        try:
-            diff = int(self._value.attr("_M_impl").attr("_M_finish")) - int(
-                self._value.attr("_M_impl").attr("_M_start")
-            )
-            if diff == 0:
-                return 0
-            byte_size = self.__data_ptr_value()[0].byte_size()
-            return int(diff / byte_size)
-        except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve size of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported stdlib version"
-            )
+        return self.__vec.size
 
     def __data_ptr_value(self) -> AbstractValue:
-        assert isinstance(self._value, AbstractValue)
-
-        # # via data method
-        # try:
-        #     return self._value.call_method("data")
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
-        try:
-            return self._value.attr("_M_impl").attr("_M_start")
-        except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve data ptr of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported stdlib version"
-            )
+        return self.__vec.data_ptr_value()
 
     def read_from_debugger(self) -> np.ndarray:
         assert isinstance(self._value, AbstractValue)
@@ -230,6 +196,6 @@ class StdSpan(Container1D):
 
 ContainerFactory().register(CArray1D)
 ContainerFactory().register(StdArray)
-ContainerFactory().register(StdVector)
+ContainerFactory().register(StdVector1D)
 ContainerFactory().register(StdSpan)
 ContainerFactory().register(Pointer1D)
