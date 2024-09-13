@@ -13,14 +13,19 @@ it with nasty macros or fancy libs, just start your debugger !
 Currently supported audio containers (both in `float` and `double`) are :
 
 __1D (mono) containers__:
-- std::array
-- std::vector
-- std::span
-- C array
-- pointer
+- `std::array`
+- `std::vector`
+- `std::span`
+- `C array`
+- `pointer`
 
 __2D (multichannel) containers__:
 - Any nesting of 1D containers
+- `juce::AudioBuffer`
+- `juce::dsp::AudioBlock`
+
+Currently supported OS are Linux and supposedly MacOS. Both GNU and LLVM stdlib
+implementation are supported.
 
 ---
 
@@ -86,7 +91,7 @@ pip uninstall dave
 - [x] document commands
 - [x] add license
 - [x] llvm libc/libstd (need to be tested)
-- [ ] JUCE 
+- [x] JUCE 
 - [ ] GSL
 - [ ] command aliases
 - [ ] minimize call to render functions

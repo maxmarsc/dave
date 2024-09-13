@@ -18,14 +18,19 @@ For now Dave support samples as `float`, `double`, `std::complex` and C's `compl
 Supported audio containers are :
 
 __1D (mono) containers__:
-- std::array
-- std::vector
-- std::span
-- C array
-- pointer
+- `std::array`
+- `std::vector`
+- `std::span`
+- `C array`
+- `pointer`
 
 __2D (multichannel) containers__:
 - Any nesting of 1D containers
+- `juce::AudioBuffer`
+- `juce::dsp::AudioBlock`
+
+Currently supported OS are Linux and supposedly MacOS. Both GNU and LLVM stdlib
+implementation are supported.
 
 ## Commands
 Dave adds a set of new commands to your debugger
