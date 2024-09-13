@@ -193,20 +193,22 @@ class StdArray2D(Container2D):
     def __data_ptr_value(self) -> AbstractValue:
         assert isinstance(self._value, AbstractValue)
 
-        # # via data method
-        # try:
-        #     return self._value.call_method("data")
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
+        # via libstdc++ (GNU) members
         try:
             return self._value.attr("_M_elems")
         except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve data ptr of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported stdlib version"
-            )
+            pass
+
+        # via libc++ (LLVM) members
+        try:
+            return self._value.attr("__elems_")
+        except RuntimeError:
+            pass
+
+        raise RuntimeError(
+            f"Failed to retrieve data ptr of {self._value.typename()}. "
+            "Consider disabling optimization or use a supported stdlib version"
+        )
 
     def read_from_debugger(self) -> np.ndarray:
         ret = np.ndarray(self.shape())

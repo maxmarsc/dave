@@ -72,7 +72,7 @@ class Pointer1D(Container1D):
         return array.reshape(self.shape())
 
 
-class StdArray(Container1D):
+class StdArray1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::array<{SampleType.regex()},\s*(\d+)>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
@@ -164,7 +164,7 @@ class StdSpan1D(Container1D):
 
 
 ContainerFactory().register(CArray1D)
-ContainerFactory().register(StdArray)
+ContainerFactory().register(StdArray1D)
 ContainerFactory().register(StdVector1D)
 ContainerFactory().register(StdSpan1D)
 ContainerFactory().register(Pointer1D)
