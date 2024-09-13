@@ -13,7 +13,7 @@ from ...container import SampleType, Container2D
 from ...container_factory import ContainerFactory
 from ...debuggers.value import AbstractValue
 
-from .std_base import StdVector
+from .std_base import StdVector, StdSpan
 from .template_parser import parse_template
 
 
@@ -216,8 +216,6 @@ class StdArray2D(Container2D):
 
 
 class StdVector2D(Container2D):
-    __REGEX = rf"^(?:const\s+)?std::vector<(.*),.*>\s*$"
-
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
         parsed_types = parse_template(typename)
@@ -288,12 +286,12 @@ class StdSpan2D(Container2D):
                 f"Could not parse nested type {nested} as a valid container type"
             )
 
-        self.__extent = int(re_match.group(2))
+        self.__span = StdSpan(dbg_value, int(re_match.group(2)))
         self._value = dbg_value
         self.__nested_containers = [
             ContainerFactory().build_1D(
-                StdSpan2D.__data_ptr_value(dbg_value)[i],
-                StdSpan2D.__data_ptr_value(dbg_value)[i].typename(),
+                self.__data_ptr_value()[i],
+                self.__data_ptr_value()[i].typename(),
                 "",
                 _,
             )
@@ -303,41 +301,10 @@ class StdSpan2D(Container2D):
 
     @property
     def size(self) -> int:
-        assert isinstance(self._value, AbstractValue)
-        if self.__extent != 18446744073709551615:
-            return self.__extent
-        else:
-            # # via size method
-            # try:
-            #     return int(self._value.call_method("size"))
-            # except RuntimeError:
-            #     pass
+        return self.__span.size
 
-            # via GNU stdlib members
-            try:
-                return int(self._value.attr("_M_extent").attr("_M_extent_value"))
-            except:
-                raise RuntimeError(
-                    f"Failed to retrieve size of {self._value.typename()}. "
-                    "Consider disabling optimization or use a supported stdlib version"
-                )
-
-    @staticmethod
-    def __data_ptr_value(value: AbstractValue) -> AbstractValue:
-        # # via data method
-        # try:
-        #     return value.call_method("data")
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
-        try:
-            return value.attr("_M_ptr")
-        except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve data ptr of {value.typename()}. "
-                "Consider disabling optimizations or use a supported stdlib version"
-            )
+    def __data_ptr_value(self) -> AbstractValue:
+        return self.__span.data_ptr_value()
 
     def shape(self) -> Tuple[int, int]:
         return (self.size, self.__nested_containers[0].size)

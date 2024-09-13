@@ -11,7 +11,7 @@ import numpy as np
 from ...container import SampleType, Container1D
 from ...container_factory import ContainerFactory
 from ...debuggers.value import AbstractValue
-from .std_base import StdVector
+from .std_base import StdVector, StdSpan
 
 
 class CArray1D(Container1D):
@@ -133,7 +133,7 @@ class StdVector1D(Container1D):
         return array.reshape(self.shape())
 
 
-class StdSpan(Container1D):
+class StdSpan1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::span<{SampleType.regex()},\s*(\d+)>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
@@ -142,7 +142,7 @@ class StdSpan(Container1D):
         if re_match is None:
             raise TypeError(f"Could not parse {typename} as a valid std::span type")
 
-        self.__extent = int(re_match.group(2))
+        self.__span = StdSpan(dbg_value, int(re_match.group(2)))
         datatype = SampleType.parse(re_match.group(1))
         super().__init__(dbg_value, name, datatype)
 
@@ -152,41 +152,10 @@ class StdSpan(Container1D):
 
     @property
     def size(self) -> int:
-        assert isinstance(self._value, AbstractValue)
-        if self.__extent != 18446744073709551615:
-            return self.__extent
-        else:
-            # # via size method
-            # try:
-            #     return int(self._value.call_method("size"))
-            # except RuntimeError:
-            #     pass
-
-            # via GNU stdlib members
-            try:
-                return int(self._value.attr("_M_extent").attr("_M_extent_value"))
-            except:
-                raise RuntimeError(
-                    f"Failed to retrieve size of {self._value.typename()}. "
-                    "Consider disabling optimization or use a supported stdlib version"
-                )
+        return self.__span.size
 
     def __data_ptr(self) -> int:
-        assert isinstance(self._value, AbstractValue)
-        # via data method
-        # try:
-        #     return int(self._value.call_method("data"))
-        # except RuntimeError:
-        #     pass
-
-        # via GNU stdlib members
-        try:
-            return int(self._value.attr("_M_ptr"))
-        except RuntimeError:
-            raise RuntimeError(
-                f"Failed to retrieve data ptr of {self._value.typename()}. "
-                "Consider disabling optimizations or use a supported stdlib version"
-            )
+        return int(self.__span.data_ptr_value())
 
     def read_from_debugger(self) -> np.ndarray:
         assert isinstance(self._value, AbstractValue)
@@ -197,5 +166,5 @@ class StdSpan(Container1D):
 ContainerFactory().register(CArray1D)
 ContainerFactory().register(StdArray)
 ContainerFactory().register(StdVector1D)
-ContainerFactory().register(StdSpan)
+ContainerFactory().register(StdSpan1D)
 ContainerFactory().register(Pointer1D)

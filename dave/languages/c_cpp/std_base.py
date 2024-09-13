@@ -51,3 +51,54 @@ class StdVector:
             f"Failed to retrieve data ptr of {self.__value.typename()}. "
             "Consider disabling optimization or use a supported stdlib version"
         )
+
+
+class StdSpan:
+    DYNAMIC_EXTENT = 18446744073709551615
+
+    def __init__(self, dbg_value: AbstractValue, extent: int):
+        self.__value = dbg_value
+        self.__extent = extent
+
+    @property
+    def size(self) -> int:
+        assert isinstance(self.__value, AbstractValue)
+        if self.__extent != StdSpan.DYNAMIC_EXTENT:
+            return self.__extent
+
+        # via libstdc++ (GNU) members
+        try:
+            return int(self.__value.attr("_M_extent").attr("_M_extent_value"))
+        except:
+            pass
+
+        # via libc++ (LLVM) members
+        try:
+            return int(self.__value.attr("__size_"))
+        except:
+            pass
+
+        raise RuntimeError(
+            f"Failed to retrieve size of {self.__value.typename()}. "
+            "Consider disabling optimization or use a supported stdlib version"
+        )
+
+    def data_ptr_value(self) -> AbstractValue:
+        assert isinstance(self.__value, AbstractValue)
+
+        # via libstdc++ (GNU) members
+        try:
+            return self.__value.attr("_M_ptr")
+        except RuntimeError:
+            pass
+
+        # via libc++ (LLVM) members
+        try:
+            return self.__value.attr("__data_")
+        except RuntimeError:
+            pass
+
+        raise RuntimeError(
+            f"Failed to retrieve data ptr of {self.__value.typename()}. "
+            "Consider disabling optimizations or use a supported stdlib version"
+        )
