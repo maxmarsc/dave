@@ -85,9 +85,9 @@ pip uninstall dave
 - [x] improve logging system
 - [x] document commands
 - [x] add license
-- [ ] llvm libc/libstd
-- [ ] GSL
+- [x] llvm libc/libstd (need to be tested)
 - [ ] JUCE 
+- [ ] GSL
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] CHOC 
