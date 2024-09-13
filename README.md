@@ -84,14 +84,14 @@ pip uninstall dave
 - [x] Easy installation
 - [x] improve logging system
 - [x] document commands
-- [ ] command aliases
-- [ ] minimize call to render functions
+- [x] add license
 - [ ] llvm libc/libstd
 - [ ] GSL
 - [ ] JUCE 
+- [ ] command aliases
+- [ ] minimize call to render functions
 - [ ] CHOC 
 - [ ] Document the code
-- [ ] add license
 - [ ] find testing strategy
 - [ ] Play 
 - [x] Restart dave process 
