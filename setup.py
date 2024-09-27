@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="dave",
+    name="davext",
     version="0.0.1",
     author="maxmarsc",
     install_requires=[

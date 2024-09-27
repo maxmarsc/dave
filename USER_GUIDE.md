@@ -1,4 +1,4 @@
-# Dave user guide
+# DAVE user guide
 This is the user guide for DAVE
 
 ## DAVE setup
@@ -13,7 +13,7 @@ This can happen because DAVE modify your init script user-wide, but you don't
 necessarely install DAVE user-wide (maybe in a venv)
 
 ## Supported containers
-For now Dave support samples as `float`, `double`, `std::complex` and C's `complex`
+For now DAVE support samples as `float`, `double`, `std::complex` and C's `complex`
 
 Supported audio containers are :
 
@@ -33,7 +33,7 @@ Currently supported OS are Linux and supposedly MacOS. Both GNU and LLVM stdlib
 implementation are supported.
 
 ## Commands
-Dave adds a set of new commands to your debugger
+DAVE adds a set of new commands to your debugger
 
 ### `dave show`
 `dave show` is the most basic command of DAVE
