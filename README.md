@@ -37,9 +37,7 @@ the [User Guide](USER_GUIDE.md) to get familiar with DAVE
 To install dave and its bindings it relatively simple :
 ```bash
 # First install the module itself
-git clone git@github.com:maxmarsc/gave.git dave
-# If not in a venv you need the --user flag to install it user-wide
-pip install -e dave
+pip install git+ssh://git@github.com/maxmarsc/dave.git@main
 # Then install the bindings for your debugger
 python -m dave install [gdb|lldb|both]
 ```
@@ -61,7 +59,7 @@ See the [User Guide](USER_GUIDE.md) on how to use these.
 If you want/need to update dave, it's done in two steps :
 ```bash
 # Update the module itself
-pip install --upgrade dave
+pip install git+ssh://git@github.com/maxmarsc/dave.git@main
 # Update the bindings for your debugger
 python -m dave update [gdb|lldb|both]
 ```
@@ -74,8 +72,11 @@ python -m dave uninstall [gdb|lldb|both]
 
 You can then also remove the python module if you want : 
 ```bash
-pip uninstall dave
+pip uninstall davext
 ```
+
+**Note:** You can notice the pip package is actually called `davext` and not `dave`
+this is because the name `dave` is already taken on pypi, but I don't plan to change.
 
 ## Milestones
 - [x] Freeze
