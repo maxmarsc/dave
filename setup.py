@@ -13,6 +13,6 @@ setup(
         "doc": ["sphinx", "sphinx_rtd_theme", "numpydoc"],
     },
     packages=find_packages(include=["dave", "dave.debuggers", "dave.languages"]),
-    package_data={'': ['LICENSE', 'dave/assets/lldb_init.py', 'dave/assets/.gdbinit', 'dave/assets/.lldbinit']},
+    package_data={'dave': ['assets/lldb_init.py', 'assets/.gdbinit', 'assets/.lldbinit']},
     include_package_data=True,
 )
