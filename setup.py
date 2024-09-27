@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="davext",
-    version="0.0.1",
+    version="0.1.1",
     author="maxmarsc",
     install_requires=[
         "matplotlib",
@@ -12,5 +12,7 @@ setup(
         "display": ["matplotlib>=2.2.3"],
         "doc": ["sphinx", "sphinx_rtd_theme", "numpydoc"],
     },
-    packages=find_packages(include=["dave"]),
+    packages=find_packages(include=["dave", "dave.debuggers", "dave.languages"]),
+    package_data={'dave': ['assets/lldb_init.py', 'assets/.gdbinit', 'assets/.lldbinit']},
+    include_package_data=True,
 )
