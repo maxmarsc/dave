@@ -12,5 +12,5 @@ setup(
         "display": ["matplotlib>=2.2.3"],
         "doc": ["sphinx", "sphinx_rtd_theme", "numpydoc"],
     },
-    packages=find_packages(include=["dave", "dave/assets", "dave/debuggers", "dave/languages"]),
+    packages=find_packages(include=["dave", "dave.assets", "dave.debuggers", "dave.languages"]),
 )
