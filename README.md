@@ -35,12 +35,27 @@ the [User Guide](USER_GUIDE.md) to get familiar with DAVE
 ## Project setup
 ### Installation
 To install dave and its bindings it relatively simple :
+
+---
+#### Linux
 ```bash
 # First install the module itself
-pip install git+ssh://git@github.com/maxmarsc/dave.git@main
+pip install --user git+ssh://git@github.com/maxmarsc/dave.git@main
 # Then install the bindings for your debugger
 python -m dave install [gdb|lldb|both]
 ```
+
+*No need the use the --user flag if installing in a virtual environment*
+
+#### Mac OS
+Currently only the toolchain provided by XCode is supported. If you use a custom
+toolchain (maybe with CLion), please contact me or open an issue.
+```bash
+xcrun pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
+xcrun python3 -m dave install lldb
+```
+
+---
 
 Then when starting your debugger you should see the following message :
 ```
@@ -57,14 +72,26 @@ See the [User Guide](USER_GUIDE.md) on how to use these.
 
 ### Update
 If you want/need to update dave, it's done in two steps :
+
+#### Linux
 ```bash
 # Update the module itself
-pip install git+ssh://git@github.com/maxmarsc/dave.git@main
+pip install --user git+ssh://git@github.com/maxmarsc/dave.git@main
 # Update the bindings for your debugger
 python -m dave update [gdb|lldb|both]
 ```
 
+#### Mac OS
+```bash
+xcrun pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
+xcrun python3 -m dave update lldb
+```
+
 ### Uninstallation
+**Note:** You can notice the pip package is actually called `davext` and not `dave`
+this is because the name `dave` is already taken on pypi, but I don't plan to change.
+
+#### Linux
 To remove the dave bindings
 ```bash
 python -m dave uninstall [gdb|lldb|both]
@@ -75,8 +102,18 @@ You can then also remove the python module if you want :
 pip uninstall davext
 ```
 
-**Note:** You can notice the pip package is actually called `davext` and not `dave`
-this is because the name `dave` is already taken on pypi, but I don't plan to change.
+#### Mac OS
+To remove the dave bindings
+```bash
+xcrun python3 -m dave uninstall lldb
+```
+
+You can then also remove the python module if you want : 
+```bash
+xcrun pip3 uninstall davext
+```
+---
+
 
 ## Milestones
 - [x] Freeze

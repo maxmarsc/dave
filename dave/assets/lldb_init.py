@@ -39,10 +39,11 @@ try:
 
         Logger().get().info("[dave] Successfully loaded")
 
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
     import os, sys
 
     LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
     logging.basicConfig(level=LOGLEVEL, format="%(levelname)s: %(message)s")
     logging.warning("[dave] module not found. Commands will not be available")
+    logging.debug(f"failed with {e}")
     logging.debug(f"sys.path : {sys.path}")

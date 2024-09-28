@@ -12,7 +12,8 @@ setup(
         "display": ["matplotlib>=2.2.3"],
         "doc": ["sphinx", "sphinx_rtd_theme", "numpydoc"],
     },
-    packages=find_packages(include=["dave", "dave.debuggers", "dave.languages"]),
+    packages=find_packages(include=["dave", "dave.debuggers", "dave.debuggers.lldb", "dave.debuggers.gdb", "dave.debuggers.pdb", 
+                                    "dave.languages.c_cpp", "dave.languages.python"]),
     package_data={'dave': ['assets/lldb_init.py', 'assets/.gdbinit', 'assets/.lldbinit']},
     include_package_data=True,
 )
