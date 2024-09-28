@@ -20,13 +20,14 @@ paths = (
 sys.path = paths + sys.path
 try:
     import dave.debuggers.gdb
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
     import os
     import logging
 
     LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
     logging.basicConfig(level=LOGLEVEL, format="%(levelname)s: %(message)s")
     logging.warning("[dave] module not found. Commands will not be available")
+    logging.debug(f"failed with {e}")
     logging.debug(f"sys.path : {sys.path}")
 end
 # --- DAVE END ---
