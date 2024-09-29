@@ -51,7 +51,11 @@ python -m dave install [gdb|lldb|both]
 Currently only the toolchain provided by XCode is supported. If you use a custom
 toolchain (maybe with CLion), please contact me or open an issue.
 ```bash
+# Install the tcl/tk binding for xcode's python if needed
+xcrun python3 -c "import tkinter" || brew install python-tk@$(xcrun python3 --version | grep -oE '[0-9]+\.[0-9]+' | head -n1)
+# Install the dave module
 xcrun pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
+# Install the lldb bindings
 xcrun python3 -m dave install lldb
 ```
 
