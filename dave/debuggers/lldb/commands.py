@@ -26,11 +26,13 @@ class StopHook:
 class LLDBEventHandler:
     def __init__(self, debugger: lldb.SBDebugger):
         self.__debugger = debugger
+        Logger().get().debug("Creating lldb.SBListener")
         self.__listener = lldb.SBListener("lldb_listener")
         self.attached = False
         self.__last_frame = None
 
         # Start listening thread
+        Logger().get().debug("Creating EventHandler thread")
         self.__thread = threading.Thread(target=self.__event_loop)
         self.__thread.start()
 
@@ -79,6 +81,7 @@ class LLDBEventHandler:
         while True:
             if not self.attached:
                 self.__try_to_attach_to_process()
+            
             if DaveProcess().is_alive():
                 # Signal we're alive
                 DaveProcess().live_signal()

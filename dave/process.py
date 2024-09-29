@@ -1,6 +1,7 @@
 from __future__ import annotations
-import multiprocessing
+import multiprocessing as mp
 import queue
+import sys
 from typing import Dict, List, Union
 from enum import Enum
 
@@ -13,14 +14,18 @@ from .logger import Logger
 
 
 class DaveProcess(metaclass=SingletonMeta):
+    START_METHOD="fork" if sys.platform == "darwin" else "spawn"
+
     def __init__(self) -> None:
         self.__containers: Dict[int, Container] = dict()
-        self.__cqueue = multiprocessing.Queue()
-        self.__pqueue = multiprocessing.Queue()
+        mp.set_start_method(DaveProcess.START_METHOD, force=True)
+        self.__cqueue = mp.Queue()
+        self.__pqueue = mp.Queue()
         self.__process = None
 
+
     def start(self, monitor_live_signal: bool = False):
-        if isinstance(self.__process, multiprocessing.Process):
+        if isinstance(self.__process, mp.Process):
             if self.__process.is_alive():
                 raise RuntimeError("Dave process was already started")
             elif self.__process.exitcode is not None:
@@ -28,16 +33,18 @@ class DaveProcess(metaclass=SingletonMeta):
                 self.__process = None
                 self.__containers = dict()
 
-        old_spawn_method = multiprocessing.get_start_method()
+        # spawn_method = "fork"
+        # old_spawn_method = mp.get_start_method()
         with blocked_signals():
-            if old_spawn_method != "spawn":
-                multiprocessing.set_start_method("spawn", force=True)
-            self.__process = multiprocessing.Process(
+            # if old_spawn_method != spawn_method:
+            #     mp.set_start_method(spawn_method, force=True)
+            self.__process = mp.Process(
                 target=DaveGUI.create_and_run,
                 args=(self.__cqueue, self.__pqueue, monitor_live_signal),
             )
-            if old_spawn_method != "spawn":
-                multiprocessing.set_start_method(old_spawn_method, force=True)
+            # if old_spawn_method != spawn_method:
+            #     print(f"setting spawn method to {old_spawn_method}")
+            #     mp.set_start_method(old_spawn_method, force=True)
             self.__process.start()
 
     def is_alive(self) -> bool:

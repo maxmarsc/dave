@@ -36,7 +36,7 @@ int main() {
             audio_buffer.getWritePointer(0) + kBlockSize, 2.5F);
 
   // Fill with std::sin
-  auto step  = 2.F * M_PIf / kBlockSize * 16;
+  auto step  = 2.F * 3.14F / kBlockSize * 16;
   auto phase = 0.F;
   for (auto i = 0; i < kBlockSize; ++i) {
     auto val = std::sin(phase);
