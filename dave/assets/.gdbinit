@@ -19,7 +19,7 @@ paths = (
 # sys.path.extend(paths)
 sys.path = paths + sys.path
 try:
-    import dave.debuggers.gdb
+    import dave.server.debuggers.gdb
 except ModuleNotFoundError as e:
     import os
     import logging

@@ -5,16 +5,17 @@ import sys
 from typing import Dict, List, Union
 from enum import Enum
 
-from .gui import DaveGUI
-from .container import Container
-from .future_gdb import blocked_signals
-from .container_model import ContainerModel
-from .singleton import SingletonMeta
-from .logger import Logger
+from .client.gui import DaveGUI
+from .server.container import Container
+from .server.future_gdb import blocked_signals
+
+from dave.common.singleton import SingletonMeta
+from dave.common.logger import Logger
+from dave.common.raw_container import RawContainer
 
 
 class DaveProcess(metaclass=SingletonMeta):
-    START_METHOD="fork" if sys.platform == "darwin" else "spawn"
+    START_METHOD = "fork" if sys.platform == "darwin" else "spawn"
 
     def __init__(self) -> None:
         self.__containers: Dict[int, Container] = dict()
@@ -22,7 +23,6 @@ class DaveProcess(metaclass=SingletonMeta):
         self.__cqueue = mp.Queue()
         self.__pqueue = mp.Queue()
         self.__process = None
-
 
     def start(self, monitor_live_signal: bool = False):
         if isinstance(self.__process, mp.Process):
@@ -67,11 +67,12 @@ class DaveProcess(metaclass=SingletonMeta):
             id = container.id
             if not container.in_scope:
                 Logger().get().debug(f"{container.name} is out of scope")
-                self.__cqueue.put(ContainerModel.OutScopeUpdate(id))
+                self.__cqueue.put(RawContainer.OutScopeUpdate(id))
             else:
                 Logger().get().debug(f"{container.name} is in scope")
                 data = container.read_from_debugger()
-                self.__cqueue.put(ContainerModel.InScopeUpdate(id, data))
+                shape = container.shape()
+                self.__cqueue.put(RawContainer.InScopeUpdate(id, data, shape))
 
     def add_to_model(self, container: Container):
         self.__containers[container.id] = container

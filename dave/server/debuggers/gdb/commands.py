@@ -1,11 +1,11 @@
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
-from ...process import DaveProcess
+from dave.process import DaveProcess
+from dave.server.container_factory import ContainerFactory, ContainerError
+from dave.common.logger import Logger
 
-from ...container_factory import ContainerFactory, ContainerError
 from .value import GdbValue
-from ...logger import Logger
 
 last_frame = None  # type: gdb.Frame
 

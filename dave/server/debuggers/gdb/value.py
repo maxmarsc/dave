@@ -60,6 +60,6 @@ class GdbValue(AbstractValue):
         return in_scope
 
     @staticmethod
-    def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> ndarray:
+    def readmemory(addr: int, bytesize: int) -> bytearray:
         inferior = gdb.selected_inferior()
-        return np.frombuffer(inferior.read_memory(addr, bytesize), dtype=dtype)
+        return bytearray(inferior.read_memory(addr, bytesize))

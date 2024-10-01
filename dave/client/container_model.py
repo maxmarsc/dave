@@ -1,9 +1,12 @@
-from typing import Any, List
+from __future__ import annotations
+from typing import Any, List, Tuple
 from matplotlib.axes import Axes
 
+from dave.common.data_layout import DataLayout
+from dave.common.raw_container import RawContainer
+
+from .raw_to_numpy import *
 from .view_setting import Setting
-from .container import Container, Container2D
-from .data_layout import DataLayout
 from .views import get_views_for_data_layout, AudioView, get_view_from_name
 
 from dataclasses import dataclass
@@ -16,26 +19,16 @@ import tkinter as tk
 
 
 class ContainerModel:
-    @dataclass
-    class InScopeUpdate:
-        id: int
-        data: np.ndarray
-
-    @dataclass
-    class OutScopeUpdate:
-        id: int
-
-    def __init__(self, raw: Container.Raw, samplerate: float):
+    def __init__(self, raw: RawContainer, samplerate: float):
         self.__raw = raw
+        self.__data = raw_to_numpy(raw)
         self.__sr = samplerate
         self.__frozen_data = None
         self.__concat = False
-        self.__channels = self.__raw.data.shape[0]
+        self.__channels = self.__raw.original_shape[0]
         self.__in_scope = True
         self.__interleaved = False
         self.__mid_side = False
-        if not issubclass(raw.container_cls, Container):
-            raise RuntimeError(f"{raw.container_cls} is not a valid container class")
         self.__data_layout: DataLayout = self.__raw.default_layout
         # First as default
         self.__view: AudioView = get_views_for_data_layout(self.__data_layout)[0](
@@ -55,7 +48,7 @@ class ContainerModel:
 
     @property
     def possible_layouts(self) -> List[DataLayout]:
-        return self.__raw.container_cls.available_data_layouts()
+        return self.__raw.possible_layout
 
     @property
     def selected_layout(self) -> DataLayout:
@@ -90,7 +83,7 @@ class ContainerModel:
         if freeze == self.frozen:
             return
         if freeze:
-            self.__frozen_data = self.__raw.data
+            self.__frozen_data = self.__data
         else:
             self.__frozen_data = None
         self.__update_pending = True
@@ -153,7 +146,7 @@ class ContainerModel:
         return False
 
     def is_channel_layout_fixed(self):
-        if issubclass(self.__raw.container_cls, Container2D):
+        if self.__raw.dimensions_fixed:
             return True
         return False
 
@@ -171,6 +164,21 @@ class ContainerModel:
         self.__update_pending = False
 
     def __compute_render_array(self, data: np.ndarray) -> np.ndarray:
+        """
+        Produces the array needed for rendering
+
+        Performs (de)interleaving, reshaping, mid/side computing
+
+        Parameters
+        ----------
+        data : np.ndarray
+            The original np.ndarray as seen by the debugger
+
+        Returns
+        -------
+        np.ndarray
+            The transformed array corresponding to the rendering parameters
+        """
         total_samples = data.shape[0] * data.shape[1]
         render_shape = (self.__channels, int(total_samples / self.__channels))
         if self.interleaved:
@@ -205,7 +213,7 @@ class ContainerModel:
             The channel to draw
         """
         # Compute the rendering shape
-        live_data = self.__compute_render_array(self.__raw.data)
+        live_data = self.__compute_render_array(self.__data)
         if self.frozen:
             frozen_data = self.__compute_render_array(self.__frozen_data)
 
@@ -223,12 +231,18 @@ class ContainerModel:
                 self.__view.render_view(axes[0], frozen_data[channel], "#ff7f0e")
 
     # ==============================================================================
-    def update_data(self, new_data: np.ndarray):
-        new_data = self.__data_layout.convert_to_layout(new_data)
+    def update_data(self, update: RawContainer.InScopeUpdate):
+        """
+        Updates the container data, by loading the bytes into numpy and stores
+        it accordingly
+        """
+        self.__raw.update(update)
+        # new_data = self.__data_layout.convert_to_layout(new_data)
+        new_data = convert_data_to_layout(raw_to_numpy(self.__raw), self.__data_layout)
         if self.concat:
-            self.__raw.data = np.concatenate((self.__raw.data, new_data), -1)
+            self.__data = np.concatenate((self.__data, new_data), -1)
         else:
-            self.__raw.data = new_data
+            self.__data = new_data
         self.__in_scope = True
         self.__update_pending = True
 
@@ -243,8 +257,8 @@ class ContainerModel:
                 return False
         if (
             value > 0
-            and value <= self.__raw.data.shape[1]
-            and self.__raw.data.shape[1] % value == 0
+            and value <= self.__data.shape[1]
+            and self.__data.shape[1] % value == 0
         ):
             if value != self.channels:
                 self.channels = value
@@ -254,15 +268,15 @@ class ContainerModel:
     def update_layout(self, new_layout: DataLayout):
         assert new_layout in self.possible_layouts
         self.__data_layout = new_layout
-        self.__raw.data = self.__data_layout.convert_to_layout(self.__raw.data)
+        self.__data = convert_data_to_layout(self.__data, self.__data_layout)
         if self.frozen:
-            self.__frozen_data = self.__data_layout.convert_to_layout(
-                self.__frozen_data
+            self.__frozen_data = convert_data_to_layout(
+                self.__frozen_data, self.__data_layout
             )
         self.__view: AudioView = get_views_for_data_layout(self.__data_layout)[0](
             self.__sr
         )
-        self.__channels = self.__raw.data.shape[0]
+        self.__channels = self.__data.shape[0]
         self.__update_pending = True
 
     def update_view_type(self, view_name: str):

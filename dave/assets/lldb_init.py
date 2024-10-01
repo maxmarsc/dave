@@ -2,7 +2,7 @@ import lldb  # type: ignore
 import logging
 
 try:
-    from dave.debuggers.lldb import (
+    from dave.server.debuggers.lldb import (
         ShowCommand,
         DeleteCommand,
         FreezeCommand,
@@ -10,7 +10,7 @@ try:
         StopHook,
         LLDBEventHandler,
     )
-    from dave import Logger
+    from dave.common.logger import Logger
 
     def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
         # Register dave commands

@@ -15,12 +15,13 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import numpy as np
 
-from .data_layout import DataLayout
+from dave.common.data_layout import DataLayout
+from dave.common.logger import Logger
+from dave.common.raw_container import RawContainer
+from dave.server.container import Container
 from .container_model import ContainerModel
-from .container import Container
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 from .tooltip import Tooltip
-from .logger import Logger
 
 
 class ContainerSettingsFrame:
@@ -681,17 +682,17 @@ class DaveGUI:
                 elif isinstance(msg, DaveGUI.ConcatMessage):
                     Logger().get().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
-                elif isinstance(msg, Container.Raw):
+                elif isinstance(msg, RawContainer):
                     Logger().get().debug(f"Received new container : {msg.id}")
                     new_model = ContainerModel(msg, 44100)
                     self.__models[msg.id] = new_model
                     self.__settings_tab.add_container(new_model)
                     update_needed = True
-                elif isinstance(msg, ContainerModel.InScopeUpdate):
+                elif isinstance(msg, RawContainer.InScopeUpdate):
                     Logger().get().debug(f"Received data update : {msg.id}")
-                    self.__models[msg.id].update_data(msg.data)
+                    self.__models[msg.id].update_data(msg)
                     update_needed = True
-                elif isinstance(msg, ContainerModel.OutScopeUpdate):
+                elif isinstance(msg, RawContainer.OutScopeUpdate):
                     Logger().get().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True

@@ -35,12 +35,9 @@ class CArray1D(Container1D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = self._value.readmemory(
-            self._value.address(), self.byte_size, self.dtype
-        )
-        return array.reshape(self.shape())
+        return self._value.readmemory(self._value.address(), self.byte_size)
 
 
 class Pointer1D(Container1D):
@@ -66,14 +63,13 @@ class Pointer1D(Container1D):
     def size(self) -> int:
         return self.__size
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = self._value.readmemory(int(self._value), self.byte_size, self.dtype)
-        return array.reshape(self.shape())
+        return self._value.readmemory(int(self._value), self.byte_size)
 
 
 class StdArray1D(Container1D):
-    __REGEX = rf"^(?:const\s+)?std::array<{SampleType.regex()},\s*(\d+)>\s*$"
+    __REGEX = rf"^(?:const\s+)?std::array<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
@@ -93,12 +89,9 @@ class StdArray1D(Container1D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = self._value.readmemory(
-            self._value.address(), self.byte_size, self.dtype
-        )
-        return array.reshape(self.shape())
+        return self._value.readmemory(self._value.address(), self.byte_size)
 
 
 class StdVector1D(Container1D):
@@ -125,12 +118,9 @@ class StdVector1D(Container1D):
     def __data_ptr_value(self) -> AbstractValue:
         return self.__vec.data_ptr_value()
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = self._value.readmemory(
-            int(self.__data_ptr_value()), self.byte_size, self.dtype
-        )
-        return array.reshape(self.shape())
+        return self._value.readmemory(int(self.__data_ptr_value()), self.byte_size)
 
 
 class StdSpan1D(Container1D):
@@ -157,10 +147,9 @@ class StdSpan1D(Container1D):
     def __data_ptr(self) -> int:
         return int(self.__span.data_ptr_value())
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = self._value.readmemory(self.__data_ptr(), self.byte_size, self.dtype)
-        return array.reshape(self.shape())
+        return self._value.readmemory(self.__data_ptr(), self.byte_size)
 
 
 ContainerFactory().register(CArray1D)

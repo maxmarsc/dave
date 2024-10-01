@@ -1,9 +1,9 @@
 import lldb
 import shlex
 
-from ...process import DaveProcess
+from dave.process import DaveProcess
 from ...container_factory import ContainerFactory, ContainerError
-from ...logger import Logger
+from dave.common.logger import Logger
 from .value import LldbValue
 import threading
 import time

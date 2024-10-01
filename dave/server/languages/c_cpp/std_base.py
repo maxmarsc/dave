@@ -1,4 +1,4 @@
-from dave.debuggers.value import AbstractValue
+from ...debuggers.value import AbstractValue
 
 
 class StdVector:

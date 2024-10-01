@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 
 from dave.container import SampleType, Container2D
-from dave.container_factory import ContainerFactory
+from dave.server.container_factory import ContainerFactory
 
 
 class NumpyArray(Container2D):

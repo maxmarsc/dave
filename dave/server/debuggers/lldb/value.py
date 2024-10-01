@@ -83,7 +83,7 @@ class LldbValue(AbstractValue):
         return False
 
     @staticmethod
-    def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> np.ndarray:
+    def readmemory(addr: int, bytesize: int) -> bytearray:
         assert LldbValue.__debugger is not None
         process = (
             LldbValue.__debugger.GetSelectedTarget().GetProcess()
@@ -93,7 +93,7 @@ class LldbValue(AbstractValue):
         if not error.Success():
             raise RuntimeError(f"Failed to read {bytesize} bytes from {addr}")
 
-        return np.frombuffer(raw_mem, dtype=dtype)
+        return bytearray(raw_mem)
 
     @staticmethod
     def find_variable_robust(

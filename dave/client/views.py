@@ -4,7 +4,7 @@ from typing import Any, List
 import numpy as np
 
 from matplotlib.axes import Axes
-from .data_layout import DataLayout
+from dave.common.data_layout import DataLayout
 from .view_setting import (
     FloatSetting,
     IntSetting,

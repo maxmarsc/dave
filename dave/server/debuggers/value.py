@@ -38,5 +38,5 @@ class AbstractValue(ABC):
 
     @staticmethod
     @abstractmethod
-    def readmemory(addr: int, bytesize: int, dtype: np.dtype) -> np.ndarray:
+    def readmemory(addr: int, bytesize: int) -> bytearray:
         pass

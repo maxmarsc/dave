@@ -1,5 +1,5 @@
+from dave.common.logger import Logger
 from ...languages.c_cpp import *
-from ...logger import Logger
 from .commands import GdbCommand, exit_handler, stop_handler, frame_checker
 
 import gdb  # type: ignore

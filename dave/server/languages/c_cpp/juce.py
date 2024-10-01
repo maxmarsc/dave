@@ -5,10 +5,10 @@ from typing import Callable, List, Tuple
 
 import numpy as np
 
+from dave.common.logger import Logger
 from ...container import SampleType, Container2D
 from ...container_factory import ContainerFactory
 from ...debuggers.value import AbstractValue
-from ...logger import Logger
 
 
 class JuceAudioBuffer(Container2D):
@@ -45,16 +45,17 @@ class JuceAudioBuffer(Container2D):
     def __channel_data_ptr(self, channel: int) -> int:
         return int(self._value.attr("channels")[channel])
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = np.ndarray(self.shape, dtype=self.dtype)
-        for channel in range(self.num_channels):
-            array[channel, :] = self._value.readmemory(
-                self.__channel_data_ptr(channel),
-                self.float_type.byte_size() * self.block_size,
-                self.dtype,
-            )
-        return array
+        return b"".join(
+            [
+                self._value.readmemory(
+                    self.__channel_data_ptr(channel),
+                    self.float_type.byte_size() * self.block_size,
+                )
+                for channel in range(self.num_channels)
+            ]
+        )
 
 
 class JuceAudioBlock(Container2D):
@@ -92,16 +93,17 @@ class JuceAudioBlock(Container2D):
         start = int(self._value.attr("startSample"))
         return self._value.attr("channels")[channel][start].address()
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = np.ndarray(self.shape, dtype=self.dtype)
-        for channel in range(self.num_channels):
-            array[channel, :] = self._value.readmemory(
-                self.__channel_data_ptr(channel),
-                self.float_type.byte_size() * self.block_size,
-                self.dtype,
-            )
-        return array
+        return b"".join(
+            [
+                self._value.readmemory(
+                    self.__channel_data_ptr(channel),
+                    self.float_type.byte_size() * self.block_size,
+                )
+                for channel in range(self.num_channels)
+            ]
+        )
 
 
 ContainerFactory().register(JuceAudioBuffer)

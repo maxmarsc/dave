@@ -57,11 +57,10 @@ class CArrayAny2D(Container2D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_debugger(self) -> np.ndarray:
-        ret = np.ndarray(self.shape())
-        for i in range(self.__size):
-            ret[i][:] = self.__nested_containers[i].read_from_debugger()
-        return ret
+    def read_from_debugger(self) -> bytearray:
+        return b''.join([
+            container.read_from_debugger() for container in self.__nested_containers
+        ])
 
 
 class CarrayCarray2D(Container2D):
@@ -93,12 +92,9 @@ class CarrayCarray2D(Container2D):
     def byte_size(self) -> int:
         return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
 
-    def read_from_debugger(self) -> np.ndarray:
+    def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
-        array = self._value.readmemory(
-            self._value.address(), self.byte_size, dtype=self.dtype
-        )
-        return array.reshape(self.shape())
+        return self._value.readmemory(self._value.address(), self.byte_size)
 
 
 class Pointer2D(Container2D):
@@ -147,11 +143,10 @@ class Pointer2D(Container2D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_debugger(self) -> np.ndarray:
-        ret = np.ndarray(self.shape())
-        for i in range(self.__size):
-            ret[i][:] = self.__nested_containers[i].read_from_debugger()
-        return ret
+    def read_from_debugger(self) -> bytearray:
+        return b''.join([
+            container.read_from_debugger() for container in self.__nested_containers
+        ])
 
 
 class StdArray2D(Container2D):
@@ -210,11 +205,10 @@ class StdArray2D(Container2D):
             "Consider disabling optimization or use a supported stdlib version"
         )
 
-    def read_from_debugger(self) -> np.ndarray:
-        ret = np.ndarray(self.shape())
-        for i in range(self.__size):
-            ret[i][:] = self.__nested_containers[i].read_from_debugger()
-        return ret
+    def read_from_debugger(self) -> bytearray:
+        return b''.join([
+            container.read_from_debugger() for container in self.__nested_containers
+        ])
 
 
 class StdVector2D(Container2D):
@@ -265,11 +259,10 @@ class StdVector2D(Container2D):
             return True
         return False
 
-    def read_from_debugger(self) -> np.ndarray:
-        ret = np.ndarray(self.shape())
-        for i in range(self.size):
-            ret[i][:] = self.__nested_containers[i].read_from_debugger()
-        return ret
+    def read_from_debugger(self) -> bytearray:
+        return b''.join([
+            container.read_from_debugger() for container in self.__nested_containers
+        ])
 
 
 class StdSpan2D(Container2D):
@@ -315,11 +308,10 @@ class StdSpan2D(Container2D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
-    def read_from_debugger(self) -> np.ndarray:
-        ret = np.ndarray(self.shape())
-        for i in range(self.size):
-            ret[i][:] = self.__nested_containers[i].read_from_debugger()
-        return ret
+    def read_from_debugger(self) -> bytearray:
+        return b''.join([
+            container.read_from_debugger() for container in self.__nested_containers
+        ])
 
 
 ContainerFactory().register(CArrayAny2D)
