@@ -24,11 +24,14 @@ def stop_handler(event: gdb.StopEvent):
 
 def frame_checker():
     global last_frame  # type: gdb.Frame
-    current_frame = gdb.selected_frame()
-    if current_frame != last_frame and DaveProcess().is_alive():
-        if last_frame is not None:
-            DaveProcess().dbgr_update_callback()
-        last_frame = current_frame
+    try:
+        current_frame = gdb.selected_frame()
+        if current_frame != last_frame and DaveProcess().is_alive():
+            if last_frame is not None:
+                DaveProcess().dbgr_update_callback()
+            last_frame = current_frame
+    except gdb.error:
+        pass
 
 
 class GdbCommand(gdb.Command):

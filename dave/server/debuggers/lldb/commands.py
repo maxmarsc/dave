@@ -83,8 +83,6 @@ class LLDBEventHandler:
                 self.__try_to_attach_to_process()
             
             if DaveProcess().is_alive():
-                # Signal we're alive
-                DaveProcess().live_signal()
 
                 event = lldb.SBEvent()
                 if self.__listener.WaitForEvent(0, event):

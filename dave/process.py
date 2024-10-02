@@ -1,51 +1,90 @@
 from __future__ import annotations
+from dataclasses import dataclass
 import multiprocessing as mp
+from multiprocessing.connection import Connection
 import queue
+import subprocess
 import sys
 from typing import Dict, List, Union
 from enum import Enum
 
-from .client.gui import DaveGUI
 from .server.container import Container
 from .server.future_gdb import blocked_signals
 
 from dave.common.singleton import SingletonMeta
 from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
+from dave.common.server_type import *
 
 
 class DaveProcess(metaclass=SingletonMeta):
-    START_METHOD = "fork" if sys.platform == "darwin" else "spawn"
+    class Message(Enum):
+        STOP = "stop"
+    
+    @dataclass
+    class DeleteMessage:
+        id: int
+
+    @dataclass
+    class FreezeMessage:
+        id: int
+
+    @dataclass
+    class ConcatMessage:
+        id: int
+    
+    START_METHOD = "spawn"
 
     def __init__(self) -> None:
         self.__containers: Dict[int, Container] = dict()
-        mp.set_start_method(DaveProcess.START_METHOD, force=True)
-        self.__cqueue = mp.Queue()
-        self.__pqueue = mp.Queue()
+        if SERVER_TYPE == ServerType.LLDB:
+            # On LLDB we can use a context
+            self.__ctx = mp.get_context(DaveProcess.START_METHOD)
+        else:
+            # But not in GDB, dark magic probably
+            self.__ctx = mp
+            self.__ctx.set_start_method(DaveProcess.START_METHOD, force=True)
+        # Make sure we start the GUI process from the python executable from the PATH
+        self.__ctx.set_executable(subprocess.check_output(['which', 'python3'], text=True).strip())
+        self.__dbgr_con, self.__gui_con = self.__ctx.Pipe()
         self.__process = None
 
-    def start(self, monitor_live_signal: bool = False):
-        if isinstance(self.__process, mp.Process):
+    def start(self):
+        if self.__process is not None:
             if self.__process.is_alive():
                 raise RuntimeError("Dave process was already started")
             elif self.__process.exitcode is not None:
                 # Process already ran and exit, needs to reset the object
                 self.__process = None
                 self.__containers = dict()
+                self.__dbgr_con, self.__gui_con = self.__ctx.Pipe()
 
-        # spawn_method = "fork"
-        # old_spawn_method = mp.get_start_method()
         with blocked_signals():
-            # if old_spawn_method != spawn_method:
-            #     mp.set_start_method(spawn_method, force=True)
-            self.__process = mp.Process(
-                target=DaveGUI.create_and_run,
-                args=(self.__cqueue, self.__pqueue, monitor_live_signal),
+            self.__process = self.__ctx.Process(
+                target=DaveProcess.create_and_run,
+                args=(self.__gui_con),
             )
-            # if old_spawn_method != spawn_method:
-            #     print(f"setting spawn method to {old_spawn_method}")
-            #     mp.set_start_method(old_spawn_method, force=True)
             self.__process.start()
+
+    @staticmethod
+    def create_and_run(gui_conn: Connection):
+        """
+        ! This should never be called from the debugger process !
+        
+        Starts the GUI thread
+        """
+        try:
+            from dave.client.gui import DaveGUI
+        except ModuleNotFoundError as e:
+            Logger().get().critical("Tried to load GUI from incompatible interpreter\n"
+                                 f"sys.executable : {sys.executable}\n"
+                                 f"sys.path : {sys.path}\n")
+            raise e
+        
+        Logger().get().debug("Starting GUI process")
+        gui = DaveGUI(gui_conn)
+        gui.run()
+        
 
     def is_alive(self) -> bool:
         if self.__process is not None:
@@ -53,7 +92,7 @@ class DaveProcess(metaclass=SingletonMeta):
         return False
 
     def should_stop(self):
-        self.__cqueue.put(DaveGUI.Message.STOP)
+        self.__dbgr_con.send(DaveProcess.Message.STOP)
 
     def join(self):
         self.__process.join()
@@ -67,16 +106,16 @@ class DaveProcess(metaclass=SingletonMeta):
             id = container.id
             if not container.in_scope:
                 Logger().get().debug(f"{container.name} is out of scope")
-                self.__cqueue.put(RawContainer.OutScopeUpdate(id))
+                self.__dbgr_con.send(RawContainer.OutScopeUpdate(id))
             else:
                 Logger().get().debug(f"{container.name} is in scope")
                 data = container.read_from_debugger()
                 shape = container.shape()
-                self.__cqueue.put(RawContainer.InScopeUpdate(id, data, shape))
+                self.__dbgr_con.send(RawContainer.InScopeUpdate(id, data, shape))
 
     def add_to_model(self, container: Container):
         self.__containers[container.id] = container
-        self.__cqueue.put(container.as_raw())
+        self.__dbgr_con.send(container.as_raw())
 
     def __identify_container(self, id: str) -> int:
         try:
@@ -106,7 +145,7 @@ class DaveProcess(metaclass=SingletonMeta):
         if id not in self.__containers:
             return False
 
-        self.__cqueue.put(DaveGUI.FreezeMessage(id))
+        self.__dbgr_con.send(DaveProcess.FreezeMessage(id))
         return True
 
     def concat_container(self, id: str) -> bool:
@@ -128,7 +167,7 @@ class DaveProcess(metaclass=SingletonMeta):
         if id not in self.__containers:
             return False
 
-        self.__cqueue.put(DaveGUI.ConcatMessage(id))
+        self.__dbgr_con.send(DaveProcess.ConcatMessage(id))
         return True
 
     def delete_container(self, id: str) -> bool:
@@ -153,20 +192,17 @@ class DaveProcess(metaclass=SingletonMeta):
             return False
 
         # wtf is this flagged as unreachable
-        self.__cqueue.put(DaveGUI.DeleteMessage(id))
+        self.__dbgr_con.send(DaveProcess.DeleteMessage(id))
         return True
 
-    def live_signal(self):
-        self.__cqueue.put(DaveGUI.Message.DBGR_IS_ALIVE)
-
     def __handle_incoming_messages(self):
-        while True:
+        while self.__dbgr_con.poll():
             try:
-                msg = self.__pqueue.get_nowait()
-                if isinstance(msg, DaveGUI.DeleteMessage):
+                msg = self.__dbgr_con.recv()
+                if isinstance(msg, DaveProcess.DeleteMessage):
                     Logger().get().debug(
                         "Debugger process received delete command for {msg.id}"
                     )
                     del self.__containers[msg.id]
-            except queue.Empty:
-                break
+            except EOFError:
+                Logger().get().debug("Received EOF from GUI process")

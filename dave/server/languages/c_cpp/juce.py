@@ -38,7 +38,6 @@ class JuceAudioBuffer(Container2D):
     def block_size(self) -> int:
         return int(self._value.attr("size"))
 
-    @property
     def shape(self) -> Tuple[int, int]:
         return (self.num_channels, self.block_size)
 
@@ -85,7 +84,6 @@ class JuceAudioBlock(Container2D):
     def block_size(self) -> int:
         return int(self._value.attr("numSamples"))
 
-    @property
     def shape(self) -> Tuple[int, int]:
         return (self.num_channels, self.block_size)
 

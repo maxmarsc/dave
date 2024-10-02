@@ -2,6 +2,9 @@ import lldb  # type: ignore
 import logging
 
 try:
+    from dave.common.server_type import *
+    SERVER_TYPE = ServerType.LLDB
+    
     from dave.server.debuggers.lldb import (
         ShowCommand,
         DeleteCommand,

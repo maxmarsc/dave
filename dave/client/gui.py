@@ -4,11 +4,9 @@ from tkinter import StringVar, ttk, filedialog, messagebox
 from typing import Dict, List, Tuple
 
 
-import threading
-import multiprocessing
-import queue
+
+from multiprocessing.connection import Connection
 import tkinter as tk
-import time
 import wave
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -19,6 +17,7 @@ from dave.common.data_layout import DataLayout
 from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 from dave.server.container import Container
+from dave.process import DaveProcess
 from .container_model import ContainerModel
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 from .tooltip import Tooltip
@@ -589,39 +588,15 @@ class AudioViewsTab:
 
 
 class DaveGUI:
-    class Message(Enum):
-        STOP = "stop"
-        DBGR_IS_ALIVE = "dbgr_is_alive"
-
-    @dataclass
-    class DeleteMessage:
-        id: int
-
-    @dataclass
-    class FreezeMessage:
-        id: int
-
-    @dataclass
-    class ConcatMessage:
-        id: int
 
     def __init__(
         self,
-        cqueue: multiprocessing.Queue,
-        pqueue: multiprocessing.Queue,
-        monitor_live_signal: bool,
+        connection : Connection,
     ):
-        Logger().get().debug(
-            f"Starting GUI process, monitor_live_signal is {monitor_live_signal}"
-        )
 
         # Refresh and quit settings
         self.__refresh_time_ms = 20
-        self.__monitor_live_signal = monitor_live_signal
-        self.__live_signal_count = 0
-        self.__live_signal_count_max = 4
-        self.__cqueue = cqueue
-        self.__pqueue = pqueue
+        self.__conn = connection
 
         # GUI settings
         self.__models: Dict[int, ContainerModel] = dict()
@@ -639,14 +614,6 @@ class DaveGUI:
         self.__settings_tab = SettingsTab(self.__settings_tabframe, self.__models)
         self.__update_tk_id = ""
 
-    @staticmethod
-    def create_and_run(
-        cqueue: multiprocessing.Queue,
-        pqueue: multiprocessing.Queue,
-        monitor_live_signal: bool,
-    ):
-        gui = DaveGUI(cqueue, pqueue, monitor_live_signal)
-        gui.run()
 
     def on_closing(self):
         if self.__update_tk_id:
@@ -659,27 +626,25 @@ class DaveGUI:
             self.__refresh_time_ms, self.tkinter_update_callback
         )
         self.__window.mainloop()
+        Logger().get().debug("Tkinter mainloop exiting")
 
     def __poll_queue(self) -> bool:
         update_needed = False
-        if self.__monitor_live_signal:
-            self.__live_signal_count += 1
-        while True:
-            try:
-                msg = self.__cqueue.get(block=False)
 
-                if msg == DaveGUI.Message.STOP:
+        while self.__conn.poll():
+            try:
+                msg = self.__conn.recv()
+
+                if msg == DaveProcess.Message.STOP:
                     self.on_closing()
                     return False
-                elif msg == DaveGUI.Message.DBGR_IS_ALIVE:
-                    self.__live_signal_count = 0
-                elif isinstance(msg, DaveGUI.DeleteMessage):
+                elif isinstance(msg, DaveProcess.DeleteMessage):
                     Logger().get().debug(f"Received delete message : {msg.id}")
                     self.__models[msg.id].mark_for_deletion()
-                elif isinstance(msg, DaveGUI.FreezeMessage):
+                elif isinstance(msg, DaveProcess.FreezeMessage):
                     Logger().get().debug(f"Received freeze message : {msg.id}")
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
-                elif isinstance(msg, DaveGUI.ConcatMessage):
+                elif isinstance(msg, DaveProcess.ConcatMessage):
                     Logger().get().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawContainer):
@@ -696,20 +661,10 @@ class DaveGUI:
                     Logger().get().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
-            except queue.Empty:
-                break
-
-        # If the main process didn't sent live signal for too many iteration
-        # we stop
-        if (
-            self.__monitor_live_signal
-            and self.__live_signal_count >= self.__live_signal_count_max
-        ):
-            Logger().get().debug(
-                "No live signal detected from the debugger, closing the GUI"
-            )
-            self.on_closing()
-            return False
+            except EOFError:
+                Logger().get().debug("Received EOF from debugger process, will shutdown")
+                self.on_closing()
+                return
 
         return update_needed
 
@@ -730,7 +685,7 @@ class DaveGUI:
         for id in to_delete:
             del self.__models[id]
             self.__settings_tab.delete_container(id)
-            self.__pqueue.put(DaveGUI.DeleteMessage(id))
+            self.__conn.send(DaveProcess.DeleteMessage(id))
 
         # If no container left we close the gui
         if len(self.__models) == 0 and len(to_delete) != 0:
