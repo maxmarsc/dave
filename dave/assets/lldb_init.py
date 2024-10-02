@@ -1,5 +1,17 @@
 import lldb  # type: ignore
 import logging
+import subprocess
+import sys
+
+paths = (
+    subprocess.check_output(
+        'python -c "import os,sys;print(os.linesep.join(sys.path).strip())"', shell=True
+    )
+    .decode("utf-8")
+    .split()
+)
+# Extend LLDB's Python's search path
+sys.path.extend(paths)
 
 try:
     from dave.common.server_type import *

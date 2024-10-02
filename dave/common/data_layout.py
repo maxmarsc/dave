@@ -1,5 +1,4 @@
 from enum import Enum
-# import numpy as np
 
 
 class DataLayout(Enum):

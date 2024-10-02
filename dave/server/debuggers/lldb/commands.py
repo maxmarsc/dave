@@ -1,7 +1,7 @@
 import lldb
 import shlex
 
-from dave.process import DaveProcess
+from ...process import DaveProcess
 from ...container_factory import ContainerFactory, ContainerError
 from dave.common.logger import Logger
 from .value import LldbValue
@@ -143,7 +143,7 @@ class ShowCommand:
             return
 
         if not DaveProcess().is_alive():
-            DaveProcess().start(True)
+            DaveProcess().start()
         DaveProcess().add_to_model(container)
 
     def get_short_help(self):

@@ -1,8 +1,6 @@
 from __future__ import annotations
-from numpy import ndarray
 from ..value import AbstractValue
 import gdb  # type: ignore
-import numpy as np
 
 
 class GdbValue(AbstractValue):

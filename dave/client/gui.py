@@ -4,20 +4,19 @@ from tkinter import StringVar, ttk, filedialog, messagebox
 from typing import Dict, List, Tuple
 
 
-
+import numpy as np
 from multiprocessing.connection import Connection
 import tkinter as tk
 import wave
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-import numpy as np
 
 from dave.common.data_layout import DataLayout
 from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 from dave.server.container import Container
-from dave.process import DaveProcess
+from dave.server.process import DaveProcess
 from .container_model import ContainerModel
 from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 from .tooltip import Tooltip

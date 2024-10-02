@@ -1,8 +1,7 @@
 # --- DAVE BEGIN ---
 python
 # Update GDB's Python paths with the `sys.path` values of the local
-#  Python installation, whether that is brew'ed Python, a virtualenv,
-#  or another system python.
+# This is needed to find the common and server parts of dave
 
 # Convert GDB to interpret in Python
 import os, subprocess, sys
@@ -16,8 +15,8 @@ paths = (
     .split()
 )
 # Extend GDB's Python's search path
-# sys.path.extend(paths)
-sys.path = paths + sys.path
+sys.path.extend(paths)
+# sys.path = paths + sys.path
 try:
     import dave.server.debuggers.gdb
 except ModuleNotFoundError as e:

@@ -2,7 +2,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Callable, List, Tuple, Type, Union
 
-import numpy as np
 
 class SampleType(Enum):
     FLOAT = "float"

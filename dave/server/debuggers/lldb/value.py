@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Union
 from ..value import AbstractValue
-import numpy as np
 import lldb
 
 

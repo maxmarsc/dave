@@ -1,7 +1,7 @@
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
-from dave.process import DaveProcess
+from dave.server.process import DaveProcess
 from dave.server.container_factory import ContainerFactory, ContainerError
 from dave.common.logger import Logger
 

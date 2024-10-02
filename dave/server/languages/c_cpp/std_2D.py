@@ -7,7 +7,6 @@ from typing import Callable, List, Tuple
 
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
-import numpy as np
 
 from ...container import SampleType, Container2D
 from ...container_factory import ContainerFactory

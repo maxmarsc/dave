@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import Callable, List, Tuple
 
-import numpy as np
 
 from dave.common.logger import Logger
 from ...container import SampleType, Container2D
