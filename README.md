@@ -36,13 +36,11 @@ the [User Guide](USER_GUIDE.md) to get familiar with DAVE
 ### Installation
 To install dave and its bindings it relatively simple :
 
----
-#### Linux
 ```bash
 # First install the module itself
-pip install --user git+ssh://git@github.com/maxmarsc/dave.git@main
+pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
 # Then install the bindings for your debugger
-python -m dave install [gdb|lldb|both]
+python3 -m dave install [gdb|lldb|both]
 ```
 
 *No need the use the --user flag if installing in a virtual environment*
@@ -50,13 +48,13 @@ python -m dave install [gdb|lldb|both]
 #### Mac OS
 Currently only the toolchain provided by XCode is supported. If you use a custom
 toolchain (maybe with CLion), please contact me or open an issue.
+
+You also might need to install tkinter using homebrew or macports
 ```bash
-# Install the tcl/tk binding for xcode's python if needed
-xcrun python3 -c "import tkinter" || brew install python-tk@$(xcrun python3 --version | grep -oE '[0-9]+\.[0-9]+' | head -n1)
-# Install the dave module
-xcrun pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
-# Install the lldb bindings
-xcrun python3 -m dave install lldb
+# homebrew
+brew install python-tk
+# macports
+sudo port instalk py-tkinter
 ```
 
 ---
@@ -77,45 +75,27 @@ See the [User Guide](USER_GUIDE.md) on how to use these.
 ### Update
 If you want/need to update dave, it's done in two steps :
 
-#### Linux
 ```bash
 # Update the module itself
-pip install --user git+ssh://git@github.com/maxmarsc/dave.git@main
+pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
 # Update the bindings for your debugger
-python -m dave update [gdb|lldb|both]
-```
-
-#### Mac OS
-```bash
-xcrun pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
-xcrun python3 -m dave update lldb
+python3 -m dave update [gdb|lldb|both]
 ```
 
 ### Uninstallation
 **Note:** You can notice the pip package is actually called `davext` and not `dave`
 this is because the name `dave` is already taken on pypi, but I don't plan to change.
 
-#### Linux
 To remove the dave bindings
 ```bash
-python -m dave uninstall [gdb|lldb|both]
+python3 -m dave uninstall [gdb|lldb|both]
 ```
 
 You can then also remove the python module if you want : 
 ```bash
-pip uninstall davext
+pip3 uninstall davext
 ```
 
-#### Mac OS
-To remove the dave bindings
-```bash
-xcrun python3 -m dave uninstall lldb
-```
-
-You can then also remove the python module if you want : 
-```bash
-xcrun pip3 uninstall davext
-```
 ---
 
 
