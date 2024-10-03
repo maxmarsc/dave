@@ -3,10 +3,13 @@ from dataclasses import dataclass
 import multiprocessing as mp
 from multiprocessing.connection import Connection
 import queue
+import os
 import subprocess
 import sys
 from typing import Dict, List, Union
 from enum import Enum
+from pathlib import Path
+
 
 from .container import Container
 from .future_gdb import blocked_signals
@@ -16,11 +19,16 @@ from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 from dave.common.server_type import *
 
+try:
+    DAVE_VENV_PATH = Path(os.environ["DAVE_VENV_FOLDER"]) / "bin/activate"
+except KeyError:
+    DAVE_VENV_PATH = Path.home() / ".dave/venv/bin/activate"
+
 
 class DaveProcess(metaclass=SingletonMeta):
     class Message(Enum):
         STOP = "stop"
-    
+
     @dataclass
     class DeleteMessage:
         id: int
@@ -32,7 +40,7 @@ class DaveProcess(metaclass=SingletonMeta):
     @dataclass
     class ConcatMessage:
         id: int
-    
+
     START_METHOD = "spawn"
 
     def __init__(self) -> None:
@@ -45,7 +53,13 @@ class DaveProcess(metaclass=SingletonMeta):
             self.__ctx = mp
             self.__ctx.set_start_method(DaveProcess.START_METHOD, force=True)
         # Make sure we start the GUI process from the python executable from the PATH
-        self.__ctx.set_executable(subprocess.check_output(['which', 'python3'], text=True).strip())
+        self.__ctx.set_executable(
+            subprocess.check_output(
+                '. {};which python"'.format(DAVE_VENV_PATH), shell=True
+            )
+            .strip()
+            .decode("utf-8")
+        )
         self.__dbgr_con, self.__gui_con = self.__ctx.Pipe()
         self.__process = None
 
@@ -62,7 +76,7 @@ class DaveProcess(metaclass=SingletonMeta):
         with blocked_signals():
             self.__process = self.__ctx.Process(
                 target=DaveProcess.create_and_run,
-                args=(self.__gui_con, ),
+                args=(self.__gui_con,),
             )
             self.__process.start()
 
@@ -70,14 +84,17 @@ class DaveProcess(metaclass=SingletonMeta):
     def create_and_run(gui_conn: Connection):
         """
         ! This should never be called from the debugger process !
-        
+
         Starts the GUI thread
         """
         # First make sure the import path are the one from the new env
         # import sys
         sys.path = (
             subprocess.check_output(
-                'python -c "import os,sys;print(os.linesep.join(sys.path).strip())"', shell=True
+                '. {};python -c "import os,sys;print(os.linesep.join(sys.path).strip())"'.format(
+                    DAVE_VENV_PATH
+                ),
+                shell=True,
             )
             .decode("utf-8")
             .split()
@@ -86,15 +103,16 @@ class DaveProcess(metaclass=SingletonMeta):
             # from dave.client.gui import DaveGUI
             from dave.client import DaveGUI
         except ModuleNotFoundError as e:
-            Logger().get().critical("Tried to load GUI from incompatible interpreter\n"
-                                 f"sys.executable : {sys.executable}\n"
-                                 f"sys.path : {sys.path}\n")
+            Logger().get().critical(
+                "Tried to load GUI from incompatible interpreter\n"
+                f"sys.executable : {sys.executable}\n"
+                f"sys.path : {sys.path}\n"
+            )
             raise e
-        
+
         Logger().get().debug("Starting GUI process")
         gui = DaveGUI(gui_conn)
         gui.run()
-        
 
     def is_alive(self) -> bool:
         if self.__process is not None:

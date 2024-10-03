@@ -9,30 +9,37 @@ The bindings for gdb and lldb uses the `~/.gdbinit` and `~/.lldbinit` files
 to automatically load the dave module at runtime. If the module is not accessible
 then you will be inform.
 
-This can happen because DAVE modify your init script user-wide, but you don't
-necessarely install DAVE user-wide (maybe in a venv)
+### The `dave` command line tool
+After installation (and reloading your .bashrc/.zshrc file), you should have access to
+the `dave` command line tool :
 
-## Supported containers
-For now DAVE support samples as `float`, `double`, `std::complex` and C's `complex`
+```
+usage: dave [-h] {status,bind,unbind,update, uninstall} [{lldb,gdb,both}]
 
-Supported audio containers are :
+Helper script to manage DAVE
 
-__1D (mono) containers__:
-- `std::array`
-- `std::vector`
-- `std::span`
-- `C array`
-- `pointer`
+subcommands:
+        dave status
+                        Print information about the current dave installation
+        dave bind [{lldb, gdb, both}]
+                        Bind the selected debuggers to dave
+                        Default to 'both' on Linux and 'lldb' on MacOS
 
-__2D (multichannel) containers__:
-- Any nesting of 1D containers
-- `juce::AudioBuffer`
-- `juce::dsp::AudioBlock`
+        dave unbind [{lldb, gdb, both}]
+                        Unbind the selected debuggers from dave
+                        Default to 'both' on Linux and 'lldb' on MacOS
 
-Currently supported OS are Linux and supposedly MacOS. Both GNU and LLVM stdlib
-implementation are supported.
+        dave update
+                        Update the dave package and the bindings
 
-## Commands
+        dave uninstall 
+                        Uninstall dave completely
+
+options:
+        -h, --help      show this help message and exit
+```
+
+## Debugger commands
 DAVE adds a set of new commands to your debugger
 
 ### `dave show`
@@ -257,3 +264,23 @@ Available on **complex** (1D/2D) data layout.
 ![Phase](.pictures/phase.png)
 
 The phase view computes and plot the phase of a complex signal.
+
+## Supported containers
+For now DAVE support samples as `float`, `double`, `std::complex` and C's `complex`
+
+Supported audio containers are :
+
+__1D (mono) containers__:
+- `std::array`
+- `std::vector`
+- `std::span`
+- `C array`
+- `pointer`
+
+__2D (multichannel) containers__:
+- Any nesting of 1D containers
+- `juce::AudioBuffer`
+- `juce::dsp::AudioBlock`
+
+Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
+implementation are supported.

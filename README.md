@@ -30,41 +30,35 @@ implementation are supported.
 ---
 
 To get started first follow the `Project Setup` guide below, then you can read 
-the [User Guide](USER_GUIDE.md) to get familiar with DAVE
+the [User Guide](USER_GUIDE.md) to get familiar with DAVE.
+
+If you want to develop/experiment with dave, follow the [Development Guide](DEV_GUIDE.md)
 
 ## Project setup
 ### Installation
-To install dave and its bindings it relatively simple :
-
+The simplest way to install dave and its bindings is to use the install script :
 ```bash
-# First install the module itself
-pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
-# Then install the bindings for your debugger
-python3 -m dave install [gdb|lldb|both]
+# via the install script
+## using curl
+$ bash -c "$(curl -fsSL https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/dave/assets/dave_install.sh)"
+
+## using wget
+$ bash -c "$(wget https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/dave/assets/dave_install.sh -O -)"
 ```
 
-*No need the use the --user flag if installing in a virtual environment*
+It will install the python dave modules, the debuggers bindings, and the `dave`
+cli tool to help manage your dave installation.
 
-#### Mac OS
-Currently only the toolchain provided by XCode is supported. If you use a custom
-toolchain (maybe with CLion), please contact me or open an issue.
-
-You also might need to install tkinter using homebrew or macports
-```bash
-# homebrew
-brew install python-tk
-# macports
-sudo port instalk py-tkinter
-```
+*MacOS* : On MacOS distribution you might need to install tkinter using homebrew/macports.
 
 ---
 
-Then when starting your debugger you should see the following message :
+After binding, starts your debugger, you should see the following message :
 ```
 [dave] Successfully loaded
 ```
 
-And the dave commands should be available :
+And the dave debugger commands should be available :
  - `dave show`
  - `dave delete`
  - `dave freeze`
@@ -73,27 +67,22 @@ And the dave commands should be available :
 See the [User Guide](USER_GUIDE.md) on how to use these.
 
 ### Update
-If you want/need to update dave, it's done in two steps :
+If you want/need to update dave, you can use the `dave` cli tool :
 
 ```bash
-# Update the module itself
-pip3 install --user git+ssh://git@github.com/maxmarsc/dave.git@main
-# Update the bindings for your debugger
-python3 -m dave update [gdb|lldb|both]
+# Update dave
+dave update
 ```
 
 ### Uninstallation
-**Note:** You can notice the pip package is actually called `davext` and not `dave`
-this is because the name `dave` is already taken on pypi, but I don't plan to change.
-
-To remove the dave bindings
+If you just want to remove the dave bindings run
 ```bash
-python3 -m dave uninstall [gdb|lldb|both]
+dave unbind
 ```
 
-You can then also remove the python module if you want : 
+If you want to completely remove dave from your system run
 ```bash
-pip3 uninstall davext
+dave uninstall
 ```
 
 ---

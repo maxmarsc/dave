@@ -85,7 +85,7 @@ def parse_arguments():
     parser.add_argument(
         "action",
         type=str,
-        choices=["install", "uninstall", "update"],
+        choices=["bind", "unbind", "update", "check"],
         help="Action to perform",
     )
     parser.add_argument(
@@ -191,23 +191,23 @@ def uninstall_gdb(backup=True):
 def main():
     args = parse_arguments()
 
-    if args.action == "install":
+    if args.action == "bind":
 
         if args.debugger in ("gdb", "both"):
             if check_for_gdb_installation():
-                logging.error("GDB bindings are already installed")
+                logging.warning("GDB bindings are already installed. Skipping")
             else:
                 install_gdb()
                 logging.info("GDB bindings were installed")
 
         if args.debugger in ("lldb", "both"):
             if check_for_lldb_installation():
-                logging.error("Error : LLDB bindings are already installed")
+                logging.warning("LLDB bindings are already installed. Skipping")
             else:
                 install_lldb()
                 logging.info("LLDB bindings were installed")
 
-    elif args.action == "uninstall":
+    elif args.action == "unbind":
 
         if args.debugger in ("gdb", "both"):
             if check_for_gdb_installation():
@@ -244,6 +244,20 @@ def main():
                 logging.error(
                     "Could not update LLDB bindings as these are not installed"
                 )
+    elif args.action == "check":
+        if args.debugger == "both":
+            raise NotImplementedError()
+        elif args.debugger == "lldb":
+            if check_for_lldb_installation():
+                print(1)
+            else:
+                print(0)
+        else:
+            if check_for_gdb_installation():
+                print(1)
+            else:
+                print(0)
+            
     else:
         raise NotImplementedError()
 

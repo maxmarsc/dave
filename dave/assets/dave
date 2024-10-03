@@ -1,0 +1,166 @@
+#!/bin/bash
+set -euo pipefail
+
+# Function to display help message
+show_help() {
+    echo "usage: $(basename "$0") [-h] {status,bind,unbind,update, uninstall} [{lldb,gdb,both}]"
+    echo ""
+    echo "Helper script to manage DAVE"
+    echo ""
+    printf "subcommands:\n"
+    printf "\tdave status\n"
+    printf "\t\t\tPrint information about the current dave installation\n"
+    printf "\tdave bind [{lldb, gdb, both}]\n"
+    printf "\t\t\tBind the selected debuggers to dave\n"
+    printf "\t\t\tDefault to 'both' on Linux and 'lldb' on MacOS\n\n" 
+    printf "\tdave unbind [{lldb, gdb, both}]\n"
+    printf "\t\t\tUnbind the selected debuggers from dave\n"
+    printf "\t\t\tDefault to 'both' on Linux and 'lldb' on MacOS\n\n" 
+    printf "\tdave update\n"
+    printf "\t\t\tUpdate the dave package and the bindings\n\n"
+    printf "\tdave uninstall \n\t\t\tUninstall dave completely\n"
+    echo ""
+    echo "options:"
+    printf "  \t-h, --help\tshow this help message and exit\n"
+}
+
+# Default debugger type
+DEBUGGER_TYPE="both"
+if [[ "$(uname)" == "Darwin"* ]]; then
+    DEBUGGER_TYPE="lldb"
+fi
+
+# Check for help flag
+if [[ "$#" -eq 0 ]]; then
+    show_help
+    exit 1
+fi
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        bind|unbind|update|uninstall|status)
+            ACTION="$1"
+            shift
+            ;;
+        lldb|gdb|both)
+            DEBUGGER_TYPE="$1"
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo "Error: Invalid argument '$1'"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# shellcheck disable=SC2016
+PATH_COMMAND='export PATH="$PATH:$HOME"/.dave/scripts'
+
+zsh_path_uninstall() {
+    if grep -Fxq "$PATH_COMMAND" ~/.zshrc; then
+        echo "Deleting dave from the PATH in ~/.zshrc"
+        grep -v "$PATH_COMMAND" "$HOME/.zshrc" > "$HOME/.zshrc.davetmp" && mv "$HOME/.zshrc.davetmp" "$HOME/.zshrc"
+    fi
+}
+bash_path_uninstall() {
+if grep -Fxq "$PATH_COMMAND" ~/.bashrc; then
+    echo "Deleting dave from the PATH in ~/.bashrc"
+    grep -v "$PATH_COMMAND" "$HOME/.bashrc" > "$HOME/.bashrc.davetmp" && mv "$HOME/.bashrc.davetmp" "$HOME/.bashrc"
+fi
+}
+
+ACTIVATE_SCRIPT="$HOME/.dave/venv/bin/activate"
+case "$ACTION" in
+    status)
+        # shellcheck disable=SC1090
+        source "$ACTIVATE_SCRIPT"
+        package_version=$(pip show davext | grep -i '^Version:' | awk '{print $2}')
+        echo "dave module version : ${package_version}"
+        gdb=$(python -m dave check gdb)
+        if [[ "$gdb" == "1" ]]; then
+            echo "gdb bindings : installed"
+        else
+            echo "gdb bindings : not installed"
+        fi
+        lldb=$(python -m dave check lldb)
+        if [[ "$lldb" == "1" ]]; then
+            echo "lldb bindings : installed"
+        else
+            echo "lldb bindings : not installed"
+        fi
+        deactivate
+        ;;
+    bind)
+        # shellcheck disable=SC1090
+        source "$ACTIVATE_SCRIPT"
+        python -m dave bind "$DEBUGGER_TYPE"
+        deactivate
+        ;;
+    unbind)
+        # shellcheck disable=SC1090
+        source "$ACTIVATE_SCRIPT"
+        python -m dave unbind "$DEBUGGER_TYPE"
+        deactivate
+        ;;
+    update)
+        # shellcheck disable=SC1090
+        source "$ACTIVATE_SCRIPT"
+        # Update the package
+        echo "Updating dave package"
+        pip install --upgrade davext
+        # Update gdb bindings if needed
+        gdb=$(python -m dave check gdb)
+        if [[ "$gdb" == "1" ]]; then
+            echo "Updating gdb bindings"
+            python -m dave update gdb
+        fi
+        # update lldb bindings if needed
+        lldb=$(python -m dave check lldb)
+        if [[ "$lldb" == "1" ]]; then
+            echo "Updating lldb bindings"
+            python -m dave update lldb
+        fi
+        deactivate
+        ;;
+    uninstall)
+        # Unbind debuggers
+        # shellcheck disable=SC1090
+        source "$ACTIVATE_SCRIPT"
+        gdb=$(python -m dave check gdb)
+        if [[ "$gdb" == "1" ]]; then
+            echo "Removing gdb bindings"
+            python -m dave unbind gdb
+        fi
+        lldb=$(python -m dave check lldb)
+        if [[ "$lldb" == "1" ]]; then
+            echo "Removing lldb bindings"
+            python -m dave unbind lldb
+        fi
+        deactivate
+
+        # Remove from PATH
+        if [[ "$(uname)" == "Darwin"* ]]; then
+            zsh_path_uninstall
+            bash_path_uninstall
+        elif [[ "$(uname)" == "Linux"* ]]; then
+            SHELL_NAME=$(basename "$SHELL")
+            if [[ "$SHELL_NAME" == "zsh" ]]; then
+                zsh_path_uninstall
+            fi
+            bash_path_uninstall
+        else
+            echo "Unsupported OS : $(uname)"
+            exit 1
+        fi
+
+        # Delete the folder
+        rm -rf "$HOME/.dave"
+        echo ""
+        echo "DAVE was successfully uninstalled"
+esac

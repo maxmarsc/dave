@@ -2,21 +2,36 @@ import lldb  # type: ignore
 import logging
 import subprocess
 import sys
+import os
 
-paths = (
-    subprocess.check_output(
-        'python -c "import os,sys;print(os.linesep.join(sys.path).strip())"', shell=True
+# Update LLDB's Python paths with the `sys.path` values of the local
+from pathlib import Path
+
+try:
+    DAVE_VENV_PATH = Path(os.environ["DAVE_VENV_FOLDER"]) / "bin/activate"
+except KeyError:
+    DAVE_VENV_PATH = Path.home() / ".dave/venv/bin/activate"
+
+# Execute a Python using the user's shell and pull out the sys.path (for site-packages)
+if DAVE_VENV_PATH.is_file():
+    paths = (
+        subprocess.check_output(
+            '. {};python -c "import os,sys;print(os.linesep.join(sys.path).strip())"'.format(
+                DAVE_VENV_PATH
+            ),
+            shell=True,
+        )
+        .decode("utf-8")
+        .split()
     )
-    .decode("utf-8")
-    .split()
-)
-# Extend LLDB's Python's search path
-sys.path.extend(paths)
+    # Delete duplicates and update the search list with dave venv
+    sys.path = list(dict.fromkeys(sys.path + paths))
 
 try:
     from dave.common.server_type import *
+
     SERVER_TYPE = ServerType.LLDB
-    
+
     from dave.server.debuggers.lldb import (
         ShowCommand,
         DeleteCommand,
