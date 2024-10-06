@@ -103,10 +103,11 @@ dave uninstall
 - [x] add license
 - [x] llvm libc/libstd (need to be tested)
 - [x] JUCE 
-- [ ] GSL
+- [x] GSL
 - [ ] command aliases
 - [ ] minimize call to render functions
-- [ ] CHOC 
+- [ ] CHOC
+- [ ] Eigen
 - [ ] Document the code
 - [ ] Add a way for the user to add custom container support
 - [ ] find testing strategy
