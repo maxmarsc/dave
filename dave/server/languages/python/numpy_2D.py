@@ -2,7 +2,7 @@ import re
 from typing import Tuple
 import numpy as np
 
-from dave.container import SampleType, Container2D
+from dave.server.container import SampleType, Container2D
 from dave.server.container_factory import ContainerFactory
 
 

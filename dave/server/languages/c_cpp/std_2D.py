@@ -57,9 +57,9 @@ class CArrayAny2D(Container2D):
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> bytearray:
-        return b''.join([
-            container.read_from_debugger() for container in self.__nested_containers
-        ])
+        return b"".join(
+            [container.read_from_debugger() for container in self.__nested_containers]
+        )
 
 
 class CarrayCarray2D(Container2D):
@@ -143,13 +143,13 @@ class Pointer2D(Container2D):
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> bytearray:
-        return b''.join([
-            container.read_from_debugger() for container in self.__nested_containers
-        ])
+        return b"".join(
+            [container.read_from_debugger() for container in self.__nested_containers]
+        )
 
 
 class StdArray2D(Container2D):
-    __REGEX = rf"^(?:const\s+)?std::array<(.*),\s*(\d+)>\s*$"
+    __REGEX = rf"^(?:const\s+)?std::array<(.*),\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
@@ -205,9 +205,9 @@ class StdArray2D(Container2D):
         )
 
     def read_from_debugger(self) -> bytearray:
-        return b''.join([
-            container.read_from_debugger() for container in self.__nested_containers
-        ])
+        return b"".join(
+            [container.read_from_debugger() for container in self.__nested_containers]
+        )
 
 
 class StdVector2D(Container2D):
@@ -259,13 +259,13 @@ class StdVector2D(Container2D):
         return False
 
     def read_from_debugger(self) -> bytearray:
-        return b''.join([
-            container.read_from_debugger() for container in self.__nested_containers
-        ])
+        return b"".join(
+            [container.read_from_debugger() for container in self.__nested_containers]
+        )
 
 
 class StdSpan2D(Container2D):
-    __REGEX = rf"^(?:const\s+)?std::span<(.*),\s*(\d+)>\s*$"
+    __REGEX = rf"^(?:const\s+)?(?:std|gsl)::span<(.*),\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
@@ -308,9 +308,9 @@ class StdSpan2D(Container2D):
         return re.compile(cls.__REGEX)
 
     def read_from_debugger(self) -> bytearray:
-        return b''.join([
-            container.read_from_debugger() for container in self.__nested_containers
-        ])
+        return b"".join(
+            [container.read_from_debugger() for container in self.__nested_containers]
+        )
 
 
 ContainerFactory().register(CArrayAny2D)

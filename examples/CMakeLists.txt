@@ -1,6 +1,4 @@
 include(FetchContent)
-# include(curl)
-
 set(JUCE_USE_CURL OFF)
 FetchContent_Declare(
   juce_project
@@ -11,6 +9,19 @@ FetchContent_Declare(
 )
 set(JUCE_MODULES_ONLY ON)
 FetchContent_MakeAvailable(juce_project)
+
+
+set(GSL_INSTALL OFF)
+set(GSL_TEST OFF)
+FetchContent_Declare(
+  GSL
+  GIT_REPOSITORY "https://github.com/microsoft/GSL"
+  GIT_TAG "v4.0.0"
+  GIT_SHALLOW ON
+)
+
+FetchContent_MakeAvailable(GSL)
+
 
 add_executable(std
     ${CMAKE_CURRENT_SOURCE_DIR}/std.cpp
@@ -43,3 +54,11 @@ target_compile_definitions(
   juce
   PUBLIC JUCE_USE_CURL=0
 )
+
+add_executable(
+  gsl
+  ${CMAKE_CURRENT_SOURCE_DIR}/gsl.cpp
+)
+set_target_properties(gsl PROPERTIES CXX_STANDARD 17)
+
+target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)

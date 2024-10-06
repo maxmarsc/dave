@@ -55,7 +55,7 @@ class DaveProcess(metaclass=SingletonMeta):
         # Make sure we start the GUI process from the python executable from the PATH
         self.__ctx.set_executable(
             subprocess.check_output(
-                '. {};which python"'.format(DAVE_VENV_PATH), shell=True
+                ". {};which python".format(DAVE_VENV_PATH), shell=True
             )
             .strip()
             .decode("utf-8")

@@ -78,6 +78,12 @@ class StdSpan:
         except:
             pass
 
+        # via GSL span members
+        try:
+            return int(self.__value.attr("storage_").attr("size_"))
+        except:
+            pass
+
         raise RuntimeError(
             f"Failed to retrieve size of {self.__value.typename()}. "
             "Consider disabling optimization or use a supported stdlib version"
@@ -95,6 +101,12 @@ class StdSpan:
         # via libc++ (LLVM) members
         try:
             return self.__value.attr("__data_")
+        except RuntimeError:
+            pass
+
+        # via GSL members
+        try:
+            return self.__value.attr("storage_").attr("data_")
         except RuntimeError:
             pass
 
