@@ -26,7 +26,7 @@ def parse_template(typename: str) -> List[str]:
     if "," not in template_parameters:
         return [template_name, template_parameters]
 
-    ret = [template_name]
+    ret = [template_name + typename[ends[-1] + 1 :]]
     commas = find_all(template_parameters, ",")
     prev_i_comma = -1
     for i_comma in commas:

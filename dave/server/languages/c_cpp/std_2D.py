@@ -4,6 +4,7 @@ from __future__ import annotations
 # from enum import Enum
 import re
 from typing import Callable, List, Tuple
+from pathlib import Path
 
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
@@ -28,13 +29,15 @@ class CArrayAny2D(Container2D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid C array type")
+            raise TypeError(
+                f"CArrayAny2D could not parse {typename} as a valid C array type"
+            )
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse nested type {nested} as a valid container type"
+                f"CArrayAny2D could not parse nested type {nested} as a valid container type"
             )
 
         self.__size = int(re_match.group(2))
@@ -73,7 +76,9 @@ class CarrayCarray2D(Container2D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid 2D C array type")
+            raise TypeError(
+                f"CarrayCarray2D could not parse {typename} as a valid 2D C array type"
+            )
 
         # Check if contains a nested valid 1D container
         data_type = SampleType.parse(re_match.group(1))
@@ -107,13 +112,15 @@ class Pointer2D(Container2D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid ptr ptr type")
+            raise TypeError(
+                f"Pointer2D could not parse {typename} as a valid ptr ptr type"
+            )
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse nested type {nested} as a valid container type"
+                f"Pointer2D could not parse nested type {nested} as a valid container type"
             )
 
         if "*" in nested and len(dims) != 2:
@@ -121,7 +128,7 @@ class Pointer2D(Container2D):
                 "Pointer of pointer container requires exactly two dimensions"
             )
         elif not "*" in nested and len(dims) != 1:
-            raise TypeError("Pointer container requires exactly one dimensions")
+            raise TypeError("Pointer container requires exactly one dimension")
 
         self.__size = dims[0]
         self.__nested_containers = [
@@ -155,13 +162,15 @@ class StdArray2D(Container2D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid std::array type")
+            raise TypeError(
+                f"StdArray2D could not parse {typename} as a valid std::array type"
+            )
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse nested type {nested} as a valid container type"
+                f"StdArray2D could not parse nested type {nested} as a valid container type"
             )
 
         self.__size = int(re_match.group(2))
@@ -215,13 +224,15 @@ class StdVector2D(Container2D):
         typename = dbg_value.typename()
         parsed_types = parse_template(typename)
         if not StdVector2D.name_parser(typename):
-            raise TypeError(f"Could not parse {typename} as a valid std::array type")
+            raise TypeError(
+                f"StdVector2D could not parse {typename} as a valid std::array type"
+            )
 
         # Check if contains a nested valid 1D container
         nested = parsed_types[1]
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse nested type {nested} as a valid container type"
+                f"StdVector2D could not parse nested type {nested} as a valid container type"
             )
 
         self._value = dbg_value
@@ -271,13 +282,15 @@ class StdSpan2D(Container2D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid std::array type")
+            raise TypeError(
+                f"StdSpan2D could not parse {typename} as a valid std::array type"
+            )
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
         if not ContainerFactory().check_valid_1D(nested):
             raise TypeError(
-                f"Could not parse nested type {nested} as a valid container type"
+                f"StdSpan2D could not parse nested type {nested} as a valid container type"
             )
 
         self.__span = StdSpan(dbg_value, int(re_match.group(2)))

@@ -60,7 +60,7 @@ class ContainerFactory(metaclass=SingletonMeta):
     def build(
         self, dbg_value: Any, typename: str, varname: str, dims: List[int] = []
     ) -> Container:
-        Logger().get().debug(f"Building {varname}: |{typename}|")
+        Logger().get().debug(f"Building {varname} from type |{typename}|")
 
         # First we check if it is a 1D container
         try:

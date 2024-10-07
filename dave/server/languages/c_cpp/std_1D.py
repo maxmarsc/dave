@@ -20,7 +20,9 @@ class CArray1D(Container1D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid C array type")
+            raise TypeError(
+                f"CArray1D could not parse {typename} as a valid C array type"
+            )
 
         data_type = SampleType.parse(re_match.group(1))
         self.__size = int(re_match.group(2))
@@ -48,7 +50,9 @@ class Pointer1D(Container1D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid C array type")
+            raise TypeError(
+                f"Pointer1D could not parse {typename} as a valid C array type"
+            )
 
         data_type = SampleType.parse(re_match.group(1))
         self.__size = dims[0]
@@ -74,7 +78,9 @@ class StdArray1D(Container1D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid std::array type")
+            raise TypeError(
+                f"StdArray1D could not parse {typename} as a valid std::array type"
+            )
 
         data_type = SampleType.parse(re_match.group(1))
         self.__size = int(re_match.group(2))
@@ -100,7 +106,9 @@ class StdVector1D(Container1D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid std::vector type")
+            raise TypeError(
+                f"StdVector1D could not parse {typename} as a valid std::vector type"
+            )
 
         datatype = SampleType.parse(re_match.group(1))
         self.__vec = StdVector(dbg_value)
@@ -131,7 +139,9 @@ class StdSpan1D(Container1D):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
-            raise TypeError(f"Could not parse {typename} as a valid std::span type")
+            raise TypeError(
+                f"StdSpan1D could not parse {typename} as a valid std::span type"
+            )
 
         self.__span = StdSpan(dbg_value, int(re_match.group(2)))
         datatype = SampleType.parse(re_match.group(1))
