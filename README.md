@@ -16,6 +16,7 @@ __1D (mono) containers__:
 - `std::array`
 - `std::vector`
 - `std::span`
+- [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
 - `C array`
 - `pointer`
 
