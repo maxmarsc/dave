@@ -36,6 +36,9 @@ the [User Guide](USER_GUIDE.md) to get familiar with DAVE.
 If you want to develop/experiment with dave, follow the [Development Guide](DEV_GUIDE.md)
 
 ## Project setup
+### Requirements
+DAVE requires a python >= 3.10 installation with working `venv` and `tkinter` modules
+
 ### Installation
 The simplest way to install dave and its bindings is to use the install script :
 ```bash
@@ -110,6 +113,7 @@ dave uninstall
 - [ ] Add command to help diagnostic type for custom container support
 - [ ] Add argument parsing to `show` (view, layout, settings...)
 - [ ] Add versionning selection to dave_install
+- [ ] Add FISH shell support
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] CHOC

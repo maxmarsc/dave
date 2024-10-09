@@ -16,6 +16,7 @@ printf "\n\nThis message should disappear soon enough, happy coding !\n\n"
 read -rp "Type Enter to continue" response
 
 
+#============================   OS detection   =================================
 if [[ "$(uname)" == "Darwin"* ]]; then
     echo "MacOS detected"
 elif [[ "$(uname)" == "Linux"* ]]; then
@@ -25,6 +26,63 @@ else
     exit 1
 fi
 
+
+#============================   Python detection   =============================
+# Function to compare Python versions
+version_ge() {
+    # Compare two version numbers
+    # Returns 0 (true) if version1 >= version2, otherwise 1 (false)
+    local version1=("${1//./ }")
+    local version2=("${2//./ }")
+    
+    for i in {0..2}; do
+        if [[ ${version1[i]} -gt ${version2[i]} ]]; then
+            return 0
+        elif [[ ${version1[i]} -lt ${version2[i]} ]]; then
+            return 1
+        fi
+    done
+    return 0
+}
+
+PY3_VERSIONS=$(compgen -c | grep -E '^python3(\.[0-9]+)?$' | sort -V)
+SELECTED_PY3=""
+for PY3 in $PY3_VERSIONS; do
+    # Check for version
+    VERSION=$("$PY3" --version | awk '{print $2}')
+    if ! version_ge "$VERSION" "3.10";then
+      continue
+    fi
+
+    # Check for venv
+    VENV_CHECK_CALL="$PY3 -m venv -h"
+    if ! eval "$VENV_CHECK_CALL" > /dev/null 2>&1 ; then
+        continue
+    fi
+
+    # Check for tkinter
+    TKINTER_CHECK_CALL="$PY3 -c 'import tkinter;tkinter.Tk()'"
+    if ! eval "$TKINTER_CHECK_CALL" > /dev/null 2>&1 ; then
+        continue
+    fi
+
+    SELECTED_PY3="$PY3"
+    break
+done
+
+if [[ "$SELECTED_PY3" == "" ]];then
+  echo "Failed to find a working python >= 3.10 installation with working venv and tkinter modules"
+  if [[ "$(uname)" == "Darwin"* ]]; then
+        >&2 echo "On MacOS you can install tkinter using homebrew or macports"
+        >&2 printf "\tbrew install python-tk\n\tor"
+        >&2 printf "\tsudo port install py-tkinter"
+  fi
+  exit 1
+fi
+
+echo "Selection $SELECTED_PY3 for dave installation"
+
+#============================   DAVE folder   ==================================
 # Create dave dir
 DAVE_DIR="$HOME"/.dave
 if [[ -d "$DAVE_DIR" ]]; then
@@ -34,27 +92,11 @@ fi
 
 mkdir -p "$DAVE_DIR"
 
-# Check for venv
-VENV_CHECK_CALL="python3 -m venv -h"
-if ! eval "$VENV_CHECK_CALL" > /dev/null 2>&1 ; then
-    >&2 echo "'python3 -m venv' command check failed. Check you python3 venv installation" 
-    exit 1
-fi
 
-# Check for tkinter
-TKINTER_CHECK_CALL="python3 -c 'import tkinter;tkinter.Tk()'"
-if ! eval "$TKINTER_CHECK_CALL" > /dev/null 2>&1 ; then
-    >&2 echo "tkinter check failed. Check your tkinter installation"
-    if [[ "$(uname)" == "Darwin"* ]]; then
-        >&2 echo "On MacOS you can install tkinter using homebrew or macports"
-        >&2 printf "\tbrew install python-tk\n\tor"
-        >&2 printf "\tsudo port install py-tkinter"
-    fi
-fi
-
+#============================   DAVE venv   ====================================
 # Create the venv
 echo "Creating custom dave venv..."
-python3 -m venv "$DAVE_DIR/venv"
+"$SELECTED_PY3" -m venv "$DAVE_DIR/venv"
 ACTIVATE_SCRIPT="$HOME/.dave/venv/bin/activate"
 # Activate the venv
 # shellcheck disable=SC1090
@@ -64,6 +106,9 @@ source "$ACTIVATE_SCRIPT"
 echo "Installing dave module..."
 pip install davext
 deactivate
+
+
+#============================   DAVE command line tool   =======================
 # Installing dave bash script
 mkdir "$HOME"/.dave/scripts
 DAVE_SCRIPT=$(find "$DAVE_DIR"/venv/lib/python3*/site-packages/dave/assets -name "dave")
@@ -97,7 +142,7 @@ bash_path_install() {
     printf "\nAllowing BASH to access dave commands requires adding "
     printf "'~/.dave/scripts' to the PATH in ~/.bashrc\n"
     printf "\t"
-    read -rp "Allow ~/.bashrc modification ? [y/n] (default: y): " response
+    read -rp "Allow ~/.bashrc modification ? [Y/n]: " response
     response=${response:-y}  # Set default to 'y' if no input is provided
 
     if [[ "$response" == "y" || "$response" == "Y" ]]; then
@@ -120,7 +165,7 @@ automatic_bind() {
     # propose to bind gdb if installed
     if command -v gdb > /dev/null 2>&1; then
         printf "\ngdb was detected on your system\n"
-        read -rp "Would you like to bind dave to gdb ? [y/n] (default: y): " response
+        read -rp "Would you like to bind dave to gdb ? [Y/n]: " response
         response=${response:-y}
         if [[ "$response" == "y" || "$response" == "Y" ]]; then
             python -m dave bind gdb
@@ -130,7 +175,7 @@ automatic_bind() {
     # propose to bind lldb if installed
     if command -v lldb > /dev/null 2>&1; then
         printf "\nlldb was detected on your system\n"
-        read -rp "Would you like to bind dave to lldb ? [y/n] (default: y): " response
+        read -rp "Would you like to bind dave to lldb ? [Y/n]: " response
         response=${response:-y}
         if [[ "$response" == "y" || "$response" == "Y" ]]; then
             python -m dave bind lldb
@@ -153,5 +198,7 @@ fi
 
 automatic_bind
 
+echo ""
 echo "DAVE was successfully installed. To access the dave shell command, source your .bashrc/.zshrc file"
+echo ""
 echo "Don't forget to check the User Guide : https://github.com/maxmarsc/dave/blob/main/USER_GUIDE.md"

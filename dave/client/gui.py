@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from enum import Enum
 from tkinter import StringVar, ttk, filedialog, messagebox
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 
 import numpy as np
 from multiprocessing.connection import Connection
 import tkinter as tk
+import customtkinter as ctk
 import wave
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -22,7 +23,7 @@ from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 from .tooltip import Tooltip
 
 
-class ContainerSettingsFrame:
+class ContainerSettingsFrame(ctk.CTkFrame):
     """
     Holds all the settings of a container (not the actions buttons)
 
@@ -34,210 +35,201 @@ class ContainerSettingsFrame:
     """
 
     def __init__(self, master: tk.Misc, model: ContainerModel) -> None:
-        self.__model = model
-        self.__master = master
-        self.__frame = tk.Frame(self.__master, bd=2, relief=tk.RAISED, pady=5)
-        # Label
-        self.__name_label = tk.Label(
-            self.__frame, text=f"{self.__model.variable_name} : ", font="bold"
+        super().__init__(
+            master, fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"]
         )
-        self.__name_label.pack(side=tk.LEFT, fill="y")
-        ttk.Separator(self.__frame, orient="vertical").pack(side=tk.LEFT, fill="y")
+        self.__model = model
+        self.__bold_font = ctk.CTkFont(size=16, weight="bold")
+        self.__font = ctk.CTkFont(size=15)
+        # container name
+        self.__name_label = ctk.CTkLabel(
+            self,
+            text=f"{self.__model.variable_name} : ",
+            font=self.__font,
+            width=120,
+            anchor="e",
+        )
+        self.__name_label.pack(side=tk.LEFT, padx=2)
+
         # Layout selection
-        self.__layout_menu = None
-        self.__layout_separator = None
         self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
         self.__layout_var.trace_add("write", self.layout_var_callback)
+        self.__layout_menu = ctk.CTkOptionMenu(
+            self,
+            values=[layout.value for layout in self.__model.possible_layouts],
+            variable=self.__layout_var,
+            font=self.__font,
+            width=125,
+        )
+        Tooltip(self.__layout_menu, text="Select data layout of the container")
+        self.__layout_menu.pack(side=tk.LEFT, padx=10, pady=10)
+
         # Optionnal channel menu
-        self.__channel_label = None
-        self.__channel_entry = None
-        self.__channel_interleaved_button = None
-        self.__channel_mid_side_button = None
-        self.__channel_separator = None
+        self.__channel_settings = ChannelSettingsFrame(self, self.__model)
+        self.__channel_settings.pack(side=tk.LEFT, padx=(5, 5))
+
         # View selection
         self.__view_menu = None
-        self.__view_separator = None
         self.__view_var = tk.StringVar(value=self.__model.selected_view)
         self.__view_var.trace_add("write", self.view_var_callback)
-        # Settings selection
-        self.__view_settings_frame = None
-        self.__view_settings = None
-        # General section
-        self.__general_section_frame = None
-        self.__general_section_separator = None
-        self.__delete_button = None
+        self.__view_menu = ctk.CTkOptionMenu(
+            self,
+            values=self.__model.possible_views,
+            variable=self.__view_var,
+            font=self.__font,
+            width=125,
+        )
+        Tooltip(self.__view_menu, text="Select which view to render")
+        self.__view_menu.pack(side=tk.LEFT, padx=(5, 5), pady=10)
+        self.__view_separator = ttk.Separator(self, orient="vertical")
 
-        self.update()
-        self.__frame.pack(side=tk.TOP, fill="x")
+        #  View settings
+        self.__view_settings_frame = ViewSettingsFrame(self, self.__model)
+        self.__view_settings_frame.pack(side=tk.LEFT, padx=(5, 5))
+
+        # General section
+        self.__general_settings_frame = GeneralSettingsFrame(self, self.__model)
+        self.__general_settings_frame.pack(side=tk.RIGHT, padx=(5, 5))
+
+        # self.update()
+        self.pack(side=tk.TOP, fill=tk.BOTH, padx=2, pady=2)
 
     def layout_var_callback(self, *_):
         # Update the model
         self.__model.update_layout(DataLayout(self.__layout_var.get()))
-        # Reset the old gui widgets
-        self.reset_channel_menu()
-        self.reset_view_menu()
-        self.reset_view_settings()
-        # Update the view_var with the default view of the layout
-        self.__view_var.set(self.__model.selected_view)
+
         # Trigger a redraw
-        self.update()
+        self.update_widgets()
 
     def view_var_callback(self, *_):
         # Update the model
         self.__model.update_view_type(self.__view_var.get())
-        # Reset the settings of the view
-        self.reset_view_settings()
+
         # Trigger a redraw
-        self.update()
+        self.update_widgets()
 
-    def reset_view_menu(self):
-        # Reset the view selector
-        if self.__view_menu:
-            self.__view_menu.destroy()
-            self.__view_separator.destroy()
-            self.__view_menu = None
-
-    def reset_view_settings(self):
-        # Reset the settings of the view
-        if self.__view_settings_frame:
-            self.__view_settings_frame.destroy()
-            self.__view_settings_frame = None
-            self.__view_settings = None
-
-    def reset_channel_menu(self):
-        if self.__channel_label:
-            self.__channel_label.destroy()
-            if self.__channel_entry:
-                self.__channel_entry.destroy()
-            self.__channel_separator.destroy()
-            self.__channel_label = None
-            if self.__channel_interleaved_button:
-                self.__channel_interleaved_button.destroy()
-                self.__channel_interleaved_button = None
-            if self.__channel_mid_side_button:
-                self.__channel_mid_side_button.destroy()
-                self.__channel_mid_side_button = None
-
-    def interleaved_button_callback(self, *_):
-        # Update the model
-        self.__model.interleaved = not self.__model.interleaved
-        # Update the button
-        self.__channel_interleaved_button.config(
-            relief=tk.SUNKEN if self.__model.interleaved else tk.RAISED
+    def update_widgets(self):
+        # Update the layout selection
+        self.__layout_menu.configure(
+            values=[layout.value for layout in self.__model.possible_layouts]
         )
 
-    def mid_side_button_callback(self, *_):
-        # Update the model
-        self.__model.mid_side = not self.__model.mid_side
-        # Update the button
-        self.__channel_mid_side_button.config(
-            relief=tk.SUNKEN if self.__model.mid_side else tk.RAISED
+        # Update the channel menu
+        self.__channel_settings.update_widgets()
+
+        # Update the view selection
+        if self.__view_var.get() not in self.__model.possible_views:
+            self.__view_menu.configure(values=self.__model.possible_views)
+            self.__view_var.set(self.__model.selected_view)
+
+        # Update the view settings
+        self.__view_settings_frame.update_widgets()
+
+
+class ChannelSettingsFrame(ctk.CTkFrame):
+    def __init__(self, master: tk.Misc, model: ContainerModel):
+        super().__init__(master, fg_color="transparent")
+        self.__model = model
+        self.__font = ctk.CTkFont(size=15)
+
+        # Number of channels
+        self.__channel_var = tk.StringVar(value=str(self.__model.channels))
+        self.__channel_label = ctk.CTkLabel(self, text=f"channels :", font=self.__font)
+        self.__channel_entry = ctk.CTkEntry(
+            self,
+            textvariable=self.__channel_var,
+            width=40,
+            placeholder_text=str(self.__model.channels),
+            state=("normal" if self.channel_entry_enabled() else "disabled"),
         )
+        self.__channel_entry.bind("<Return>", self.channel_var_callback)
+        self.__channel_label.pack(side=tk.LEFT, padx=(5, 5))
+        self.__channel_entry.pack(side=tk.LEFT, padx=(5, 5))
+
+        # Interleaved switch
+        self.__channel_interleaved_var = tk.BooleanVar(value=self.__model.interleaved)
+        self.__channel_interleaved_var.trace_add("write", self.interleaved_var_callback)
+        self.__channel_interleaved_switch = ctk.CTkSwitch(
+            self,
+            text="Interleaved",
+            font=self.__font,
+            variable=self.__channel_interleaved_var,
+            onvalue=True,
+            offvalue=False,
+            state=("normal" if self.interleaved_enabled() else "disabled"),
+        )
+        self.__channel_interleaved_switch.pack(side=tk.LEFT, padx=(5, 5))
+
+        # Mid/Side switch
+        self.__channel_midside_var = tk.BooleanVar(value=self.__model.interleaved)
+        self.__channel_midside_var.trace_add("write", self.midside_var_callback)
+        self.__channel_mid_side_switch = ctk.CTkSwitch(
+            self,
+            text="Mid/Side",
+            font=self.__font,
+            variable=self.__channel_midside_var,
+            onvalue=True,
+            offvalue=False,
+            state="normal" if self.__model.channels == 2 else "disabled",
+        )
+        self.__channel_mid_side_switch.pack(side=tk.LEFT, padx=(5, 5))
+
+    def interleaved_var_callback(self, *_):
+        self.__model.interleaved = self.__channel_interleaved_var.get()
+
+    def midside_var_callback(self, *_):
+        self.__model.mid_side = self.__channel_midside_var.get()
+
+    def interleaved_enabled(self) -> bool:
+        return not self.__model.is_channel_layout_fixed() and self.__model.channels != 1
+
+    def channel_entry_enabled(self) -> bool:
+        return (
+            self.__model.is_layout_2D() and not self.__model.is_channel_layout_fixed()
+        )
+
+    def channel_var_callback(self, *_):
+        new_val = self.__channel_var.get()
+        if not self.__model.update_channel(new_val):
+            Logger().get().warning(
+                f"{new_val} is not a valid channel number for this container"
+            )
+            self.__channel_var.set(str(self.__model.channels))
+
+    def update_widgets(self):
+        # Update channel selector
+        self.__channel_entry.configure(
+            state=("normal" if self.channel_entry_enabled() else "disabled"),
+        )
+
+        # Update interleaved switch
+        self.__channel_interleaved_switch.configure(
+            state=("normal" if self.interleaved_enabled() else "disabled")
+        )
+        # Update mid/side switch
+        self.__channel_mid_side_switch.configure(
+            state="normal" if self.__model.channels == 2 else "disabled"
+        )
+
+
+class GeneralSettingsFrame(ctk.CTkFrame):
+    def __init__(self, master: tk.Misc, model: ContainerModel):
+        super().__init__(master, width=40, fg_color="transparent")
+        self.__model = model
+        self.__delete_button = ctk.CTkButton(
+            self,
+            text="X",
+            command=self.delete_button_callback,
+            width=28,
+        )
+        self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=[5, 5])
 
     def delete_button_callback(self):
         self.__model.mark_for_deletion()
-        self.__frame.destroy()
-
-    def destroy(self):
-        self.__frame.destroy()
-
-    def update(self):
-        # Create the layout menu
-        if not self.__layout_menu:
-            possible_layouts_name = [
-                layout.value for layout in self.__model.possible_layouts
-            ]
-            self.__layout_menu = tk.OptionMenu(
-                self.__frame, self.__layout_var, *possible_layouts_name
-            )
-            Tooltip(self.__layout_menu, text="Select data layout of the container")
-            self.__layout_menu.pack(side=tk.LEFT, padx=10, pady=10)
-            self.__layout_separator = ttk.Separator(self.__frame, orient="vertical")
-            self.__layout_separator.pack(side=tk.LEFT, fill="y")
-
-        # If the mid/side button should be added or removed, we force the update
-        # by deleting the channel menu
-        if (self.__model.channels == 2 and self.__channel_mid_side_button is None) or (
-            self.__model.channels != 2 and self.__channel_mid_side_button is not None
-        ):
-            self.reset_channel_menu()
-            self.reset_view_menu()
-            self.reset_view_settings()
-
-        # Create the channel menu
-        if self.__model.is_layout_2D() and not self.__channel_label:
-            if self.__model.is_channel_layout_fixed():
-                # If the number of channels is fixed, we only display it
-                self.__channel_label = tk.Label(
-                    self.__frame, text=f"channels : {self.__model.channels}"
-                )
-                self.__channel_label.pack(side=tk.LEFT, padx=5)
-            else:
-                # If the number of channel is not fixed, it might be interleaved
-                vcmd = (self.__master.register(self.__model.update_channel), "%P")
-                self.__channel_label = tk.Label(self.__frame, text=f"channels :")
-                self.__channel_entry = tk.Entry(
-                    self.__frame, validate="focus", validatecommand=vcmd, width=4
-                )
-                self.__channel_entry.insert(0, f"{self.__model.channels}")
-                self.__channel_interleaved_button = tk.Button(
-                    self.__frame,
-                    text="interleaved",
-                    relief=tk.SUNKEN if self.__model.interleaved else tk.RAISED,
-                    command=self.interleaved_button_callback,
-                )
-                self.__channel_label.pack(side=tk.LEFT, padx=5)
-                self.__channel_entry.pack(side=tk.LEFT)
-                self.__channel_interleaved_button.pack(side=tk.LEFT, padx=3)
-
-            if self.__model.channels == 2:
-                self.__channel_mid_side_button = tk.Button(
-                    self.__frame,
-                    text="mid/side",
-                    relief=tk.SUNKEN if self.__model.mid_side else tk.RAISED,
-                    command=self.mid_side_button_callback,
-                )
-                self.__channel_mid_side_button.pack(side=tk.LEFT, padx=3)
-
-            self.__channel_separator = ttk.Separator(self.__frame, orient="vertical")
-            self.__channel_separator.pack(side=tk.LEFT, fill="y")
-
-        # Create the view menu
-        if not self.__view_menu:
-            self.__view_menu = tk.OptionMenu(
-                self.__frame, self.__view_var, *self.__model.possible_views
-            )
-            Tooltip(self.__view_menu, text="Select which view to render")
-            self.__view_menu.pack(side=tk.LEFT, padx=10, pady=10)
-            self.__view_separator = ttk.Separator(self.__frame, orient="vertical")
-            self.__view_separator.pack(side=tk.LEFT, fill="y")
-
-        # Create the settings menu
-        if not self.__view_settings_frame:
-            self.__view_settings_frame = tk.Frame(self.__frame)
-            self.__view_settings_frame.pack(side=tk.LEFT, fill="both")
-        if not self.__view_settings:
-            self.__view_settings = ViewSettingsFrame(
-                self.__view_settings_frame, self.__model
-            )
-
-        # Create the general menu
-        if not self.__general_section_frame:
-            self.__general_section_frame = tk.Frame(self.__frame)
-            self.__delete_button = tk.Button(
-                self.__general_section_frame,
-                text="X",
-                command=self.delete_button_callback,
-            )
-            self.__general_section_separator = ttk.Separator(
-                self.__frame, orient="vertical"
-            )
-            self.__general_section_frame.pack(side=tk.RIGHT, fill="y")
-            self.__general_section_separator.pack(side=tk.RIGHT, fill="y")
-            self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=[2, 2])
+        self.master.destroy()
 
 
-class ViewSettingsFrame:
+class ViewSettingsFrame(ctk.CTkFrame):
     """
     A frame containing the selector for every view setting of a model.
 
@@ -247,11 +239,19 @@ class ViewSettingsFrame:
     """
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
-        self.__master = master
+        super().__init__(master, height=56, fg_color="transparent")
+        # self.__master = master
         self.__container = container
         self.__container_suffix = "_" + str(container.id)
-        self.__vars: Dict[str, tk.Variable] = dict()
-        for setting in container.view_settings:
+        self.__vars: Dict[str, Tuple[tk.Variable, Setting]] = dict()
+        self.__widgets: List[tk.Misc] = list()
+        self.__font = ctk.CTkFont(size=15)
+        self.__crt_view_type = self.__container.selected_view
+        self.__create_selectors()
+
+    def __create_selectors(self):
+        assert len(self.__widgets) == 0
+        for setting in self.__container.view_settings:
             if isinstance(setting, StringSetting):
                 self.create_string_selector(setting)
             elif isinstance(setting, IntSetting):
@@ -265,60 +265,116 @@ class ViewSettingsFrame:
         # Create the StringVar to keep updated of changes
         var_name = setting.name + self.__container_suffix
         var = tk.StringVar(value=setting.value, name=var_name)
-        self.__vars[var_name] = var
-        var.trace_add("write", self.var_callback)
+        self.__vars[var_name] = (var, setting)
+        var.trace_add("write", self.update_setting)
         # Create the option menu & the label
-        label = tk.Label(self.__master, text=setting.name)
-        menu = tk.OptionMenu(self.__master, var, *setting.possible_values())
+        label = ctk.CTkLabel(self, text=setting.name)
+        menu = ctk.CTkOptionMenu(
+            self,
+            values=setting.possible_values(),
+            variable=var,
+            font=self.__font,
+            width=125,
+        )
         label.pack(side=tk.LEFT, padx=5)
         menu.pack(side=tk.LEFT)
+        self.__widgets.append(label)
+        self.__widgets.append(menu)
 
     def create_float_selector(self, setting: FloatSetting):
-        # Create the DoubleVar to keep updated of changes
+        # Create the Var to keep the entry value before validating it
         var_name = setting.name + self.__container_suffix
-        var = tk.DoubleVar(value=setting.value, name=var_name)
-        self.__vars[var_name] = var
-        vcmd = (self.__master.register(setting.validate), "%P")
+        var = tk.StringVar(value=str(setting.value), name=var_name)
+        self.__vars[var_name] = (var, setting)
         # Create the entry and the label
-        label = tk.Label(self.__master, text=setting.name)
-        entry = tk.Entry(
-            self.__master,
+        label = ctk.CTkLabel(self, text=setting.name, font=self.__font)
+        entry = ctk.CTkEntry(
+            self,
             textvariable=var,
-            validate="focusout",
-            validatecommand=vcmd,
+            width=60,
+            placeholder_text=setting.name,
         )
+        validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
+            name, event
+        )
+        entry.bind("<Return>", validate_lambda)
         label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT)
-        var.trace_add("write", self.var_callback)
+        self.__widgets.append(label)
+        self.__widgets.append(entry)
 
     def create_int_selector(self, setting: IntSetting):
-        # Create the DoubleVar to keep updated of changes
+        # Create the Var to keep the entry value before validating it
         var_name = setting.name + self.__container_suffix
-        var = tk.IntVar(value=setting.value, name=var_name)
-        self.__vars[var_name] = var
-        vcmd = (self.__master.register(setting.validate), "%P")
+        var = tk.StringVar(value=str(setting.value), name=var_name)
+        self.__vars[var_name] = (var, setting)
         # Create the entry and the label
-        label = tk.Label(self.__master, text=setting.name)
-        entry = tk.Entry(
-            self.__master,
+        label = ctk.CTkLabel(self, text=setting.name, font=self.__font)
+        entry = ctk.CTkEntry(
+            self,
             textvariable=var,
-            validate="focusout",
-            validatecommand=vcmd,
+            width=60,
+            placeholder_text=setting.name,
         )
+        validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
+            name, event
+        )
+        entry.bind("<Return>", validate_lambda)
         label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT)
-        var.trace_add("write", self.var_callback)
+        self.__widgets.append(label)
+        self.__widgets.append(entry)
 
-    def var_callback(self, var_name: str, *_):
+    def entry_var_callback(self, varname, _):
+        var, setting = self.__vars[varname]
+        assert isinstance(setting, FloatSetting) or isinstance(setting, IntSetting)
+        try:
+            if setting.validate(setting.parse_tkvar(var)):
+                # New input was validated
+                self.update_setting(varname)
+            else:
+                # bad input, rollback
+                self.__vars[varname][0].set(setting.value)
+        except tk.TclError:
+            # Might fail when tk update the var with an empty string
+            pass
+        except ValueError:
+            # bad input, rollback
+            self.__vars[varname][0].set(setting.value)
+
+    def update_setting(self, var_name: str, *_):
+        """
+        To be called when a variable has been modified, and validated if concerned
+        by validation
+        """
         assert var_name in self.__vars
         setting_name = var_name[: -len(self.__container_suffix)]
+        var, setting = self.__vars[var_name]
         try:
             self.__container.update_view_settings(
-                setting_name, self.__vars[var_name].get()
+                setting_name, setting.parse_tkvar(var)
             )
         except tk.TclError:
             # Might fail when tk update the var with an empty string
             pass
+
+    def update_widgets(self):
+        if self.__crt_view_type != self.__container.selected_view:
+            # Delete old widgets & vars
+            for widget in self.__widgets:
+                widget.destroy()
+            self.__widgets.clear()
+            # Delete the update_setting trace before deleting the var
+            for var, _ in self.__vars.values():
+                for trace_type, trace_name in var.trace_info():
+                    if trace_name.endswith("update_setting"):
+                        var.trace_remove(trace_type, trace_name)
+            # Delete the vars
+            self.__vars.clear()
+
+            # Recreate new widgets
+            self.__crt_view_type = self.__container.selected_view
+            self.__create_selectors()
 
 
 class ContainersActionsButtonsFrames:
@@ -329,10 +385,11 @@ class ContainersActionsButtonsFrames:
     def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
         self.__master = master
         self.__container_models = container_models
-        self.__container_buttons_frame: Dict[int, tk.Frame] = dict()
+        self.__container_buttons_frame: Dict[int, ctk.CTkFrame] = dict()
+        # self.__container_buttons_frame: Dict[int, tk.Frame] = dict()
         self.__container_buttons: Dict[int, ActionButtonsFrame] = dict()
 
-    def update(self):
+    def update_widgets(self):
         # First delete old occurences
         to_delete = []
         for id, buttons_frame in self.__container_buttons_frame.items():
@@ -351,17 +408,16 @@ class ContainersActionsButtonsFrames:
         for id, container in self.__container_models.items():
             if id not in self.__container_buttons_frame and container.in_scope:
                 idx = len(self.__container_buttons)
-                self.__container_buttons_frame[id] = tk.Frame(self.__master)
+                self.__container_buttons_frame[id] = ctk.CTkFrame(self.__master)
                 self.__container_buttons[id] = ActionButtonsFrame(
                     self.__container_buttons_frame[id], container
                 )
                 # Place the new button frame
-                self.__container_buttons_frame[id].grid(row=idx, column=0)
+                self.__container_buttons_frame[id].grid(
+                    row=idx, column=0, sticky="ew", padx=(5, 0)
+                )
+                self.__master.grid_columnconfigure(0, weight=1)
                 self.__master.grid_rowconfigure(index=idx, weight=container.channels)
-
-        # Finally update everyone
-        for widget in self.__container_buttons.values():
-            widget.update()
 
 
 class ActionButtonsFrame:
@@ -372,41 +428,53 @@ class ActionButtonsFrame:
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
         self.__master = master
         self.__container = container
+        self.__freeze_var = tk.BooleanVar(value=self.__container.frozen)
+        self.__concat_var = tk.BooleanVar(value=self.__container.concat)
+        self.__freeze_var.trace_add("write", self.freeze_button_clicked)
+        self.__concat_var.trace_add("write", self.concat_button_clicked)
+        self.__font = ctk.CTkFont(size=15)
 
         # Create buttons
-        self.__freeze_button = tk.Button(
+        self.__freeze_button = ctk.CTkSwitch(
             self.__master,
-            text="F",
-            command=self.__freeze_button_clicked,
-            relief="raised",
+            text="Freeze",
+            variable=self.__freeze_var,
+            onvalue=True,
+            offvalue=False,
+            font=self.__font,
         )
-        self.__concat_button = tk.Button(
+        self.__concat_button = ctk.CTkSwitch(
             self.__master,
-            text="C",
-            command=self.__concat_button_clicked,
-            relief="raised",
+            text="Concat",
+            variable=self.__concat_var,
+            onvalue=True,
+            offvalue=False,
+            font=self.__font,
         )
-        self.__save_button = tk.Button(
-            self.__master, text="S", command=self.__save_button_clicked, relief="raised"
+        self.__save_button = ctk.CTkButton(
+            self.__master,
+            text="Save",
+            command=self.__save_button_clicked,
+            font=self.__font,
         )
 
         # Create tooltips
-        Tooltip(self.__freeze_button, text="Freeze")
-        Tooltip(self.__concat_button, text="Concatenate")
+
         Tooltip(self.__save_button, text="Save to disc")
 
         # Packing
-        self.__freeze_button.pack(anchor=tk.CENTER, fill=tk.X)
-        self.__concat_button.pack(anchor=tk.CENTER, fill=tk.X)
-        self.__save_button.pack(anchor=tk.CENTER, fill=tk.X)
+        self.__freeze_button.grid(row=0, column=0, padx=(5, 5), pady=(5, 5))
+        self.__concat_button.grid(row=1, column=0, padx=(5, 5), pady=(5, 5))
+        self.__save_button.grid(row=2, column=0, padx=(5, 5), pady=(5, 5))
+        self.__master.columnconfigure(0, weight=1)
 
-        self.update()
+    def freeze_button_clicked(self, *_):
+        self.__container.frozen = self.__freeze_var.get()
+        # self.__container.frozen = not self.__container.frozen
 
-    def __freeze_button_clicked(self):
-        self.__container.frozen = not self.__container.frozen
-
-    def __concat_button_clicked(self):
-        self.__container.concat = not self.__container.concat
+    def concat_button_clicked(self, *_):
+        self.__container.concat = self.__concat_var.get()
+        # self.__container.concat = not self.__container.concat
 
     def __save_button_clicked(self):
         filetypes = [("Numpy file", ".npy")]
@@ -446,14 +514,6 @@ class ActionButtonsFrame:
     def __save_as_npy(self, filename: str):
         np.save(filename, self.__container.data)
 
-    def update(self):
-        self.__freeze_button.config(
-            relief="sunken" if self.__container.frozen else "raised"
-        )
-        self.__concat_button.config(
-            relief="sunken" if self.__container.concat else "raised"
-        )
-
 
 class SettingsTab:
     def __init__(self, master, container_models: Dict[int, ContainerModel]):
@@ -461,7 +521,8 @@ class SettingsTab:
         self.__container_models = container_models
         self.__containers_settings: Dict[int, ContainerSettingsFrame] = dict()
         self.__empty_label = None
-        self.update_ui()
+        self.__bold_font = ctk.CTkFont(size=18, weight="bold")
+        self.update_widgets()
 
     def add_container(self, container: ContainerModel):
         assert container.id not in self.__containers_settings
@@ -472,13 +533,19 @@ class SettingsTab:
         )
 
     def delete_container(self, id: int):
+        """
+        Calling this will remove the ContainerSettingsFrame from the given container.
+
+        This will never delete the containermodel itself, at is is the responsibility
+        of the main GUI handler
+        """
         # Warning : This will mark the container for deletion, this should
         # not be called when just being out of scope
         if id in self.__containers_settings:
-            self.__containers_settings[id].delete_button_callback()
+            self.__containers_settings[id].destroy()
             del self.__containers_settings[id]
 
-    def update_ui(self):
+    def update_widgets(self):
         for id, container in self.__container_models.items():
             if id not in self.__containers_settings and container.in_scope:
                 # Back in scope, let's add it
@@ -489,11 +556,11 @@ class SettingsTab:
                 del self.__containers_settings[id]
             elif id in self.__containers_settings and container.in_scope:
                 # Still in scope, let's update it
-                self.__containers_settings[id].update()
+                self.__containers_settings[id].update_widgets()
 
         if len(self.__containers_settings) == 0 and self.__empty_label is None:
-            self.__empty_label = tk.Label(
-                self.__master, text="No container in scope", font="bold"
+            self.__empty_label = ctk.CTkLabel(
+                self.__master, text="No container in scope", font=self.__bold_font
             )
             self.__empty_label.pack(anchor=tk.CENTER, expand=True)
         elif len(self.__containers_settings) != 0 and self.__empty_label is not None:
@@ -506,22 +573,25 @@ class AudioViewsTab:
         self.__container_models = container_models
         self.__master = master
         # Audio view rendering
-        self.__view_frame = tk.Frame(self.__master)
+        # self.__view_frame = tk.Frame(self.__master)
+        self.__view_frame = ctk.CTkFrame(self.__master)
         self.__fig = Figure()
         self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__view_frame)
         self.__canvas_widget = self.__canvas.get_tk_widget()
         self.__canvas_widget.pack(fill=tk.BOTH, expand=True)
+        self.__canvas_widget.pack()
         self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__view_frame)
         self.__toolbar.update()
         self.__toolbar.pack()
         # Button rendering
-        self.__buttons_frame = tk.Frame(self.__master, width=30, relief=tk.SUNKEN)
-        self.__buttons_frame.pack_propagate(False)
+        self.__buttons_frame = ctk.CTkFrame(self.__master, width=130)
+        self.__buttons_frame.grid_propagate(False)
         self.__containers_actions_buttons_frame = ContainersActionsButtonsFrames(
             self.__buttons_frame, self.__container_models
         )
         # frame packing
         self.__buttons_frame.pack(side=tk.RIGHT, fill="y", pady=(0, 45))
+        # self.__buttons_frame.pack(side=tk.RIGHT, fill="y", pady=(0, 45), padx=(5, 5))
         self.__view_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     def __subplots_hratios(self) -> List[int]:
@@ -539,11 +609,11 @@ class AudioViewsTab:
 
         return hratios
 
-    def update(self):
-        self.update_figures()
-        self.__containers_actions_buttons_frame.update()
+    def update_widgets(self):
+        self.__update_figures()
+        self.__containers_actions_buttons_frame.update_widgets()
 
-    def update_figures(self):
+    def __update_figures(self):
         self.__fig.clear()
         hratios = self.__subplots_hratios()
         nrows = len(hratios)
@@ -590,8 +660,10 @@ class DaveGUI:
 
     def __init__(
         self,
-        connection : Connection,
+        connection: Connection,
     ):
+        ctk.set_appearance_mode("System")
+        # ctk.set_default_color_theme("blue")
 
         # Refresh and quit settings
         self.__refresh_time_ms = 20
@@ -599,20 +671,24 @@ class DaveGUI:
 
         # GUI settings
         self.__models: Dict[int, ContainerModel] = dict()
-        self.__window = tk.Tk()
+        # self.__window = tk.Tk()
+        self.__window = ctk.CTk()
         self.__window.title("Dave")
-        self.__window.minsize(400, 600)
+        self.__window.minsize(800, 600)
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.__notebook = ttk.Notebook(self.__window)
+        self.__notebook = ctk.CTkTabview(self.__window)
         self.__notebook.pack(fill="both", expand=True)
-        self.__audio_tabframe = ttk.Frame(self.__notebook)
-        self.__notebook.add(self.__audio_tabframe, text="Views")
-        self.__settings_tabframe = ttk.Frame(self.__notebook)
-        self.__notebook.add(self.__settings_tabframe, text="Settings")
-        self.__audio_views_tab = AudioViewsTab(self.__audio_tabframe, self.__models)
-        self.__settings_tab = SettingsTab(self.__settings_tabframe, self.__models)
-        self.__update_tk_id = ""
+        self.__notebook.add("Views")
+        self.__notebook.add("Settings")
+        self.__notebook.set("Views")
 
+        self.__audio_views_tab = AudioViewsTab(
+            self.__notebook.tab("Views"), self.__models
+        )
+        self.__settings_tab = SettingsTab(
+            self.__notebook.tab("Settings"), self.__models
+        )
+        self.__update_tk_id = ""
 
     def on_closing(self):
         if self.__update_tk_id:
@@ -661,7 +737,9 @@ class DaveGUI:
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
             except EOFError:
-                Logger().get().debug("Received EOF from debugger process, will shutdown")
+                Logger().get().debug(
+                    "Received EOF from debugger process, will shutdown"
+                )
                 self.on_closing()
                 return
 
@@ -699,8 +777,8 @@ class DaveGUI:
 
         # Check for new containers or model update
         if self.__poll_queue() or self.__check_model_for_updates():
-            self.__audio_views_tab.update()
-            self.__settings_tab.update_ui()
+            self.__audio_views_tab.update_widgets()
+            self.__settings_tab.update_widgets()
 
         # Queue the next update
         self.__update_tk_id = self.__window.after(

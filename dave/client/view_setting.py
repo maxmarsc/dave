@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, List, Union
+import tkinter as tk
 
 
 class Setting(ABC):
@@ -13,6 +14,11 @@ class Setting(ABC):
     @property
     @abstractmethod
     def value(self):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def parse_tkvar(var: tk.Variable) -> Union[None, Any]:
         pass
 
 
@@ -35,6 +41,13 @@ class BoolSetting(Setting):
     @staticmethod
     def possible_values() -> List[bool]:
         return (True, False)
+
+    @staticmethod
+    def parse_tkvar(var: tk.Variable) -> Union[None, bool]:
+        try:
+            return bool(var.get())
+        except tk.TclError:
+            return None
 
 
 class IntSetting(Setting):
@@ -74,6 +87,13 @@ class IntSetting(Setting):
         else:
             self.__value = new_value
 
+    @staticmethod
+    def parse_tkvar(var: tk.Variable) -> Union[None, int]:
+        try:
+            return int(var.get())
+        except tk.TclError:
+            return None
+
 
 class FloatSetting(Setting):
     def __init__(
@@ -112,6 +132,13 @@ class FloatSetting(Setting):
         else:
             self.__value = new_value
 
+    @staticmethod
+    def parse_tkvar(var: tk.Variable) -> Union[None, float]:
+        try:
+            return float(var.get())
+        except tk.TclError:
+            return None
+
 
 class StringSetting(Setting):
     def __init__(self, name: str, values: List[str], value: str = None) -> None:
@@ -133,6 +160,13 @@ class StringSetting(Setting):
 
     def possible_values(self) -> List[str]:
         return self.__possible_values
+
+    @staticmethod
+    def parse_tkvar(var: tk.Variable) -> Union[None, str]:
+        try:
+            return str(var.get())
+        except tk.TclError:
+            return None
 
 
 # class ScaleSetting(StringSetting):

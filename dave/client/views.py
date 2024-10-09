@@ -2,9 +2,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, List
 import numpy as np
+from warnings import catch_warnings, warn
 
 from matplotlib.axes import Axes
 from dave.common.data_layout import DataLayout
+from dave.common.logger import Logger
 from .view_setting import (
     FloatSetting,
     IntSetting,
@@ -213,8 +215,14 @@ class SpectrogramView(AudioView):
         return (self.__nfft, self.__overlap, self.__window)
 
     def render_view(self, axes: Axes, data: np.ndarray, color=None):
+        import traceback
+
+        # traceback.print_stack(limit=15)
         overlap = int(self.__overlap.value * self.__nfft.value)
-        axes.specgram(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
+        with catch_warnings(record=True) as w:
+            axes.specgram(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
+        if w:
+            Logger().get().warning("Divide by zero in Spectrogram rendering, skipping")
 
 
 # ===========================================================================
@@ -246,9 +254,12 @@ class PSDView(AudioView):
         if color is None:
             color = DEFAULT_COLOR
         overlap = int(self.__overlap.value * self.__nfft.value)
-        axes.psd(
-            data, color=color, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap
-        )
+        with catch_warnings(record=True) as w:
+            axes.psd(
+                data, color=color, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap
+            )
+        if w:
+            Logger().get().warning("Divide by zero in PSD rendering, skipping")
 
 
 # ===========================================================================
