@@ -2,6 +2,11 @@
 ## Added
 ## Changed
 ## Fixed
+
+# v0.3.2
+## Changed
+- Improved error handling when starting the gui process
+## Fixed
 - Fixed #6 by adding "__1::" suffix in std typename matchers
 
 # v0.3.1
