@@ -105,14 +105,17 @@ dave uninstall
 - [x] llvm libc/libstd (need to be tested)
 - [x] JUCE 
 - [x] GSL
+- [ ] Add samplerate support
+- [ ] Add a way for the user to add custom container support
+- [ ] Add command to help diagnostic type for custom container support
+- [ ] Add argument parsing to `show` (view, layout, settings...)
+- [ ] Add versionning selection to dave_install
 - [ ] command aliases
 - [ ] minimize call to render functions
 - [ ] CHOC
 - [ ] Eigen
 - [ ] Document the code
-- [ ] Add a way for the user to add custom container support
 - [ ] find testing strategy
-- [ ] Play 
 - [x] Restart dave process 
 - [x] Improve GUI proportions
 - [x] container deletion (GUI + delete command)
