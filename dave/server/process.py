@@ -100,7 +100,6 @@ class DaveProcess(metaclass=SingletonMeta):
             .split()
         )
         try:
-            # from dave.client.gui import DaveGUI
             from dave.client import DaveGUI
         except ModuleNotFoundError as e:
             Logger().get().critical(

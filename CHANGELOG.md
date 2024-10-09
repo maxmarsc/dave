@@ -1,5 +1,13 @@
 # `main`
 ## Added
+## Changed
+- `dave update` now update the dave script as well
+## Fixed
+- Fixed [issue #4](https://github.com/maxmarsc/dave/issues/4) by removing wrong
+sys.path loading
+
+# v0.3.0
+## Added
 - support for Microsoft's gsl::span
 ## Changed
 ## Fixed

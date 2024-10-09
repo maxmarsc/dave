@@ -111,9 +111,15 @@ case "$ACTION" in
     update)
         # shellcheck disable=SC1090
         source "$ACTIVATE_SCRIPT"
+
         # Update the package
         echo "Updating dave package"
         pip install --upgrade davext
+
+        # Update the script
+        DAVE_SCRIPT=$(find "$HOME/.dave/venv/lib/python3*/site-packages/dave/assets" -name "dave")
+        cp "$DAVE_SCRIPT" "$HOME/.dave/scripts"
+
         # Update gdb bindings if needed
         gdb=$(python -m dave check gdb)
         if [[ "$gdb" == "1" ]]; then
