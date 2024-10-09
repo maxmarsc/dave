@@ -101,7 +101,7 @@ class DaveProcess(metaclass=SingletonMeta):
         )
         try:
             from dave.client import DaveGUI
-        except ModuleNotFoundError as e:
+        except ImportError as e:
             Logger().get().critical(
                 "Tried to load GUI from incompatible interpreter\n"
                 f"sys.executable : {sys.executable}\n"
