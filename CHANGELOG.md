@@ -1,6 +1,10 @@
 # `main`
 ## Added
 ## Changed
+## Fixed
+
+# v0.3.1
+## Changed
 - `dave update` now update the dave script as well
 ## Fixed
 - Fixed [issue #4](https://github.com/maxmarsc/dave/issues/4) by removing wrong
