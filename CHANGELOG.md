@@ -2,6 +2,7 @@
 ## Added
 ## Changed
 ## Fixed
+- Fixed #6 by adding "__1::" suffix in std typename matchers
 
 # v0.3.1
 ## Changed

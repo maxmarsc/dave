@@ -156,7 +156,7 @@ class Pointer2D(Container2D):
 
 
 class StdArray2D(Container2D):
-    __REGEX = rf"^(?:const\s+)?std::array<(.*),\s*(\d+)[a-z]*>\s*$"
+    __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<(.*),\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
@@ -265,7 +265,7 @@ class StdVector2D(Container2D):
     @staticmethod
     def name_parser(typename: str) -> bool:
         types = parse_template(typename)
-        if types[0] == "std::vector" and len(types) == 3:
+        if types[0].startswith("std::vector") and len(types) == 3:
             return True
         return False
 
@@ -276,7 +276,7 @@ class StdVector2D(Container2D):
 
 
 class StdSpan2D(Container2D):
-    __REGEX = rf"^(?:const\s+)?(?:std|gsl)::span<(.*),\s*(\d+)[a-z]*>\s*$"
+    __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(.*),\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()

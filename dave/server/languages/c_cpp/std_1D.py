@@ -72,7 +72,7 @@ class Pointer1D(Container1D):
 
 
 class StdArray1D(Container1D):
-    __REGEX = rf"^(?:const\s+)?std::array<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
+    __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
@@ -100,7 +100,7 @@ class StdArray1D(Container1D):
 
 
 class StdVector1D(Container1D):
-    __REGEX = rf"^(?:const\s+)?std::vector<{SampleType.regex()},.*>\s*$"
+    __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?vector<{SampleType.regex()},.*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
@@ -132,7 +132,7 @@ class StdVector1D(Container1D):
 
 class StdSpan1D(Container1D):
     __REGEX = (
-        rf"^(?:const\s+)?(?:std|gsl)::span<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
+        rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
     )
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
