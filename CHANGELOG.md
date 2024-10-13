@@ -1,7 +1,15 @@
 # `main`
 ## Added
+- Support for dark/light mode according to system settings
 ## Changed
+- Dave now requires python >= 3.10
+- Dave now uses [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
+for better and more consistant UI across platforms
 ## Fixed
+- grid placement issue when deleting a container
+- Fixed [Issue #3](https://github.com/maxmarsc/dave/issues/3) by moving to CustomTkinter
+- Fixed [Issue #5](https://github.com/maxmarsc/dave/issues/5) by manually starting
+a new python interpreter
 
 # v0.3.2
 ## Changed
