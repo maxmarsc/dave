@@ -20,6 +20,7 @@ setup(
     name="davext",
     version=VERSION,
     author="maxmarsc",
+    python_requires=">3.10.1",
     author_email="maxime.coutant@protonmail.com",
     url="https://github.com/maxmarsc/dave",
     long_description=long_description,
