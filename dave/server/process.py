@@ -21,10 +21,8 @@ from dave.common.server_type import *
 
 try:
     DAVE_VENV_PATH = Path(os.environ["DAVE_VENV_FOLDER"]) / "bin/activate"
-    DAVE_VENV_PYTHON = Path(os.environ["DAVE_VENV_FOLDER"]) / "bin/python"
 except KeyError:
     DAVE_VENV_PATH = Path.home() / ".dave/venv/bin/activate"
-    DAVE_VENV_PYTHON = Path.home() / ".dave/venv/bin/python"
 
 
 class DaveProcess(metaclass=SingletonMeta):
@@ -42,8 +40,6 @@ class DaveProcess(metaclass=SingletonMeta):
     @dataclass
     class ConcatMessage:
         id: int
-
-    START_METHOD = "spawn"
 
     def __init__(self) -> None:
         self.__containers: Dict[int, Container] = dict()
@@ -71,39 +67,6 @@ class DaveProcess(metaclass=SingletonMeta):
                 shell=True,
                 pass_fds=[self.__gui_con.fileno()],
             )
-
-    @staticmethod
-    def create_and_run(gui_conn: Connection):
-        """
-        ! This should never be called from the debugger process !
-
-        Starts the GUI thread
-        """
-        # First make sure the import path are the one from the new env
-        # import sys
-        # sys.path = (
-        #     subprocess.check_output(
-        #         '. {};python -c "import os,sys;print(os.linesep.join(sys.path).strip())"'.format(
-        #             DAVE_VENV_PATH
-        #         ),
-        #         shell=True,
-        #     )
-        #     .decode("utf-8")
-        #     .split()
-        # )
-        try:
-            from dave.client import DaveGUI
-        except ImportError as e:
-            Logger().get().critical(
-                "Tried to load GUI from incompatible interpreter\n"
-                f"sys.executable : {sys.executable}\n"
-                f"sys.path : {sys.path}\n"
-            )
-            raise e
-
-        Logger().get().debug("Starting GUI process")
-        gui = DaveGUI(gui_conn)
-        gui.run()
 
     def is_alive(self) -> bool:
         if self.__process is not None:
