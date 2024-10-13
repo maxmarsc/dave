@@ -28,28 +28,29 @@ fi
 
 
 #============================   Python detection   =============================
-# Function to compare Python versions
+# Function to compare versions
 version_ge() {
-    # Compare two version numbers
-    # Returns 0 (true) if version1 >= version2, otherwise 1 (false)
-    local version1=("${1//./ }")
-    local version2=("${2//./ }")
-    
-    for i in {0..2}; do
+    # Compare two versions, return true if version1 >= version2
+    IFS='.' read -r -a version1 <<< "$1"
+    IFS='.' read -r -a version2 <<< "$2"
+
+    for i in {0..1}; do
+        # If version1 is greater than version2
         if [[ ${version1[i]} -gt ${version2[i]} ]]; then
-            return 0
+            return 0  # true
+        # If version1 is less than version2
         elif [[ ${version1[i]} -lt ${version2[i]} ]]; then
-            return 1
+            return 1  # false
         fi
     done
-    return 0
+    return 0  # They are equal
 }
 
 PY3_VERSIONS=$(compgen -c | grep -E '^python3(\.[0-9]+)?$' | sort -V)
 SELECTED_PY3=""
 for PY3 in $PY3_VERSIONS; do
     # Check for version
-    VERSION=$("$PY3" --version | awk '{print $2}')
+    VERSION="$("$PY3" --version | awk '{print $2}')"
     if ! version_ge "$VERSION" "3.10";then
       continue
     fi
@@ -74,13 +75,14 @@ if [[ "$SELECTED_PY3" == "" ]];then
   echo "Failed to find a working python >= 3.10 installation with working venv and tkinter modules"
   if [[ "$(uname)" == "Darwin"* ]]; then
         >&2 echo "On MacOS you can install tkinter using homebrew or macports"
-        >&2 printf "\tbrew install python-tk\n\tor"
-        >&2 printf "\tsudo port install py-tkinter"
+        >&2 printf "\tbrew install python-tk # >=3.10\n\tor"
+        >&2 printf "\tsudo port install py-tkinter # >= 3.10"
   fi
   exit 1
 fi
 
 echo "Selection $SELECTED_PY3 for dave installation"
+echo ""
 
 #============================   DAVE folder   ==================================
 # Create dave dir
