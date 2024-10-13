@@ -44,10 +44,10 @@ The simplest way to install dave and its bindings is to use the install script :
 ```bash
 # via the install script
 ## using curl
-$ bash -c "$(curl -fsSL https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/dave/assets/dave_install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/dave/assets/dave_install.sh)"
 
 ## using wget
-$ bash -c "$(wget https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/dave/assets/dave_install.sh -O -)"
+bash -c "$(wget https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/dave/assets/dave_install.sh -O -)"
 ```
 
 It will install the python dave modules, the debuggers bindings, and the `dave`
