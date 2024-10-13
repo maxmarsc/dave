@@ -408,16 +408,16 @@ class ViewSettingsFrame(ctk.CTkFrame):
             self.__create_selectors()
 
 
-class ContainersActionsButtonsFrames:
+class ContainersActionsGridFrame(ctk.CTkFrame):
     """
     Holds the ActionButtonsFrame for every (in scope) container
     """
 
     def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
-        self.__master = master
+        super().__init__(master, width=130)
         self.__container_models = container_models
         self.__container_actions_frame: Dict[int, ContainerActionsFrame] = dict()
-        self.__master.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
     def update_widgets(self):
         # First delete old occurences
@@ -428,9 +428,7 @@ class ContainersActionsButtonsFrames:
                 or not self.__container_models[id].in_scope
             ):
                 # Reset the weight of its grid
-                self.__master.grid_rowconfigure(
-                    index=button_frame.grid_info()["row"], weight=0
-                )
+                self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
                 button_frame.destroy()
                 to_delete.append(id)
 
@@ -440,9 +438,7 @@ class ContainersActionsButtonsFrames:
         # Then update the position of the left occurences
         for i, button_frame in enumerate(self.__container_actions_frame.values()):
             # First reset its old row to weight 0
-            self.__master.grid_rowconfigure(
-                index=button_frame.grid_info()["row"], weight=0
-            )
+            self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
             button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 0))
 
         # Then add new containers
@@ -450,7 +446,7 @@ class ContainersActionsButtonsFrames:
             if id not in self.__container_actions_frame and container.in_scope:
                 idx = len(self.__container_actions_frame)
                 self.__container_actions_frame[id] = ContainerActionsFrame(
-                    self.__master, container
+                    self, container
                 )
                 # Place the new button frame
                 self.__container_actions_frame[id].grid(
@@ -462,7 +458,7 @@ class ContainersActionsButtonsFrames:
     def __update_row_weights(self):
         for i, id in enumerate(self.__container_actions_frame):
             weight = self.__container_models[id].channels
-            self.__master.grid_rowconfigure(index=i, weight=weight)
+            self.grid_rowconfigure(index=i, weight=weight)
 
 
 class ContainerActionsFrame(ctk.CTkFrame):
@@ -630,14 +626,13 @@ class AudioViewsTab:
         self.__toolbar.update()
         self.__toolbar.pack()
         # Button rendering
-        self.__buttons_frame = ctk.CTkFrame(self.__master, width=130)
-        self.__buttons_frame.grid_propagate(False)
-        self.__containers_actions_buttons_frame = ContainersActionsButtonsFrames(
-            self.__buttons_frame, self.__container_models
+        self.__containers_actions_buttons_frame = ContainersActionsGridFrame(
+            self.__master, self.__container_models
         )
         # frame packing
-        self.__buttons_frame.pack(side=tk.RIGHT, fill="y", pady=(0, 45))
-        # self.__buttons_frame.pack(side=tk.RIGHT, fill="y", pady=(0, 45), padx=(5, 5))
+        self.__containers_actions_buttons_frame.pack(
+            side=tk.RIGHT, fill="y", pady=(0, 45)
+        )
         self.__view_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     def __subplots_hratios(self) -> List[int]:
