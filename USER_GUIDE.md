@@ -137,6 +137,9 @@ When disabling the "concat" setting, the old data is deleted.
 DAVE uses a GUI to show you audio content from your debugger. The GUI consists
 of a single window, with two tabs : the `Views` and the `Settings`
 
+### Validating inputs
+Some settings will require you to enter manually the value you'd like for the settings. When doing so you can apply the changes by pressing `<Enter>`. If the value is not valid for the settings, it will give you an error message in the console and revert back to the last value.
+
 ### The `Views` tab
 ![Views](.pictures/views.png)
 
