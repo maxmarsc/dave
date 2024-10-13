@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.4.0
+## Added
 - Support for dark/light mode according to system settings
 ## Changed
 - Dave now requires python >= 3.10
