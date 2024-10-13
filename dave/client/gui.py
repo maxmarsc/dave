@@ -416,48 +416,63 @@ class ContainersActionsButtonsFrames:
     def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
         self.__master = master
         self.__container_models = container_models
-        self.__container_buttons_frame: Dict[int, ctk.CTkFrame] = dict()
-        # self.__container_buttons_frame: Dict[int, tk.Frame] = dict()
-        self.__container_buttons: Dict[int, ActionButtonsFrame] = dict()
+        self.__container_actions_frame: Dict[int, ContainerActionsFrame] = dict()
+        self.__master.grid_columnconfigure(0, weight=1)
 
     def update_widgets(self):
         # First delete old occurences
         to_delete = []
-        for id, buttons_frame in self.__container_buttons_frame.items():
+        for id, button_frame in self.__container_actions_frame.items():
             if (
                 id not in self.__container_models
                 or not self.__container_models[id].in_scope
             ):
-                buttons_frame.destroy()
+                # Reset the weight of its grid
+                self.__master.grid_rowconfigure(
+                    index=button_frame.grid_info()["row"], weight=0
+                )
+                button_frame.destroy()
                 to_delete.append(id)
 
         for id in to_delete:
-            del self.__container_buttons[id]
-            del self.__container_buttons_frame[id]
+            del self.__container_actions_frame[id]
+
+        # Then update the position of the left occurences
+        for i, button_frame in enumerate(self.__container_actions_frame.values()):
+            # First reset its old row to weight 0
+            self.__master.grid_rowconfigure(
+                index=button_frame.grid_info()["row"], weight=0
+            )
+            button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 0))
 
         # Then add new containers
         for id, container in self.__container_models.items():
-            if id not in self.__container_buttons_frame and container.in_scope:
-                idx = len(self.__container_buttons)
-                self.__container_buttons_frame[id] = ctk.CTkFrame(self.__master)
-                self.__container_buttons[id] = ActionButtonsFrame(
-                    self.__container_buttons_frame[id], container
+            if id not in self.__container_actions_frame and container.in_scope:
+                idx = len(self.__container_actions_frame)
+                self.__container_actions_frame[id] = ContainerActionsFrame(
+                    self.__master, container
                 )
                 # Place the new button frame
-                self.__container_buttons_frame[id].grid(
+                self.__container_actions_frame[id].grid(
                     row=idx, column=0, sticky="ew", padx=(5, 0)
                 )
-                self.__master.grid_columnconfigure(0, weight=1)
-                self.__master.grid_rowconfigure(index=idx, weight=container.channels)
+
+        self.__update_row_weights()
+
+    def __update_row_weights(self):
+        for i, id in enumerate(self.__container_actions_frame):
+            weight = self.__container_models[id].channels
+            self.__master.grid_rowconfigure(index=i, weight=weight)
 
 
-class ActionButtonsFrame:
+class ContainerActionsFrame(ctk.CTkFrame):
     """
     Holds the action buttons (Freeze, Concatenate ...) of a single container
     """
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
-        self.__master = master
+        # self.__master = master
+        super().__init__(master)
         self.__container = container
         self.__freeze_var = tk.BooleanVar(value=self.__container.frozen)
         self.__concat_var = tk.BooleanVar(value=self.__container.concat)
@@ -467,7 +482,7 @@ class ActionButtonsFrame:
 
         # Create buttons
         self.__freeze_button = ctk.CTkSwitch(
-            self.__master,
+            self,
             text="Freeze",
             variable=self.__freeze_var,
             onvalue=True,
@@ -475,7 +490,7 @@ class ActionButtonsFrame:
             font=self.__font,
         )
         self.__concat_button = ctk.CTkSwitch(
-            self.__master,
+            self,
             text="Concat",
             variable=self.__concat_var,
             onvalue=True,
@@ -483,7 +498,7 @@ class ActionButtonsFrame:
             font=self.__font,
         )
         self.__save_button = ctk.CTkButton(
-            self.__master,
+            self,
             text="Save",
             command=self.__save_button_clicked,
             font=self.__font,
@@ -497,23 +512,19 @@ class ActionButtonsFrame:
         self.__freeze_button.grid(row=0, column=0, padx=(5, 5), pady=(5, 5))
         self.__concat_button.grid(row=1, column=0, padx=(5, 5), pady=(5, 5))
         self.__save_button.grid(row=2, column=0, padx=(5, 5), pady=(5, 5))
-        self.__master.columnconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
 
     def freeze_button_clicked(self, *_):
         self.__container.frozen = self.__freeze_var.get()
-        # self.__container.frozen = not self.__container.frozen
 
     def concat_button_clicked(self, *_):
         self.__container.concat = self.__concat_var.get()
-        # self.__container.concat = not self.__container.concat
 
     def __save_button_clicked(self):
         filetypes = [("Numpy file", ".npy")]
         if self.__container.selected_layout.is_real:
             filetypes.append(("Wave - 16bit PCM", ".wav"))
-        filename: str = filedialog.asksaveasfilename(
-            parent=self.__master, filetypes=filetypes
-        )
+        filename: str = filedialog.asksaveasfilename(parent=self, filetypes=filetypes)
         if not filename:
             return
         if filename.endswith(".wav"):
