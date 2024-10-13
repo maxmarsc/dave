@@ -32,12 +32,16 @@ class ContainerSettingsFrame(ctk.CTkFrame):
     - Channel selector/label
     - View type selector
     - View type settings
+    - general settings (samplerate, delete button...)
     """
 
     def __init__(self, master: tk.Misc, model: ContainerModel) -> None:
         super().__init__(
-            master, fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"]
+            master,
+            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
+            height=80,
         )
+        self.grid_propagate(False)
         self.__model = model
         self.__bold_font = ctk.CTkFont(size=16, weight="bold")
         self.__font = ctk.CTkFont(size=15)
@@ -46,10 +50,14 @@ class ContainerSettingsFrame(ctk.CTkFrame):
             self,
             text=f"{self.__model.variable_name} : ",
             font=self.__font,
-            width=120,
-            anchor="e",
+            width=200,
+            height=20,
+            anchor="w",
         )
-        self.__name_label.pack(side=tk.LEFT, padx=2)
+        self.__name_label.grid(row=0, column=0, sticky="w", padx=(5, 5), columnspan=5)
+        # self.__name_label.configure(fg_color="purple")
+
+        # self.__name_label.pack(side=tk.LEFT)
 
         # Layout selection
         self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
@@ -61,12 +69,16 @@ class ContainerSettingsFrame(ctk.CTkFrame):
             font=self.__font,
             width=125,
         )
+        # self.__layout_menu.configure(fg_color="red")
         Tooltip(self.__layout_menu, text="Select data layout of the container")
-        self.__layout_menu.pack(side=tk.LEFT, padx=10, pady=10)
+        self.__layout_menu.grid(row=1, column=0, sticky="w", padx=(5, 5))
+        # self.__layout_menu.pack(side=tk.LEFT, padx=5)
 
         # Optionnal channel menu
         self.__channel_settings = ChannelSettingsFrame(self, self.__model)
-        self.__channel_settings.pack(side=tk.LEFT, padx=(5, 5))
+        # self.__channel_settings.configure(fg_color="yellow")
+        # self.__channel_settings.pack(side=tk.LEFT, padx=5)
+        self.__channel_settings.grid(row=1, column=1, sticky="w", padx=5)
 
         # View selection
         self.__view_menu = None
@@ -80,18 +92,31 @@ class ContainerSettingsFrame(ctk.CTkFrame):
             width=125,
         )
         Tooltip(self.__view_menu, text="Select which view to render")
-        self.__view_menu.pack(side=tk.LEFT, padx=(5, 5), pady=10)
-        self.__view_separator = ttk.Separator(self, orient="vertical")
+        # self.__view_menu.configure(fg_color="green")
+        self.__view_menu.grid(row=1, column=2, sticky="w", padx=(5, 5))
+        # self.__view_menu.pack(side=tk.LEFT, padx=5)
+        # self.__view_separator = ttk.Separator(self, orient="vertical")
 
         #  View settings
         self.__view_settings_frame = ViewSettingsFrame(self, self.__model)
-        self.__view_settings_frame.pack(side=tk.LEFT, padx=(5, 5))
+        # self.__view_settings_frame.configure(fg_color="orange")
+        self.__view_settings_frame.grid(row=1, column=3, sticky="w", padx=(5, 5))
+        # self.__view_settings_frame.pack(side=tk.LEFT, padx=5)
 
         # General section
         self.__general_settings_frame = GeneralSettingsFrame(self, self.__model)
-        self.__general_settings_frame.pack(side=tk.RIGHT, padx=(5, 5))
+        # self.__general_settings_frame.configure(fg_color="cyan")
+        self.__general_settings_frame.grid(row=1, column=4, sticky="e", padx=(5, 5))
+        # self.__general_settings_frame.pack(side=tk.RIGHT, padx=5)
 
         # self.update()
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=4)
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(4, weight=0)
         self.pack(side=tk.TOP, fill=tk.BOTH, padx=2, pady=2)
 
     def layout_var_callback(self, *_):
@@ -214,7 +239,7 @@ class ChannelSettingsFrame(ctk.CTkFrame):
 
 class GeneralSettingsFrame(ctk.CTkFrame):
     def __init__(self, master: tk.Misc, model: ContainerModel):
-        super().__init__(master, width=40, fg_color="transparent")
+        super().__init__(master, fg_color="transparent")
         self.__model = model
         self.__delete_button = ctk.CTkButton(
             self,
@@ -239,18 +264,20 @@ class ViewSettingsFrame(ctk.CTkFrame):
     """
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
-        super().__init__(master, height=56, fg_color="transparent")
+        super().__init__(master, height=28, fg_color="transparent")
         # self.__master = master
         self.__container = container
         self.__container_suffix = "_" + str(container.id)
         self.__vars: Dict[str, Tuple[tk.Variable, Setting]] = dict()
         self.__widgets: List[tk.Misc] = list()
         self.__font = ctk.CTkFont(size=15)
+        self.__width = 0
         self.__crt_view_type = self.__container.selected_view
         self.__create_selectors()
 
     def __create_selectors(self):
         assert len(self.__widgets) == 0
+        self.__width = 0
         for setting in self.__container.view_settings:
             if isinstance(setting, StringSetting):
                 self.create_string_selector(setting)
@@ -260,6 +287,7 @@ class ViewSettingsFrame(ctk.CTkFrame):
                 self.create_float_selector(setting)
             else:
                 raise NotImplementedError()
+        self.configure(width=self.__width)
 
     def create_string_selector(self, setting: StringSetting):
         # Create the StringVar to keep updated of changes
@@ -276,6 +304,7 @@ class ViewSettingsFrame(ctk.CTkFrame):
             font=self.__font,
             width=125,
         )
+        self.__width += 130
         label.pack(side=tk.LEFT, padx=5)
         menu.pack(side=tk.LEFT)
         self.__widgets.append(label)
@@ -297,6 +326,7 @@ class ViewSettingsFrame(ctk.CTkFrame):
         validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
             name, event
         )
+        self.__width += 65
         entry.bind("<Return>", validate_lambda)
         label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT)
@@ -319,6 +349,7 @@ class ViewSettingsFrame(ctk.CTkFrame):
         validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
             name, event
         )
+        self.__width += 65
         entry.bind("<Return>", validate_lambda)
         label.pack(side=tk.LEFT, padx=5)
         entry.pack(side=tk.LEFT)
@@ -515,6 +546,10 @@ class ActionButtonsFrame:
         np.save(filename, self.__container.data)
 
 
+# class GeneralSettingsFrame(ctk.CTkFrame):
+#     def __init__
+
+
 class SettingsTab:
     def __init__(self, master, container_models: Dict[int, ContainerModel]):
         self.__master = master
@@ -663,7 +698,6 @@ class DaveGUI:
         connection: Connection,
     ):
         ctk.set_appearance_mode("System")
-        # ctk.set_default_color_theme("blue")
 
         # Refresh and quit settings
         self.__refresh_time_ms = 20
