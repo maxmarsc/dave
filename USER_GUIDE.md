@@ -249,7 +249,8 @@ Available settings :
 - overlap : `[0.01: 0.99]` default to `0.5`
 - window type : `hanning`, `blackman` or `none`
 
-
+**Note :** If for some reason the computation of the spectrogram is not possible
+(ex: divide by zero), the concerned channel will be left blanked like in the pictures.
 
 ### Magnitude view
 Available on **complex** (1D/2D) data layout.
