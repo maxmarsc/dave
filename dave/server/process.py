@@ -21,8 +21,10 @@ from dave.common.server_type import *
 
 try:
     DAVE_VENV_PATH = Path(os.environ["DAVE_VENV_FOLDER"]) / "bin/activate"
+    DAVE_VENV_PYTHON = Path(os.environ["DAVE_VENV_FOLDER"]) / "bin/python"
 except KeyError:
     DAVE_VENV_PATH = Path.home() / ".dave/venv/bin/activate"
+    DAVE_VENV_PYTHON = Path.home() / ".dave/venv/bin/python"
 
 
 class DaveProcess(metaclass=SingletonMeta):
@@ -45,40 +47,30 @@ class DaveProcess(metaclass=SingletonMeta):
 
     def __init__(self) -> None:
         self.__containers: Dict[int, Container] = dict()
-        if SERVER_TYPE == ServerType.LLDB:
-            # On LLDB we can use a context
-            self.__ctx = mp.get_context(DaveProcess.START_METHOD)
-        else:
-            # But not in GDB, dark magic probably
-            self.__ctx = mp
-            self.__ctx.set_start_method(DaveProcess.START_METHOD, force=True)
-        # Make sure we start the GUI process from the python executable from the PATH
-        self.__ctx.set_executable(
-            subprocess.check_output(
-                ". {};which python".format(DAVE_VENV_PATH), shell=True
-            )
-            .strip()
-            .decode("utf-8")
-        )
-        self.__dbgr_con, self.__gui_con = self.__ctx.Pipe()
+        self.__dbgr_con, self.__gui_con = mp.Pipe()
         self.__process = None
 
     def start(self):
         if self.__process is not None:
-            if self.__process.is_alive():
+            exit_code = self.__process.poll()
+            if exit_code is None:
                 raise RuntimeError("Dave process was already started")
-            elif self.__process.exitcode is not None:
+            else:
                 # Process already ran and exit, needs to reset the object
                 self.__process = None
                 self.__containers = dict()
                 self.__dbgr_con, self.__gui_con = self.__ctx.Pipe()
 
         with blocked_signals():
-            self.__process = self.__ctx.Process(
-                target=DaveProcess.create_and_run,
-                args=(self.__gui_con,),
+            self.__process = subprocess.Popen(
+                args=[
+                    ". {};python -m dave.client {}".format(
+                        DAVE_VENV_PATH, self.__gui_con.fileno()
+                    )
+                ],
+                shell=True,
+                pass_fds=[self.__gui_con.fileno()],
             )
-            self.__process.start()
 
     @staticmethod
     def create_and_run(gui_conn: Connection):
@@ -89,16 +81,16 @@ class DaveProcess(metaclass=SingletonMeta):
         """
         # First make sure the import path are the one from the new env
         # import sys
-        sys.path = (
-            subprocess.check_output(
-                '. {};python -c "import os,sys;print(os.linesep.join(sys.path).strip())"'.format(
-                    DAVE_VENV_PATH
-                ),
-                shell=True,
-            )
-            .decode("utf-8")
-            .split()
-        )
+        # sys.path = (
+        #     subprocess.check_output(
+        #         '. {};python -c "import os,sys;print(os.linesep.join(sys.path).strip())"'.format(
+        #             DAVE_VENV_PATH
+        #         ),
+        #         shell=True,
+        #     )
+        #     .decode("utf-8")
+        #     .split()
+        # )
         try:
             from dave.client import DaveGUI
         except ImportError as e:
@@ -115,14 +107,14 @@ class DaveProcess(metaclass=SingletonMeta):
 
     def is_alive(self) -> bool:
         if self.__process is not None:
-            return self.__process.is_alive()
+            return self.__process.poll() is None
         return False
 
     def should_stop(self):
         self.__dbgr_con.send(DaveProcess.Message.STOP)
 
     def join(self):
-        self.__process.join()
+        self.__process.wait()
 
     def dbgr_update_callback(self):
         # First check for delete messages
