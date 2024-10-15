@@ -23,6 +23,21 @@ from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
 from .tooltip import Tooltip
 
 
+@dataclass
+class GlobalSettings:
+    samplerate: int = 44100
+    appearance: str = "System"
+    update_needed = False
+
+    def validate_samplerate(self, value) -> bool:
+        if isinstance(value, str):
+            try:
+                value = int(value)
+            except ValueError:
+                return False
+        return value > 0
+
+
 class ContainerSettingsFrame(ctk.CTkFrame):
     """
     Holds all the settings of a container (not the actions buttons)
@@ -35,11 +50,21 @@ class ContainerSettingsFrame(ctk.CTkFrame):
     - general settings (samplerate, delete button...)
     """
 
-    def __init__(self, master: tk.Misc, model: ContainerModel) -> None:
+    def __init__(
+        self, master: tk.Misc, model: ContainerModel, global_settings: GlobalSettings
+    ) -> None:
         super().__init__(
             master,
+            corner_radius=0,
+            height=70,
+        )
+        # Forced to put the scrollable frame into another frame because of a
+        # deletion bug https://github.com/TomSchimansky/CustomTkinter/issues/2443
+        self.__scrollable_frame = ctk.CTkScrollableFrame(
+            self,
             fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
-            height=80,
+            height=70,
+            orientation="horizontal",
         )
         self.grid_propagate(False)
         self.__model = model
@@ -47,7 +72,7 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         self.__font = ctk.CTkFont(size=15)
         # container name
         self.__name_label = ctk.CTkLabel(
-            self,
+            self.__scrollable_frame,
             text=f"{self.__model.variable_name} : ",
             font=self.__font,
             width=200,
@@ -55,15 +80,12 @@ class ContainerSettingsFrame(ctk.CTkFrame):
             anchor="w",
         )
         self.__name_label.grid(row=0, column=0, sticky="w", padx=(5, 5), columnspan=5)
-        # self.__name_label.configure(fg_color="purple")
-
-        # self.__name_label.pack(side=tk.LEFT)
 
         # Layout selection
         self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
         self.__layout_var.trace_add("write", self.layout_var_callback)
         self.__layout_menu = ctk.CTkOptionMenu(
-            self,
+            self.__scrollable_frame,
             values=[layout.value for layout in self.__model.possible_layouts],
             variable=self.__layout_var,
             font=self.__font,
@@ -75,7 +97,9 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         # self.__layout_menu.pack(side=tk.LEFT, padx=5)
 
         # Optionnal channel menu
-        self.__channel_settings = ChannelSettingsFrame(self, self.__model)
+        self.__channel_settings = ChannelSettingsFrame(
+            self.__scrollable_frame, self.__model
+        )
         # self.__channel_settings.configure(fg_color="yellow")
         # self.__channel_settings.pack(side=tk.LEFT, padx=5)
         self.__channel_settings.grid(row=1, column=1, sticky="w", padx=5)
@@ -85,7 +109,7 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         self.__view_var = tk.StringVar(value=self.__model.selected_view)
         self.__view_var.trace_add("write", self.view_var_callback)
         self.__view_menu = ctk.CTkOptionMenu(
-            self,
+            self.__scrollable_frame,
             values=self.__model.possible_views,
             variable=self.__view_var,
             font=self.__font,
@@ -98,25 +122,30 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         # self.__view_separator = ttk.Separator(self, orient="vertical")
 
         #  View settings
-        self.__view_settings_frame = ViewSettingsFrame(self, self.__model)
+        self.__view_settings_frame = ViewSettingsFrame(
+            self.__scrollable_frame, self.__model
+        )
         # self.__view_settings_frame.configure(fg_color="orange")
         self.__view_settings_frame.grid(row=1, column=3, sticky="w", padx=(5, 5))
         # self.__view_settings_frame.pack(side=tk.LEFT, padx=5)
 
         # General section
-        self.__general_settings_frame = GeneralSettingsFrame(self, self.__model)
+        self.__general_settings_frame = GeneralSettingsFrame(
+            self.__scrollable_frame, self.__model, global_settings
+        )
         # self.__general_settings_frame.configure(fg_color="cyan")
         self.__general_settings_frame.grid(row=1, column=4, sticky="e", padx=(5, 5))
         # self.__general_settings_frame.pack(side=tk.RIGHT, padx=5)
 
         # self.update()
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=4)
-        self.grid_columnconfigure(0, weight=0)
-        self.grid_columnconfigure(1, weight=0)
-        self.grid_columnconfigure(2, weight=0)
-        self.grid_columnconfigure(3, weight=1)
-        self.grid_columnconfigure(4, weight=0)
+        self.__scrollable_frame.grid_rowconfigure(0, weight=1)
+        self.__scrollable_frame.grid_rowconfigure(1, weight=4)
+        self.__scrollable_frame.grid_columnconfigure(0, weight=0)
+        self.__scrollable_frame.grid_columnconfigure(1, weight=0)
+        self.__scrollable_frame.grid_columnconfigure(2, weight=0)
+        self.__scrollable_frame.grid_columnconfigure(3, weight=1)
+        self.__scrollable_frame.grid_columnconfigure(4, weight=0)
+        self.__scrollable_frame.pack(fill=tk.BOTH)
         self.pack(side=tk.TOP, fill=tk.BOTH, padx=2, pady=2)
 
     def layout_var_callback(self, *_):
@@ -215,7 +244,7 @@ class ChannelSettingsFrame(ctk.CTkFrame):
 
     def channel_var_callback(self, *_):
         new_val = self.__channel_var.get()
-        if not self.__model.update_channel(new_val):
+        if not self.__model.validate_and_update_channel(new_val):
             Logger().get().warning(
                 f"{new_val} is not a valid channel number for this container"
             )
@@ -238,20 +267,117 @@ class ChannelSettingsFrame(ctk.CTkFrame):
 
 
 class GeneralSettingsFrame(ctk.CTkFrame):
-    def __init__(self, master: tk.Misc, model: ContainerModel):
+    def __init__(
+        self, master: tk.Misc, model: ContainerModel, global_settings: GlobalSettings
+    ):
         super().__init__(master, fg_color="transparent")
         self.__model = model
+        self.__global_settings = global_settings
+        self.__font = ctk.CTkFont(size=15)
+
+        # Delete button
         self.__delete_button = ctk.CTkButton(
-            self,
-            text="X",
-            command=self.delete_button_callback,
-            width=28,
+            self, text="X", command=self.delete_button_callback, width=28
         )
-        self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=[5, 5])
+
+        # Samplerate
+        self.__samplerate_label = ctk.CTkLabel(
+            self, text="samplerate:", font=self.__font
+        )
+        self.__samplerate_var = tk.StringVar(
+            value=(
+                self.__model.samplerate
+                if self.__model.samplerate is not None
+                else self.__global_settings.samplerate
+            )
+        )
+        self.__samplerate_entry = ctk.CTkEntry(
+            self,
+            textvariable=self.__samplerate_var,
+            placeholder_text=f"{self.__global_settings.samplerate}",
+            width=80,
+            font=self.__font,
+        )
+        self.__samplerate_entry.bind("<Return>", self.samplerate_var_callback)
+        self.__samplerate_label.pack(side=tk.LEFT, padx=3)
+        self.__samplerate_entry.pack(side=tk.LEFT, padx=3)
+
+        self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=3)
 
     def delete_button_callback(self):
         self.__model.mark_for_deletion()
         self.master.destroy()
+
+    def samplerate_var_callback(self, *_):
+        new_val = self.__samplerate_var.get()
+        if new_val == "":
+            # Field is validated empty, let's use the global setting
+            self.__model.samplerate = None
+            self.__samplerate_var.set(self.__global_settings.samplerate)
+        elif not self.__model.validate_and_update_samplerate(new_val):
+            # Value is not valid, let's rollback
+            Logger().get().warning(f"{new_val} is not a valid samplerate")
+            self.__samplerate_var.set(
+                self.__model.samplerate
+                if self.__model.samplerate is not None
+                else self.__global_settings.samplerate
+            )
+        # Else the samplerate has been updated in the model
+
+
+class GlobalSettingsFrame(ctk.CTkFrame):
+    def __init__(self, master: tk.Misc, global_settings: GlobalSettings):
+        super().__init__(
+            master,
+            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
+        )
+        self.__settings = global_settings
+        self.__font = ctk.CTkFont(size=15)
+
+        # Appearance selector
+        self.__appearance_label = ctk.CTkLabel(
+            self, text="Appeareance :", font=self.__font
+        )
+        self.__appearance_var = tk.StringVar(value=self.__settings.appearance)
+        self.__appearance_var.trace_add("write", self.appearance_var_callback)
+        self.__appearance_menu = ctk.CTkOptionMenu(
+            self,
+            values=("System", "Dark", "Light"),
+            variable=self.__appearance_var,
+            font=self.__font,
+            width=100,
+        )
+        self.__appearance_label.pack(side=tk.LEFT, pady=5, padx=5)
+        self.__appearance_menu.pack(side=tk.LEFT, pady=5, padx=5)
+
+        # Samplerate entry
+        self.__samplerate_label = ctk.CTkLabel(
+            self, text="samplerate :", font=self.__font
+        )
+        self.__samplerate_var = tk.StringVar(value=self.__settings.samplerate)
+        self.__samplerate_entry = ctk.CTkEntry(
+            self,
+            textvariable=self.__samplerate_var,
+            placeholder_text="samplerate",
+            width=80,
+            font=self.__font,
+        )
+        self.__samplerate_entry.bind("<Return>", self.samplerate_var_callback)
+        self.__samplerate_entry.pack(side=tk.RIGHT, pady=5, padx=5)
+        self.__samplerate_label.pack(side=tk.RIGHT, pady=5, padx=5)
+
+    def appearance_var_callback(self, *_):
+        self.__settings.appearance = self.__appearance_var.get()
+        ctk.set_appearance_mode(self.__settings.appearance)
+
+    def samplerate_var_callback(self, *_):
+        new_val = self.__samplerate_var.get()
+        if not self.__settings.validate_samplerate(new_val):
+            Logger().get().warning(f"{new_val} is not a valid samplerate")
+            self.__samplerate_var.set(self.__settings.samplerate)
+        else:
+            self.__settings.samplerate = int(new_val)
+            self.__settings.update_needed = True
 
 
 class ViewSettingsFrame(ctk.CTkFrame):
@@ -553,17 +679,31 @@ class ContainerActionsFrame(ctk.CTkFrame):
         np.save(filename, self.__container.data)
 
 
-# class GeneralSettingsFrame(ctk.CTkFrame):
-#     def __init__
-
-
 class SettingsTab:
-    def __init__(self, master, container_models: Dict[int, ContainerModel]):
+    def __init__(
+        self,
+        master,
+        container_models: Dict[int, ContainerModel],
+        global_settings: GlobalSettings,
+    ):
         self.__master = master
         self.__container_models = container_models
+        self.__global_settings = global_settings
         self.__containers_settings: Dict[int, ContainerSettingsFrame] = dict()
         self.__empty_label = None
         self.__bold_font = ctk.CTkFont(size=18, weight="bold")
+        self.__global_settings_frame = GlobalSettingsFrame(
+            self.__master, global_settings
+        )
+        self.__global_settings_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
+        self.__separator = ctk.CTkFrame(
+            self.__master,
+            fg_color=ctk.ThemeManager.theme["CTkLabel"]["text_color"],
+            width=100,
+            height=6,
+            corner_radius=3,
+        )
+        self.__separator.pack(side=tk.TOP, anchor=tk.N, pady=(3, 5))
         self.update_widgets()
 
     def add_container(self, container: ContainerModel):
@@ -571,7 +711,7 @@ class SettingsTab:
         assert container.id in self.__container_models
         assert container.in_scope
         self.__containers_settings[container.id] = ContainerSettingsFrame(
-            self.__master, container
+            self.__master, container, self.__global_settings
         )
 
     def delete_container(self, id: int):
@@ -611,11 +751,16 @@ class SettingsTab:
 
 
 class AudioViewsTab:
-    def __init__(self, master, container_models: Dict[int, ContainerModel]):
+    def __init__(
+        self,
+        master,
+        container_models: Dict[int, ContainerModel],
+        global_settings: GlobalSettings,
+    ):
         self.__container_models = container_models
+        self.__global_settings = global_settings
         self.__master = master
         # Audio view rendering
-        # self.__view_frame = tk.Frame(self.__master)
         self.__view_frame = ctk.CTkFrame(self.__master)
         self.__fig = Figure()
         self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__view_frame)
@@ -689,7 +834,7 @@ class AudioViewsTab:
                     axes = subplots_axes[i : i + 1]
                     i += 1
                 axes[0].set_title(title)
-                model.draw_audio_view(axes, channel)
+                model.draw_audio_view(axes, channel, self.__global_settings.samplerate)
         roffset = 0.08
         self.__fig.subplots_adjust(
             left=roffset, bottom=roffset, right=1.0 - roffset + 0.01, top=1.0 - roffset
@@ -703,18 +848,18 @@ class DaveGUI:
         self,
         connection: Connection,
     ):
-        ctk.set_appearance_mode("System")
-
         # Refresh and quit settings
         self.__refresh_time_ms = 20
         self.__conn = connection
 
         # GUI settings
         self.__models: Dict[int, ContainerModel] = dict()
-        # self.__window = tk.Tk()
+        self.__global_settings = GlobalSettings()
+
+        ctk.set_appearance_mode(self.__global_settings.appearance)
         self.__window = ctk.CTk()
         self.__window.title("Dave")
-        self.__window.minsize(800, 600)
+        self.__window.minsize(900, 600)
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.__notebook = ctk.CTkTabview(self.__window)
         self.__notebook.pack(fill="both", expand=True)
@@ -723,10 +868,10 @@ class DaveGUI:
         self.__notebook.set("Views")
 
         self.__audio_views_tab = AudioViewsTab(
-            self.__notebook.tab("Views"), self.__models
+            self.__notebook.tab("Views"), self.__models, self.__global_settings
         )
         self.__settings_tab = SettingsTab(
-            self.__notebook.tab("Settings"), self.__models
+            self.__notebook.tab("Settings"), self.__models, self.__global_settings
         )
         self.__update_tk_id = ""
 
@@ -764,7 +909,7 @@ class DaveGUI:
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawContainer):
                     Logger().get().debug(f"Received new container : {msg.id}")
-                    new_model = ContainerModel(msg, 44100)
+                    new_model = ContainerModel(msg)
                     self.__models[msg.id] = new_model
                     self.__settings_tab.add_container(new_model)
                     update_needed = True
@@ -788,6 +933,11 @@ class DaveGUI:
     def __check_model_for_updates(self) -> bool:
         update_needed = False
         to_delete = []
+
+        # Check global settings
+        if self.__global_settings.update_needed:
+            update_needed = True
+            self.__global_settings.update_needed = False
 
         # We check every container model for update
         for model in self.__models.values():

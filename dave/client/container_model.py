@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 from matplotlib.axes import Axes
 
 from dave.common.data_layout import DataLayout
@@ -19,10 +19,10 @@ import tkinter as tk
 
 
 class ContainerModel:
-    def __init__(self, raw: RawContainer, samplerate: float):
+    def __init__(self, raw: RawContainer):
         self.__raw = raw
         self.__data = raw_to_numpy(raw)
-        self.__sr = samplerate
+        self.__sr = None
         self.__frozen_data = None
         self.__concat = False
         self.__channels = self.__raw.original_shape[0]
@@ -115,6 +115,17 @@ class ContainerModel:
             self.__update_pending = True
 
     @property
+    def samplerate(self) -> Union[None, int]:
+        return self.__sr
+
+    @samplerate.setter
+    def samplerate(self, value: Union[int, None]):
+        assert value is None or value >= 0
+        if self.__sr != value:
+            self.__sr = value
+            self.__update_pending = True
+
+    @property
     def interleaved(self) -> bool:
         if self.is_channel_layout_fixed():
             return False
@@ -196,7 +207,7 @@ class ContainerModel:
             mid_side_data[1] = (render_data[0][:] - render_data[1][:]) / 2.0
             return mid_side_data
 
-    def draw_audio_view(self, axes: List[Axes], channel: int):
+    def draw_audio_view(self, axes: List[Axes], channel: int, default_sr: int):
         """
         Draw the audio view of the given channel
 
@@ -211,8 +222,11 @@ class ContainerModel:
             with a non-superposable view type
         channel : int
             The channel to draw
+        default_sr: int
+            The default samplerate to use if not set in this specific model
         """
         # Compute the rendering shape
+        samplerate = self.__sr if self.__sr is not None else default_sr
         live_data = self.__compute_render_array(self.__data)
         if self.frozen:
             frozen_data = self.__compute_render_array(self.__frozen_data)
@@ -220,15 +234,17 @@ class ContainerModel:
         if self.frozen and not self.is_view_superposable:
             # Render frozen and live data on different subplots
             assert len(axes) == 2
-            self.__view.render_view(axes[0], live_data[channel])
-            self.__view.render_view(axes[1], frozen_data[channel])
+            self.__view.render_view(axes[0], live_data[channel], samplerate)
+            self.__view.render_view(axes[1], frozen_data[channel], samplerate)
         else:
             # Render live data
             assert len(axes) == 1
-            self.__view.render_view(axes[0], live_data[channel])
+            self.__view.render_view(axes[0], live_data[channel], samplerate)
             if self.frozen:
                 # Render frozen data on same subplot
-                self.__view.render_view(axes[0], frozen_data[channel], "#ff7f0e")
+                self.__view.render_view(
+                    axes[0], frozen_data[channel], samplerate, "#ff7f0e"
+                )
 
     # ==============================================================================
     def update_data(self, update: RawContainer.InScopeUpdate):
@@ -249,7 +265,7 @@ class ContainerModel:
     def mark_as_out_of_scope(self):
         self.__in_scope = False
 
-    def update_channel(self, value: int) -> bool:
+    def validate_and_update_channel(self, value: int) -> bool:
         if isinstance(value, str):
             try:
                 value = int(value)
@@ -262,6 +278,18 @@ class ContainerModel:
         ):
             if value != self.channels:
                 self.channels = value
+            return True
+        return False
+
+    def validate_and_update_samplerate(self, value: int) -> bool:
+        if isinstance(value, str):
+            try:
+                value = int(value)
+            except ValueError:
+                return False
+        if value > 0:
+            if value != self.samplerate:
+                self.samplerate = value
             return True
         return False
 

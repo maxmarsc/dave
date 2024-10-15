@@ -97,7 +97,7 @@ class AudioView(ABC):
         return True
 
     @abstractmethod
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         pass
 
     @abstractmethod
@@ -126,7 +126,7 @@ class WaveformView(AudioView):
         # else:
         #     raise RuntimeError(f"{setting_name} is not a valid WaveformView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
         # # axes.set_yscale(self.__y_scale.value)
         # if self.__y_scale.value == "log":
         #     eps = 1e-5
@@ -173,7 +173,7 @@ class CurveView(AudioView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid CurveView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
         if color is None:
             color = DEFAULT_COLOR
         axes.plot(data, color)
@@ -214,13 +214,14 @@ class SpectrogramView(AudioView):
     def get_settings(self) -> List[Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
-        import traceback
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, _=None):
+        # import traceback
+        # samplerate = kwargs["samplerate"]
 
         # traceback.print_stack(limit=15)
         overlap = int(self.__overlap.value * self.__nfft.value)
         with catch_warnings(record=True) as w:
-            axes.specgram(data, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap)
+            axes.specgram(data, NFFT=self.__nfft.value, Fs=samplerate, noverlap=overlap)
         if w:
             Logger().get().warning("Divide by zero in Spectrogram rendering, skipping")
 
@@ -250,13 +251,17 @@ class PSDView(AudioView):
     def get_settings(self) -> List[Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
         overlap = int(self.__overlap.value * self.__nfft.value)
         with catch_warnings(record=True) as w:
             axes.psd(
-                data, color=color, NFFT=self.__nfft.value, Fs=self._sr, noverlap=overlap
+                data,
+                color=color,
+                NFFT=self.__nfft.value,
+                Fs=samplerate,
+                noverlap=overlap,
             )
         if w:
             Logger().get().warning("Divide by zero in PSD rendering, skipping")
@@ -277,7 +282,7 @@ class MagnitudeView(AudioView):
     def get_settings(self) -> List[Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
         if color is None:
             color = DEFAULT_COLOR
         axes.plot(np.abs(data), color)
@@ -300,7 +305,7 @@ class PhaseView(AudioView):
     def get_settings(self) -> List[Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
         if color is None:
             color = DEFAULT_COLOR
         axes.plot(np.angle(data), color)
