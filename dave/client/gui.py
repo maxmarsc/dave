@@ -94,14 +94,12 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         # self.__layout_menu.configure(fg_color="red")
         Tooltip(self.__layout_menu, text="Select data layout of the container")
         self.__layout_menu.grid(row=1, column=0, sticky="w", padx=(5, 5))
-        # self.__layout_menu.pack(side=tk.LEFT, padx=5)
 
         # Optionnal channel menu
         self.__channel_settings = ChannelSettingsFrame(
             self.__scrollable_frame, self.__model
         )
         # self.__channel_settings.configure(fg_color="yellow")
-        # self.__channel_settings.pack(side=tk.LEFT, padx=5)
         self.__channel_settings.grid(row=1, column=1, sticky="w", padx=5)
 
         # View selection
@@ -118,8 +116,6 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         Tooltip(self.__view_menu, text="Select which view to render")
         # self.__view_menu.configure(fg_color="green")
         self.__view_menu.grid(row=1, column=2, sticky="w", padx=(5, 5))
-        # self.__view_menu.pack(side=tk.LEFT, padx=5)
-        # self.__view_separator = ttk.Separator(self, orient="vertical")
 
         #  View settings
         self.__view_settings_frame = ViewSettingsFrame(
@@ -127,7 +123,6 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         )
         # self.__view_settings_frame.configure(fg_color="orange")
         self.__view_settings_frame.grid(row=1, column=3, sticky="w", padx=(5, 5))
-        # self.__view_settings_frame.pack(side=tk.LEFT, padx=5)
 
         # General section
         self.__general_settings_frame = GeneralSettingsFrame(
@@ -135,7 +130,6 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         )
         # self.__general_settings_frame.configure(fg_color="cyan")
         self.__general_settings_frame.grid(row=1, column=4, sticky="e", padx=(5, 5))
-        # self.__general_settings_frame.pack(side=tk.RIGHT, padx=5)
 
         # self.update()
         self.__scrollable_frame.grid_rowconfigure(0, weight=1)
@@ -391,7 +385,6 @@ class ViewSettingsFrame(ctk.CTkFrame):
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
         super().__init__(master, height=28, fg_color="transparent")
-        # self.__master = master
         self.__container = container
         self.__container_suffix = "_" + str(container.id)
         self.__vars: Dict[str, Tuple[tk.Variable, Setting]] = dict()

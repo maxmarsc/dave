@@ -1,6 +1,11 @@
 # `main`
 ## Added
+- Global settings section in `Settings`
+- Global settings allow to switch between appearance mode
+- Global settings allow to define default samplerate
+- Samplerate field in container settings
 ## Changed
+- container settings are now scrollable to allow the use of smaller window
 ## Fixed
 
 # v0.4.0
