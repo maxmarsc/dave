@@ -110,7 +110,7 @@ dave uninstall
 - [x] llvm libc/libstd (need to be tested)
 - [x] JUCE 
 - [x] GSL
-- [ ] Add samplerate support
+- [x] Add samplerate support
 - [ ] Add a way for the user to add custom container support
 - [ ] Add command to help diagnostic type for custom container support
 - [ ] Add argument parsing to `show` (view, layout, settings...)

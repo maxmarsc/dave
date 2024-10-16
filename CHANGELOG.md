@@ -7,7 +7,8 @@
 ## Changed
 - container settings are now scrollable to allow the use of smaller window
 ## Fixed
-- tooltip windows rendering was not consistent
+- tooltip windows rendering on MacOS
+- error when trying to restart the dave process
 
 # v0.4.0
 ## Added

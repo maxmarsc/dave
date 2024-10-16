@@ -55,7 +55,7 @@ class DaveProcess(metaclass=SingletonMeta):
                 # Process already ran and exit, needs to reset the object
                 self.__process = None
                 self.__containers = dict()
-                self.__dbgr_con, self.__gui_con = self.__ctx.Pipe()
+                self.__dbgr_con, self.__gui_con = mp.Pipe()
 
         with blocked_signals():
             self.__process = subprocess.Popen(
