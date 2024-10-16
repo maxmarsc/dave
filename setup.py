@@ -44,7 +44,7 @@ setup(
             "assets/.lldbinit",
             "assets/dave",
         ],
-        ":": ["LICENSE"],
+        ":": ["LICENSE", ".pictures/dave_logo_v6.png"],
     },
     include_package_data=True,
 )

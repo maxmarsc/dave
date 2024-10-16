@@ -1,10 +1,12 @@
-# DAVE - Debugger Audio Visualization Extension
+# Debugger Audio Visualization Extension
+![logo](.pictures/dave_logo_long_v6.png  )
+
 DAVE is a GDB & LLDB extension which provide commands to visualize audio data
 directly from your buffers/classes. No need to recompile your code and/or instrument
 it with nasty macros or fancy libs, just start your debugger !
 
 <p align="center">
-    <b> DAVE GUI </b>
+    <b> The DAVE GUI </b>
 </p>
 <p align="center">
     <img src=".pictures/phase.png">

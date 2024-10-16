@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from tkinter import StringVar, ttk, filedialog, messagebox
 from typing import Callable, Dict, List, Tuple
+from pathlib import Path
 
 
 import numpy as np
@@ -36,6 +37,13 @@ class GlobalSettings:
             except ValueError:
                 return False
         return value > 0
+
+
+def load_icon() -> tk.PhotoImage:
+    import dave
+
+    png_icon = Path(dave.__file__).parent.parent / ".pictures/dave_logo_v6.png"
+    return tk.PhotoImage(file=png_icon)
 
 
 class ContainerSettingsFrame(ctk.CTkFrame):
@@ -691,7 +699,7 @@ class SettingsTab:
         self.__global_settings_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
         self.__separator = ctk.CTkFrame(
             self.__master,
-            fg_color=ctk.ThemeManager.theme["CTkLabel"]["text_color"],
+            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
             width=100,
             height=6,
             corner_radius=3,
@@ -851,6 +859,7 @@ class DaveGUI:
 
         ctk.set_appearance_mode(self.__global_settings.appearance)
         self.__window = ctk.CTk()
+        self.__window.tk.call("wm", "iconphoto", self.__window._w, load_icon())
         self.__window.title("Dave")
         self.__window.minsize(900, 600)
         self.__window.protocol("WM_DELETE_WINDOW", self.on_closing)
