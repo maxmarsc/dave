@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+import customtkinter as ctk
 
 
 class Tooltip:
@@ -35,7 +36,7 @@ class Tooltip:
         self,
         widget,
         *,
-        bg="#FFFFEA",
+        bg=ctk.ThemeManager.theme["CTkFrame"]["fg_color"],
         pad=(5, 3, 5, 3),
         text="widget info",
         waittime=400,
@@ -128,14 +129,18 @@ class Tooltip:
         # Leaves only the label and removes the app window
         self.tw.wm_overrideredirect(True)
 
-        win = tk.Frame(self.tw, background=bg, borderwidth=0)
-        label = tk.Label(
+        win = ctk.CTkFrame(
+            self.tw,
+            bg_color=bg,
+            fg_color=bg,
+            corner_radius=0,
+            border_width=2,
+            border_color=ctk.ThemeManager.theme["CTkScrollbar"]["button_color"],
+        )
+        label = ctk.CTkLabel(
             win,
             text=self.text,
             justify=tk.LEFT,
-            background=bg,
-            relief=tk.SOLID,
-            borderwidth=0,
             wraplength=self.wraplength,
         )
 
