@@ -9,6 +9,7 @@
 ## Fixed
 - tooltip windows rendering on MacOS
 - error when trying to restart the dave process
+- both frozen and current data were labbeled frozen in spectrogram view
 
 # v0.4.0
 ## Added

@@ -827,9 +827,8 @@ class AudioViewsTab:
                 )
 
                 if model.frozen and not model.is_view_superposable:
-                    title += " (frozen)"
                     axes = subplots_axes[i : i + 2]
-                    axes[1].set_title(title)
+                    axes[1].set_title(title + " (frozen)")
                     i += 2
                 else:
                     axes = subplots_axes[i : i + 1]
