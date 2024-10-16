@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.5.0
+## Added
 - Global settings section in `Settings`
 - Global settings allow to switch between appearance mode
 - Global settings allow to define default samplerate
