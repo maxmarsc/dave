@@ -7,6 +7,7 @@
 ## Changed
 - container settings are now scrollable to allow the use of smaller window
 ## Fixed
+- tooltip windows rendering was not consistent
 
 # v0.4.0
 ## Added
