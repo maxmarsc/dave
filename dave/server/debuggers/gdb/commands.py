@@ -30,6 +30,7 @@ def frame_checker():
             if last_frame is not None:
                 DaveProcess().dbgr_update_callback()
             last_frame = current_frame
+            Logger().get().debug("Frame change detected")
     except gdb.error:
         pass
 

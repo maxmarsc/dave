@@ -1,6 +1,9 @@
 from dave.common.logger import Logger
-from dave.common.server_type import *
-from ...languages.c_cpp import *
+import dave.common.server_type as st
+
+st.SERVER_TYPE = st.ServerType.GDB
+
+from ...languages import *
 from .commands import GdbCommand, exit_handler, stop_handler, frame_checker
 
 

@@ -289,3 +289,42 @@ __2D (multichannel) containers__:
 
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.
+
+### Custom containers
+You can add support for custom containers using a bit of python scripting.
+
+To proceed you need to:
+1. Create a `~/.dave/custom_containers` folder. It should contains all your custom code
+2. Add a new `Container` python subclass for each container you want to support (see below)
+3. Register the container class using `ContainerFactory().register()`
+4. Import your container in the `~/.dave/custom_containers/__init__.py` file 
+
+#### Examples
+Some examples are provided :
+- The [examples/custom_containers.cpp](examples/custom_containers.cpp) file contains some custom classes to add support to
+- The [examples/custom_containers]([examples/custom_containers) folder contains the python code to support these class
+
+To test these examples, just copy (or symlink) the `examples/custom_containers` in
+the `.dave` folder.
+
+#### The `Container` class
+DAVE uses the abstract `Container` class as an abstraction layer to support all
+types of audio containers.
+
+To add support for your own classes, you need to inherits either from `Container1D`
+or `Container2D`.
+
+
+When inheriting from `Container1D` you need to :
+- Implement the `size` property, which indicates the number of samples in the object
+
+When inheriting from `Container2D` you need to :
+- Implement the `shape` method, which indicates the shape of the container
+
+When inheriting from either you need to :
+- Implement the `typename_matcher` method to return a regex to match your typename
+- Implement the `read_from_debugger` method to return a `bytearray` containing
+all the samples of your container.
+
+
+If you need more examples you can look into the [languages folder](dave/server/languages/)

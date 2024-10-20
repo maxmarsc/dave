@@ -217,7 +217,7 @@ class ChannelSettingsFrame(ctk.CTkFrame):
         self.__channel_interleaved_switch.pack(side=tk.LEFT, padx=(5, 5))
 
         # Mid/Side switch
-        self.__channel_midside_var = tk.BooleanVar(value=self.__model.interleaved)
+        self.__channel_midside_var = tk.BooleanVar(value=self.__model.mid_side)
         self.__channel_midside_var.trace_add("write", self.midside_var_callback)
         self.__channel_mid_side_switch = ctk.CTkSwitch(
             self,
@@ -567,6 +567,7 @@ class ContainersActionsGridFrame(ctk.CTkFrame):
             # First reset its old row to weight 0
             self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
             button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 0))
+            button_frame.update_widgets()
 
         # Then add new containers
         for id, container in self.__container_models.items():
@@ -636,6 +637,10 @@ class ContainerActionsFrame(ctk.CTkFrame):
         self.__concat_button.grid(row=1, column=0, padx=(5, 5), pady=(5, 5))
         self.__save_button.grid(row=2, column=0, padx=(5, 5), pady=(5, 5))
         self.columnconfigure(0, weight=1)
+
+    def update_widgets(self):
+        self.__freeze_var.set(self.__container.frozen)
+        self.__concat_var.set(self.__container.concat)
 
     def freeze_button_clicked(self, *_):
         self.__container.frozen = self.__freeze_var.get()
@@ -784,7 +789,12 @@ class AudioViewsTab:
     def __subplots_hratios(self) -> List[int]:
         hratios = []
         for model in self.__container_models.values():
-            if not model.in_scope or model.channels > 16:
+            if not model.in_scope:
+                continue
+            if model.channels > 16:
+                Logger().get().warning(
+                    f"Too many channels, skipping container : {model.channels}"
+                )
                 continue
             if model.frozen and not model.is_view_superposable:
                 # If the view is not superposable, we need a subplot for both
@@ -817,12 +827,7 @@ class AudioViewsTab:
             subplots_axes = np.array([subplots_axes])
         i = 0
         for model in self.__container_models.values():
-            if not model.in_scope:
-                continue
-            if model.channels > 16:
-                Logger().get().warning(
-                    f"Too many channels : {model.channels}. Skipping"
-                )
+            if not model.in_scope or model.channels > 16:
                 continue
             for channel in range(model.channels):
                 title = (

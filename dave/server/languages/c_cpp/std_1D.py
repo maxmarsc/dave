@@ -16,7 +16,7 @@ from .std_base import StdVector, StdSpan
 class CArray1D(Container1D):
     __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\[(\d+)\]$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -74,7 +74,7 @@ class Pointer1D(Container1D):
 class StdArray1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -102,7 +102,7 @@ class StdArray1D(Container1D):
 class StdVector1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?vector<{SampleType.regex()},.*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -133,7 +133,7 @@ class StdVector1D(Container1D):
 class StdSpan1D(Container1D):
     __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*{SampleType.regex()}\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:

@@ -66,6 +66,7 @@ int main() {
     carray_carray[0][i] = val;
     carray_array[0][i]  = val * val;
     carray_vector[0][i] = -val * val;
+    carray_vector[1][i] = val / 2;
     carray_span[0][i]   = -val;
     carray_d[i]         = val;
     array[i]            = -val;
@@ -82,6 +83,8 @@ int main() {
     array[i] *= 0.5F;
     vector[i] *= 0.5F;
     carray_cpx[i] *= 0.5F;
+    carray_vector[0][i] *= 0.5F;
+    carray_vector[1][i] *= 0.5F;
   }
 
   return 0;

@@ -19,9 +19,12 @@ class Container(ABC):
         Container.__count += 1
         return Container.__count
 
-    def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
+    def __init__(
+        self, dbg_value: Any, name: str, data_type: SampleType, interleaved: bool
+    ) -> None:
         self._value = dbg_value
         self._name = name
+        self.__interleaved = interleaved
         self.__type = data_type
         self.__id = Container.__new_id()
 
@@ -46,10 +49,11 @@ class Container(ABC):
             self.name,
             self.shape(),
             self.dimensions_fixed(),
+            self.__interleaved,
             self.float_type,
-            type(self),
+            # type(self),
             self.default_layout(),
-            self.available_data_layouts()
+            self.available_data_layouts(),
         )
 
     @property
@@ -86,12 +90,11 @@ class Container(ABC):
     @abstractmethod
     def typename_matcher(cls) -> Union[re.Pattern, Callable[[str], bool]]:
         pass
-    
 
 
 class Container1D(Container):
     def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
-        super().__init__(dbg_value, name, data_type)
+        super().__init__(dbg_value, name, data_type, False)
 
     @property
     @abstractmethod
@@ -119,15 +122,21 @@ class Container1D(Container):
             DataLayout.REAL_1D,
             DataLayout.REAL_2D,
         ]
-  
+
     @staticmethod
     def dimensions_fixed() -> bool:
         return False
 
 
 class Container2D(Container):
-    def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
-        super().__init__(dbg_value, name, data_type)
+    def __init__(
+        self,
+        dbg_value: Any,
+        name: str,
+        data_type: SampleType,
+        interleaved: bool = False,
+    ) -> None:
+        super().__init__(dbg_value, name, data_type, interleaved)
 
     def default_layout(self) -> DataLayout:
         if self.float_type.is_complex():
@@ -141,7 +150,7 @@ class Container2D(Container):
             DataLayout.CPX_2D,
             DataLayout.REAL_2D,
         ]
-    
+
     @staticmethod
     def dimensions_fixed() -> bool:
         return True

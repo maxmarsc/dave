@@ -13,7 +13,7 @@ from ...debuggers.value import AbstractValue
 class JuceAudioBuffer(Container2D):
     __REGEX = rf"^(?:const\s+)?juce::AudioBuffer<{SampleType.regex()}>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -59,7 +59,7 @@ class JuceAudioBuffer(Container2D):
 class JuceAudioBlock(Container2D):
     __REGEX = rf"^(?:const\s+)?juce::dsp::AudioBlock<{SampleType.regex()}>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:

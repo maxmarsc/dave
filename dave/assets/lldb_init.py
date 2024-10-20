@@ -28,9 +28,9 @@ if DAVE_VENV_PATH.is_file():
     sys.path = list(dict.fromkeys(sys.path + paths))
 
 try:
-    from dave.common.server_type import *
+    import dave.common.server_type as st
 
-    SERVER_TYPE = ServerType.LLDB
+    st.SERVER_TYPE = st.ServerType.LLDB
 
     from dave.server.debuggers.lldb import (
         ShowCommand,

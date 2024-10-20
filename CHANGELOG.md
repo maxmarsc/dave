@@ -1,7 +1,12 @@
 # `main`
 ## Added
+- The installation script has a dev mode to install davext from github
+- Support for custom containers classes
 ## Changed
 ## Fixed
+- `freeze`, `concat`, `delete` command printing their argument on lldb
+- `freeze`, `concat` commands not affecting the gui corresponding switches
+- some debug prints when parsing a container
 
 # v0.5.1
 ## Changed
@@ -11,6 +16,7 @@
 - `std::vector` bug with carray types
 - `std/gsl::span` bug with const types
 - GUI could not start cause of missing logo file
+
 
 # v0.5.0
 ## Added

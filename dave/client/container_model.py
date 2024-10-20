@@ -27,7 +27,8 @@ class ContainerModel:
         self.__concat = False
         self.__channels = self.__raw.original_shape[0]
         self.__in_scope = True
-        self.__interleaved = False
+        print(f"building from raw : {raw.interleaved}")
+        self.__interleaved = raw.interleaved
         self.__mid_side = False
         self.__data_layout: DataLayout = self.__raw.default_layout
         # First as default
@@ -127,8 +128,6 @@ class ContainerModel:
 
     @property
     def interleaved(self) -> bool:
-        if self.is_channel_layout_fixed():
-            return False
         return self.__interleaved
 
     @interleaved.setter
@@ -239,12 +238,12 @@ class ContainerModel:
         else:
             # Render live data
             assert len(axes) == 1
-            self.__view.render_view(axes[0], live_data[channel], samplerate)
             if self.frozen:
                 # Render frozen data on same subplot
                 self.__view.render_view(
                     axes[0], frozen_data[channel], samplerate, "#ff7f0e"
                 )
+            self.__view.render_view(axes[0], live_data[channel], samplerate)
 
     # ==============================================================================
     def update_data(self, update: RawContainer.InScopeUpdate):

@@ -26,9 +26,6 @@ if DAVE_VENV_PATH.is_file():
     # Delete duplicates and update the search list with dave venv
     sys.path = list(dict.fromkeys(sys.path + paths))
 try:
-    from dave.common.server_type import *
-
-    SERVER_TYPE = ServerType.GDB
     import dave.server.debuggers.gdb
 except ModuleNotFoundError as e:
     import os

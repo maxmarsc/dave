@@ -15,9 +15,11 @@ class RawContainer:
     data: bytearray
     name: str
     original_shape: Tuple[int, int]
+    # dimensions are fixed when the container is 2D and both dimensions are therefore fixed
     dimensions_fixed: bool
+    interleaved: bool
     sample_type: SampleType
-    container_cls: Type
+    # container_cls: Type
     default_layout: DataLayout
     possible_layout: List[DataLayout]
 

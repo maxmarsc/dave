@@ -81,7 +81,7 @@ class LLDBEventHandler:
         while True:
             if not self.attached:
                 self.__try_to_attach_to_process()
-            
+
             if DaveProcess().is_alive():
 
                 event = lldb.SBEvent()
@@ -166,7 +166,6 @@ class DeleteCommand:
         result: lldb.SBCommandReturnObject,
     ):
         args = shlex.split(command)
-        result.AppendMessage(f"{args}")
 
         if len(args) != 1:
             result.SetError("Usage: dave delete VARIABLE|CONTAINER_ID")
@@ -204,7 +203,6 @@ class FreezeCommand:
         result: lldb.SBCommandReturnObject,
     ):
         args = shlex.split(command)
-        result.AppendMessage(f"{args}")
 
         if len(args) != 1:
             result.SetError("Usage: dave freeze VARIABLE|CONTAINER_ID")
@@ -242,7 +240,6 @@ class ConcatCommand:
         result: lldb.SBCommandReturnObject,
     ):
         args = shlex.split(command)
-        result.AppendMessage(f"{args}")
 
         if len(args) != 1:
             result.SetError("Usage: dave concat VARIABLE|CONTAINER_ID")

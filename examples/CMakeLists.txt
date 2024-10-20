@@ -1,3 +1,6 @@
+################################################################################
+###                             dependencies
+################################################################################
 include(FetchContent)
 set(JUCE_USE_CURL OFF)
 FetchContent_Declare(
@@ -23,12 +26,18 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(GSL)
 
 
+################################################################################
+###                             stdlib
+################################################################################
 add_executable(std
     ${CMAKE_CURRENT_SOURCE_DIR}/std.cpp
 )
 
 set_target_properties(std PROPERTIES CXX_STANDARD 20)
 
+################################################################################
+###                             scope
+################################################################################
 add_executable(cpp_scope
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp_scope.cpp
 )
@@ -36,11 +45,16 @@ add_executable(cpp_scope
 set_target_properties(cpp_scope PROPERTIES CXX_STANDARD 20)
 
 
+################################################################################
+###                               C
+################################################################################
 add_executable(c_example
     ${CMAKE_CURRENT_SOURCE_DIR}/c_example.c
 )
 
-
+################################################################################
+###                               JUCE
+################################################################################
 add_executable(juce
     ${CMAKE_CURRENT_SOURCE_DIR}/juce.cpp
 )
@@ -55,6 +69,9 @@ target_compile_definitions(
   PUBLIC JUCE_USE_CURL=0
 )
 
+################################################################################
+###                               Microsoft's GSL
+################################################################################
 add_executable(
   gsl
   ${CMAKE_CURRENT_SOURCE_DIR}/gsl.cpp
@@ -62,3 +79,12 @@ add_executable(
 set_target_properties(gsl PROPERTIES CXX_STANDARD 17)
 
 target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)
+
+################################################################################
+###                          Custom containers example
+################################################################################
+add_executable(
+  custom_containers
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_containers.cpp
+)
+set_target_properties(custom_containers PROPERTIES CXX_STANDARD 20)

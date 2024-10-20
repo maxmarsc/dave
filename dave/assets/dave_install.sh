@@ -1,19 +1,51 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "Hello ! This is the installation script for dave. First thanks a lot for trying it out"
-echo "Please note that DAVE is still in early development. If you encounter any issue"
-echo "or have any suggestion, please visit https://github.com/maxmarsc/dave"
-echo ""
-echo "I'm working hard to make this project stable HOWEVER if you encounter an issue during or after the installation DON'T PANIC"
-echo "To revert the installation process you can simply follow these commands :"
-printf "\trm -rf ~/.dave     # Will remove the dave environment and its module\n"
-printf "\trm -rf ~/.gdbinit  # Will remove gdb bindings\n"
-printf "\trm -rf ~/.lldbinit # Will remove lldb bindings\n"
-printf "\nIf you don't wanna remove the init files of your debuggers for any reason, just edit out the lines between --- DAVE BEGIN --- and --- DAVE END ---"
-printf "\n\nThis message should disappear soon enough, happy coding !\n\n"
+show_help() {
+    echo "usage: $(basename "$0") [-h] [-b BRANCH]"
+    echo ""
+    echo "Installation script for DAVE"
+    echo "Users should call it with no arguments to download the stable version"
+    echo ""
+    printf "options:\n"
+    printf "\t-b BRANCH\n"
+    printf "\t\t\tDeveloper option :\n"
+    printf "\t\t\tWill pip install dave from the given branch, not from pypi\n"
+    echo ""
+    echo "options:"
+    printf "  \t-h, --help\tshow this help message and exit\n"
+}
 
-read -rp "Type Enter to continue" response
+show_intro() {
+  echo "Hello ! This is the installation script for dave. First thanks a lot for trying it out"
+  echo "Please note that DAVE is still in early development. If you encounter any issue"
+  echo "or have any suggestion, please visit https://github.com/maxmarsc/dave"
+  echo ""
+  echo "I'm working hard to make this project stable HOWEVER if you encounter an issue during or after the installation DON'T PANIC"
+  echo "To revert the installation process you can simply follow these commands :"
+  printf "\trm -rf ~/.dave     # Will remove the dave environment and its module\n"
+  printf "\trm -rf ~/.gdbinit  # Will remove gdb bindings\n"
+  printf "\trm -rf ~/.lldbinit # Will remove lldb bindings\n"
+  printf "\nIf you don't wanna remove the init files of your debuggers for any reason, just edit out the lines between --- DAVE BEGIN --- and --- DAVE END ---"
+  printf "\n\nThis message should disappear soon enough, happy coding !\n\n"
+
+  read -rp "Type Enter to continue" response
+}
+
+
+PIP_SRC="davext"
+# Check for dev flag
+if [[ "$#" -eq 2 && "$1" == "-b" ]]; then
+    PIP_SRC="git+ssh://git@github.com/maxmarsc/dave.git@$2"
+    echo "Installing python module from git, for advised developers only"
+# Check for help flag
+elif  [[ ("$#" -eq 1 && "$1" == "-h") || "$#" -gt 0 ]]; then
+    show_help
+    exit 1
+else
+    show_intro
+fi
+
 
 
 #============================   OS detection   =================================
@@ -106,7 +138,7 @@ source "$ACTIVATE_SCRIPT"
 
 # Install dave package
 echo "Installing dave module..."
-pip install davext
+pip install "$PIP_SRC"
 deactivate
 
 
@@ -124,7 +156,7 @@ zsh_path_install() {
     printf "\nAllowing ZSH to access dave commands requires adding "
     printf "'~/.dave/scripts' to the PATH in ~/.zshrc\n"
     printf "\t"
-    read -rp "Allow ~/.zshrc modification ? [y/n] (default: y): " response
+    read -rp "Allow ~/.zshrc modification ? [Y/n]: " response
     response=${response:-y}  # Set default to 'y' if no input is provided
 
     if [[ "$response" == "y" || "$response" == "Y" ]]; then

@@ -6,4 +6,8 @@ from .commands import (
     FreezeCommand,
     ConcatCommand,
 )
-from ...languages.c_cpp import *
+import dave.common.server_type as st
+
+st.SERVER_TYPE = st.ServerType.LLDB
+
+from ...languages import *
