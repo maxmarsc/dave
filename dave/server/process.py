@@ -46,7 +46,7 @@ class DaveProcess(metaclass=SingletonMeta):
         self.__dbgr_con, self.__gui_con = mp.Pipe()
         self.__process = None
 
-    def start(self):
+    def start(self, use_external_env=True):
         if self.__process is not None:
             exit_code = self.__process.poll()
             if exit_code is None:
@@ -57,13 +57,20 @@ class DaveProcess(metaclass=SingletonMeta):
                 self.__containers = dict()
                 self.__dbgr_con, self.__gui_con = mp.Pipe()
 
-        with blocked_signals():
+        if use_external_env:
+            with blocked_signals():
+                self.__process = subprocess.Popen(
+                    args=[
+                        ". {};python -m dave.client {}".format(
+                            DAVE_VENV_PATH, self.__gui_con.fileno()
+                        )
+                    ],
+                    shell=True,
+                    pass_fds=[self.__gui_con.fileno()],
+                )
+        else:
             self.__process = subprocess.Popen(
-                args=[
-                    ". {};python -m dave.client {}".format(
-                        DAVE_VENV_PATH, self.__gui_con.fileno()
-                    )
-                ],
+                args=["python -m dave.client {}".format(self.__gui_con.fileno())],
                 shell=True,
                 pass_fds=[self.__gui_con.fileno()],
             )

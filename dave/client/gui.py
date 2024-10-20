@@ -784,7 +784,7 @@ class AudioViewsTab:
     def __subplots_hratios(self) -> List[int]:
         hratios = []
         for model in self.__container_models.values():
-            if not model.in_scope:
+            if not model.in_scope or model.channels > 16:
                 continue
             if model.frozen and not model.is_view_superposable:
                 # If the view is not superposable, we need a subplot for both
@@ -818,6 +818,11 @@ class AudioViewsTab:
         i = 0
         for model in self.__container_models.values():
             if not model.in_scope:
+                continue
+            if model.channels > 16:
+                Logger().get().warning(
+                    f"Too many channels : {model.channels}. Skipping"
+                )
                 continue
             for channel in range(model.channels):
                 title = (

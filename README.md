@@ -56,6 +56,7 @@ It will install the python dave modules, the debuggers bindings, and the `dave`
 cli tool to help manage your dave installation.
 
 *MacOS* : On MacOS distribution you might need to install tkinter using homebrew/macports.
+*Python* : Python support is limited and requires a different installation method, see the section below
 
 ---
 
@@ -90,6 +91,27 @@ If you want to completely remove dave from your system run
 ```bash
 dave uninstall
 ```
+
+### Python support
+Python support is limited because both python debuggers I have investigated
+(pdb and debugpy) does not provide an API complete enough to provide full DAVE support.
+Most importantly **Python debugger does not provide automatic update on breakpoints**.
+
+To install DAVE for python, install the `davext` pypi package in your environment.
+
+Only 1D and 2D numpy tensors are supported, and you need to manually import dave
+from the debugger CLI, like this:
+```py
+import dave.debuggers.pdb as pydave
+```
+
+Then you can use the following commands :
+ - `pydave.show` analog to `dave show`
+ - `pydave.concat` analog to `dave concat`
+ - `pydave.freeze` analog to `dave freeze`
+ - `pydave.delete` analog to `dave delete`
+ - `pydave.update` which forces the update of the containers data
+
 
 ---
 
@@ -136,21 +158,6 @@ dave uninstall
 ### Set logging level
 When running into an issue, please activate the debug log level, by setting
 the env variable `DAVE_LOGLEVEL` to `debug` before starting the debugger.
-
-### Python support
-Python support is extremely limited because both python debuggers I have investigated
-(pdb and debugpy) does not provide an API complete enough to provide full DAVE support
-
-Only 1D and 2D numpy tensors are supported, and you need to manually import dave
-from the debugger CLI, like this:
-```py
-import dave.debuggers.pdb as pydave
-```
-
-pydave provides two functions :
- - `pydave.show` which display a container
- - `pydave.update` which forces the update of the containers data
-
 
 ### LLDB on Ubuntu 22.04
 When starting lldb on ubuntu 22.04 you might get this error :
