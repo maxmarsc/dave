@@ -1,6 +1,10 @@
 # `main`
 ## Added
 ## Changed
+## Fixed
+
+# v0.5.1
+## Changed
 - Channels count is now limited to 16, if above the view will not be plotted
 ## Fixed
 - Python support
