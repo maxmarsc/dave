@@ -6,6 +6,7 @@
 - Python support
 - `std::vector` bug with carray types
 - `std/gsl::span` bug with const types
+- GUI could not start cause of missing logo file
 
 # v0.5.0
 ## Added

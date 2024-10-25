@@ -42,7 +42,7 @@ class GlobalSettings:
 def load_icon() -> tk.PhotoImage:
     import dave
 
-    png_icon = Path(dave.__file__).parent.parent / ".pictures/dave_logo_v6.png"
+    png_icon = Path(dave.__file__).parent / "assets/dave_logo_v6.png"
     return tk.PhotoImage(file=png_icon)
 
 
