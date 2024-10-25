@@ -4,6 +4,8 @@
 - Channels count is now limited to 16, if above the view will not be plotted
 ## Fixed
 - Python support
+- `std::vector` bug with carray types
+- `std/gsl::span` bug with const types
 
 # v0.5.0
 ## Added
