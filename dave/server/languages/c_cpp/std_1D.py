@@ -131,9 +131,7 @@ class StdVector1D(Container1D):
 
 
 class StdSpan1D(Container1D):
-    __REGEX = (
-        rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
-    )
+    __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*{SampleType.regex()}\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()

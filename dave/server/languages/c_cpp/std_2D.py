@@ -25,7 +25,7 @@ class CArrayAny2D(Container2D):
 
     __REGEX = rf"^(?:const\s+)?([^[\]]*)\s*\[(\d+)\]$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -72,7 +72,7 @@ class CarrayCarray2D(Container2D):
 
     __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\[(\d+)\]\s*\[(\d+)\]$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -158,7 +158,7 @@ class Pointer2D(Container2D):
 class StdArray2D(Container2D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<(.*),\s*(\d+)[a-z]*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
@@ -220,12 +220,12 @@ class StdArray2D(Container2D):
 
 
 class StdVector2D(Container2D):
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         parsed_types = parse_template(typename)
         if not StdVector2D.name_parser(typename):
             raise TypeError(
-                f"StdVector2D could not parse {typename} as a valid std::array type"
+                f"StdVector2D could not parse {typename} as a valid std::vector type"
             )
 
         # Check if contains a nested valid 1D container
@@ -265,7 +265,7 @@ class StdVector2D(Container2D):
     @staticmethod
     def name_parser(typename: str) -> bool:
         types = parse_template(typename)
-        if types[0].startswith("std::vector") and len(types) == 3:
+        if types[0].strip() == "std::vector" and len(types) == 3:
             return True
         return False
 
@@ -276,9 +276,9 @@ class StdVector2D(Container2D):
 
 
 class StdSpan2D(Container2D):
-    __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(.*),\s*(\d+)[a-z]*>\s*$"
+    __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*(.*)\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _):
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
         if re_match is None:
