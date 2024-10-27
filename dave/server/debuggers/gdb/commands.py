@@ -15,10 +15,11 @@ from .value import GdbValue
 
 
 def exit_handler(event):
-    if DaveProcess().is_alive():
-        # pass
+    if FrameCheckerThread().is_alive():
         FrameCheckerThread().should_stop()
         FrameCheckerThread().join()
+
+    if DaveProcess().is_alive():
         DaveProcess().should_stop()
         DaveProcess().join()
 
@@ -28,13 +29,11 @@ def stop_handler(event: gdb.StopEvent):
         DaveProcess().dbgr_update_callback()
 
 
-
 class FrameCheckerThread(metaclass=SingletonMeta):
     def __init__(self):
-        # super().__init__(target=self.routine, name="dave frame checker")
-        self.__thread = None   #type: threading.Thread
+        self.__thread = None  # type: threading.Thread
         self.__should_stop = False
-        self.__last_frame = None 
+        self.__last_frame = None
 
     def start(self):
         if self.__thread is not None and self.__thread.is_alive():
@@ -48,10 +47,9 @@ class FrameCheckerThread(metaclass=SingletonMeta):
             self.__thread = None
 
     def routine(self):
-        while(not self.__should_stop):
+        while not self.__should_stop:
             gdb.post_event(self.check_frame)
             time.sleep(0.1)
-
 
     def check_frame(self):
         if self.__should_stop:
@@ -68,6 +66,11 @@ class FrameCheckerThread(metaclass=SingletonMeta):
 
     def should_stop(self):
         self.__should_stop = True
+
+    def is_alive(self) -> bool:
+        if self.__thread is not None:
+            return self.__thread.is_alive()
+        return False
 
 
 class GdbCommand(gdb.Command):
