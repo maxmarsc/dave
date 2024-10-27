@@ -94,10 +94,10 @@ class DaveProcess(metaclass=SingletonMeta):
         for container in self.__containers.values():
             id = container.id
             if not container.in_scope:
-                Logger().get().debug(f"{container.name} is out of scope")
+                Logger().debug(f"{container.name} is out of scope")
                 self.__dbgr_con.send(RawContainer.OutScopeUpdate(id))
             else:
-                Logger().get().debug(f"{container.name} is in scope")
+                Logger().debug(f"{container.name} is in scope")
                 data = container.read_from_debugger()
                 shape = container.shape()
                 self.__dbgr_con.send(RawContainer.InScopeUpdate(id, data, shape))
@@ -189,9 +189,9 @@ class DaveProcess(metaclass=SingletonMeta):
             try:
                 msg = self.__dbgr_con.recv()
                 if isinstance(msg, DaveProcess.DeleteMessage):
-                    Logger().get().debug(
+                    Logger().debug(
                         "Debugger process received delete command for {msg.id}"
                     )
                     del self.__containers[msg.id]
             except EOFError:
-                Logger().get().debug("Received EOF from GUI process")
+                Logger().debug("Received EOF from GUI process")

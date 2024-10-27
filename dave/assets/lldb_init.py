@@ -67,7 +67,7 @@ try:
         # Event handler to handle process stop
         event_handler = LLDBEventHandler(debugger)
 
-        Logger().get().info("[dave] Successfully loaded")
+        Logger().info("[dave] Successfully loaded")
 
 except ModuleNotFoundError as e:
     import os, sys

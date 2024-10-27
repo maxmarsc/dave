@@ -26,13 +26,13 @@ class StopHook:
 class LLDBEventHandler:
     def __init__(self, debugger: lldb.SBDebugger):
         self.__debugger = debugger
-        Logger().get().debug("Creating lldb.SBListener")
+        Logger().debug("Creating lldb.SBListener")
         self.__listener = lldb.SBListener("lldb_listener")
         self.attached = False
         self.__last_frame = None
 
         # Start listening thread
-        Logger().get().debug("Creating EventHandler thread")
+        Logger().debug("Creating EventHandler thread")
         self.__thread = threading.Thread(target=self.__event_loop)
         self.__thread.start()
 
@@ -74,7 +74,7 @@ class LLDBEventHandler:
             .GetSelectedFrame()
         )
         if DaveProcess().is_alive() and current_frame != self.__last_frame:
-            Logger().get().debug("Frame change detected, updating")
+            Logger().debug("Frame change detected, updating")
             DaveProcess().dbgr_update_callback()
             self.__last_frame = current_frame
 
@@ -138,7 +138,7 @@ class ShowCommand:
         typename = lldb_value.typename()
         try:
             container = ContainerFactory().build(lldb_value, typename, varname, dims)
-            Logger().get().info(f"Added {varname} : {container.id}")
+            Logger().info(f"Added {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             result.SetError(e.args[0])
             return

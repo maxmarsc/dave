@@ -10,7 +10,7 @@ else:
 
 from dave.common.logger import Logger
 
-Logger().get().debug(f"Detected debugger : {st.SERVER_TYPE}")
+Logger().debug(f"Detected debugger : {st.SERVER_TYPE}")
 
 # Then custom container support
 import os, sys
@@ -27,11 +27,11 @@ else:
     custom_module_path = Path.home() / ".dave/custom_containers/__init__.py"
 
 if not custom_module_path.is_file():
-    Logger().get().debug(
+    Logger().debug(
         f"Custom containers init file not found : {custom_module_path}, skipping"
     )
 else:
-    Logger().get().debug(
+    Logger().debug(
         f"Trying to import custom containers from {custom_module_path}"
     )
 

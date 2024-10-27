@@ -27,7 +27,6 @@ class ContainerModel:
         self.__concat = False
         self.__channels = self.__raw.original_shape[0]
         self.__in_scope = True
-        print(f"building from raw : {raw.interleaved}")
         self.__interleaved = raw.interleaved
         self.__mid_side = False
         self.__data_layout: DataLayout = self.__raw.default_layout

@@ -223,7 +223,7 @@ class SpectrogramView(AudioView):
         with catch_warnings(record=True) as w:
             axes.specgram(data, NFFT=self.__nfft.value, Fs=samplerate, noverlap=overlap)
         if w:
-            Logger().get().warning("Divide by zero in Spectrogram rendering, skipping")
+            Logger().warning("Divide by zero in Spectrogram rendering, skipping")
 
 
 # ===========================================================================
@@ -264,7 +264,7 @@ class PSDView(AudioView):
                 noverlap=overlap,
             )
         if w:
-            Logger().get().warning("Divide by zero in PSD rendering, skipping")
+            Logger().warning("Divide by zero in PSD rendering, skipping")
 
 
 # ===========================================================================

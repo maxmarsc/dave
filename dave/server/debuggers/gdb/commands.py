@@ -62,7 +62,7 @@ class FrameCheckerThread(metaclass=SingletonMeta):
                 if self.__last_frame is not None:
                     DaveProcess().dbgr_update_callback()
                 self.__last_frame = current_frame
-                Logger().get().debug("Frame change detected, updating")
+                Logger().debug("Frame change detected, updating")
         except gdb.error:
             pass
 
@@ -91,7 +91,7 @@ class GdbCommand(gdb.Command):
             return
 
         if not GdbCommand.__check_for_running_inferior():
-            Logger().get().error("no processus detected")
+            Logger().error("no processus detected")
             return
 
         subcommand = args[0]
@@ -109,7 +109,7 @@ class GdbCommand(gdb.Command):
         elif subcommand == "concat":
             self.concat_container(args[1:])
         else:
-            Logger().get().error(f"Unknown subcommand '{subcommand}'")
+            Logger().error(f"Unknown subcommand '{subcommand}'")
 
     def show(self, args):
         if len(args) < 1 or len(args) > 2:
@@ -124,7 +124,7 @@ class GdbCommand(gdb.Command):
         typename = var.typename()
         try:
             container = ContainerFactory().build(var, typename, varname, dims)
-            Logger().get().info(f"Added {varname} : {container.id}")
+            Logger().info(f"Added {varname} : {container.id}")
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():

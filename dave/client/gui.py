@@ -247,7 +247,7 @@ class ChannelSettingsFrame(ctk.CTkFrame):
     def channel_var_callback(self, *_):
         new_val = self.__channel_var.get()
         if not self.__model.validate_and_update_channel(new_val):
-            Logger().get().warning(
+            Logger().warning(
                 f"{new_val} is not a valid channel number for this container"
             )
             self.__channel_var.set(str(self.__model.channels))
@@ -318,7 +318,7 @@ class GeneralSettingsFrame(ctk.CTkFrame):
             self.__samplerate_var.set(self.__global_settings.samplerate)
         elif not self.__model.validate_and_update_samplerate(new_val):
             # Value is not valid, let's rollback
-            Logger().get().warning(f"{new_val} is not a valid samplerate")
+            Logger().warning(f"{new_val} is not a valid samplerate")
             self.__samplerate_var.set(
                 self.__model.samplerate
                 if self.__model.samplerate is not None
@@ -375,7 +375,7 @@ class GlobalSettingsFrame(ctk.CTkFrame):
     def samplerate_var_callback(self, *_):
         new_val = self.__samplerate_var.get()
         if not self.__settings.validate_samplerate(new_val):
-            Logger().get().warning(f"{new_val} is not a valid samplerate")
+            Logger().warning(f"{new_val} is not a valid samplerate")
             self.__samplerate_var.set(self.__settings.samplerate)
         else:
             self.__settings.samplerate = int(new_val)
@@ -792,7 +792,7 @@ class AudioViewsTab:
             if not model.in_scope:
                 continue
             if model.channels > 16:
-                Logger().get().warning(
+                Logger().warning(
                     f"Too many channels, skipping container : {model.channels}"
                 )
                 continue
@@ -897,7 +897,7 @@ class DaveGUI:
             self.__refresh_time_ms, self.tkinter_update_callback
         )
         self.__window.mainloop()
-        Logger().get().debug("Tkinter mainloop exiting")
+        Logger().debug("Tkinter mainloop exiting")
 
     def __poll_queue(self) -> bool:
         update_needed = False
@@ -910,30 +910,30 @@ class DaveGUI:
                     self.on_closing()
                     return False
                 elif isinstance(msg, DaveProcess.DeleteMessage):
-                    Logger().get().debug(f"Received delete message : {msg.id}")
+                    Logger().debug(f"Received delete message : {msg.id}")
                     self.__models[msg.id].mark_for_deletion()
                 elif isinstance(msg, DaveProcess.FreezeMessage):
-                    Logger().get().debug(f"Received freeze message : {msg.id}")
+                    Logger().debug(f"Received freeze message : {msg.id}")
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
                 elif isinstance(msg, DaveProcess.ConcatMessage):
-                    Logger().get().debug(f"Received concat message : {msg.id}")
+                    Logger().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawContainer):
-                    Logger().get().debug(f"Received new container : {msg.id}")
+                    Logger().debug(f"Received new container : {msg.id}")
                     new_model = ContainerModel(msg)
                     self.__models[msg.id] = new_model
                     self.__settings_tab.add_container(new_model)
                     update_needed = True
                 elif isinstance(msg, RawContainer.InScopeUpdate):
-                    Logger().get().debug(f"Received data update : {msg.id}")
+                    Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)
                     update_needed = True
                 elif isinstance(msg, RawContainer.OutScopeUpdate):
-                    Logger().get().debug(f"Received oos update : {msg.id}")
+                    Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
             except EOFError:
-                Logger().get().debug(
+                Logger().debug(
                     "Received EOF from debugger process, will shutdown"
                 )
                 self.on_closing()
@@ -967,7 +967,7 @@ class DaveGUI:
 
         # If no container left we close the gui
         if len(self.__models) == 0 and len(to_delete) != 0:
-            Logger().get().debug("No container left, closing the GUI")
+            Logger().debug("No container left, closing the GUI")
             self.on_closing()
             return False
 
