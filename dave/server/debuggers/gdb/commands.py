@@ -47,7 +47,7 @@ class FrameCheckerThread(metaclass=SingletonMeta):
             self.__thread = None
 
     def routine(self):
-        while not self.__should_stop:
+        while not self.__should_stop and DaveProcess().is_alive():
             gdb.post_event(self.check_frame)
             time.sleep(0.1)
 

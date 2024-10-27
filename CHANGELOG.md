@@ -2,6 +2,7 @@
 ## Added
 ## Changed
 ## Fixed
+- Fixed an error when restarting dave on gdb
 
 # v0.6.1
 ## Fixed
