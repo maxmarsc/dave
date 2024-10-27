@@ -30,6 +30,8 @@ class Tooltip:
         - to add customizable background color, padding, waittime and
           wraplength on creation
       by Alberto Vassena on 2016.11.05.
+
+    - Modified to fit customtkinter by maxmarsc on 2024.10.27
     """
 
     def __init__(
