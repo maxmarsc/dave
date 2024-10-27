@@ -1,5 +1,11 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+
+# v0.6.0
+## Added
 - The installation script has a dev mode to install davext from github
 - Support for custom containers classes
 ## Changed
