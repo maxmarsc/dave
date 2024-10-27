@@ -2,6 +2,9 @@
 ## Added
 ## Changed
 ## Fixed
+
+# v0.6.1
+## Fixed
 - gdb log formatting
 - gdb hanging up when closing gdb after dave closing the dave gui
 
