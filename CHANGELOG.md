@@ -2,6 +2,7 @@
 ## Added
 ## Changed
 ## Fixed
+- gdb log formatting
 
 
 # v0.6.0
