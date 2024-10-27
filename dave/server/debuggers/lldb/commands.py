@@ -74,6 +74,7 @@ class LLDBEventHandler:
             .GetSelectedFrame()
         )
         if DaveProcess().is_alive() and current_frame != self.__last_frame:
+            Logger().get().debug("Frame change detected, updating")
             DaveProcess().dbgr_update_callback()
             self.__last_frame = current_frame
 

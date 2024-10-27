@@ -30,11 +30,12 @@ try:
 except ModuleNotFoundError as e:
     import os
     import logging
+    import gdb
 
     LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
-    logging.basicConfig(level=LOGLEVEL, format="%(levelname)s: %(message)s")
-    logging.warning("[dave] module not found. Commands will not be available")
-    logging.debug(f"failed with {e}")
-    logging.debug(f"sys.path : {sys.path}")
+    gdb.write("WARNING : [dave] module not found. Commands will not be available\n")
+    if LOGLEVEL == "debug":
+        gdb.write(f"DEBUG : failed with {e}\n")
+        gdb.write(f"DEBUG : sys.path : {sys.path}\n")
 end
 # --- DAVE END ---

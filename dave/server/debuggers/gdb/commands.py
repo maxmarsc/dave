@@ -1,18 +1,24 @@
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
+import threading
+import time
+
+from dave.common.singleton import SingletonMeta
 from dave.server.process import DaveProcess
 from dave.server.container_factory import ContainerFactory, ContainerError
 from dave.common.logger import Logger
 
 from .value import GdbValue
 
-last_frame = None  # type: gdb.Frame
+# last_frame = None  # type: gdb.Frame
 
 
 def exit_handler(event):
     if DaveProcess().is_alive():
         # pass
+        FrameCheckerThread().should_stop()
+        FrameCheckerThread().join()
         DaveProcess().should_stop()
         DaveProcess().join()
 
@@ -22,17 +28,46 @@ def stop_handler(event: gdb.StopEvent):
         DaveProcess().dbgr_update_callback()
 
 
-def frame_checker():
-    global last_frame  # type: gdb.Frame
-    try:
-        current_frame = gdb.selected_frame()
-        if current_frame != last_frame and DaveProcess().is_alive():
-            if last_frame is not None:
-                DaveProcess().dbgr_update_callback()
-            last_frame = current_frame
-            Logger().get().debug("Frame change detected")
-    except gdb.error:
-        pass
+
+class FrameCheckerThread(metaclass=SingletonMeta):
+    def __init__(self):
+        # super().__init__(target=self.routine, name="dave frame checker")
+        self.__thread = None   #type: threading.Thread
+        self.__should_stop = False
+        self.__last_frame = None 
+
+    def start(self):
+        if self.__thread is not None and self.__thread.is_alive():
+            raise RuntimeError("Dave frame checker was already started")
+        self.__thread = threading.Thread(target=self.routine, name="dave frame checker")
+        self.__thread.start()
+
+    def join(self):
+        if self.__thread is not None and self.__thread.is_alive():
+            self.__thread.join()
+            self.__thread = None
+
+    def routine(self):
+        while(not self.__should_stop):
+            gdb.post_event(self.check_frame)
+            time.sleep(0.1)
+
+
+    def check_frame(self):
+        if self.__should_stop:
+            return
+        try:
+            current_frame = gdb.selected_frame()
+            if current_frame != self.__last_frame and DaveProcess().is_alive():
+                if self.__last_frame is not None:
+                    DaveProcess().dbgr_update_callback()
+                self.__last_frame = current_frame
+                Logger().get().debug("Frame change detected, updating")
+        except gdb.error:
+            pass
+
+    def should_stop(self):
+        self.__should_stop = True
 
 
 class GdbCommand(gdb.Command):
@@ -93,6 +128,7 @@ class GdbCommand(gdb.Command):
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():
+            FrameCheckerThread().start()
             DaveProcess().start()
         DaveProcess().add_to_model(container)
 

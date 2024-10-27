@@ -3,6 +3,7 @@
 - The installation script has a dev mode to install davext from github
 - Support for custom containers classes
 ## Changed
+- Improved gdb frame change detection
 ## Fixed
 - `freeze`, `concat`, `delete` command printing their argument on lldb
 - `freeze`, `concat` commands not affecting the gui corresponding switches
