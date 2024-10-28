@@ -25,7 +25,11 @@ class ContainerModel:
         self.__sr = None
         self.__frozen_data = None
         self.__concat = False
-        self.__channels = self.__raw.original_shape[0]
+        self.__channels = (
+            self.__raw.original_shape[0]
+            if not raw.interleaved
+            else self.__raw.original_shape[1]
+        )
         self.__in_scope = True
         self.__interleaved = raw.interleaved
         self.__mid_side = False

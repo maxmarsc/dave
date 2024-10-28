@@ -63,14 +63,17 @@ class Container(ABC):
     # @property
     # def dtype(self) -> np.dtype:
     #     return self.__type.numpy_type()
+    @property
+    def byte_size(self) -> int:
+        return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
 
     @abstractmethod
     def shape(self) -> Tuple[int, int]:
         pass
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def available_data_layouts() -> List[DataLayout]:
+    def available_data_layouts(cls) -> List[DataLayout]:
         pass
 
     @staticmethod
@@ -104,24 +107,26 @@ class Container1D(Container):
     def shape(self) -> Tuple[int, int]:
         return (1, self.size)
 
-    @property
-    def byte_size(self) -> int:
-        return self.float_type.byte_size() * self.size
-
     def default_layout(self) -> DataLayout:
         if self.float_type.is_complex():
             return DataLayout.CPX_1D
         else:
             return DataLayout.REAL_1D
 
-    @staticmethod
-    def available_data_layouts() -> List[DataLayout]:
-        return [
-            DataLayout.CPX_1D,
-            DataLayout.CPX_2D,
-            DataLayout.REAL_1D,
-            DataLayout.REAL_2D,
-        ]
+    @classmethod
+    def available_data_layouts(cls) -> List[DataLayout]:
+        if not cls.dimensions_fixed():
+            return [
+                DataLayout.CPX_1D,
+                DataLayout.CPX_2D,
+                DataLayout.REAL_1D,
+                DataLayout.REAL_2D,
+            ]
+        else:
+            return [
+                DataLayout.CPX_1D,
+                DataLayout.REAL_1D,
+            ]
 
     @staticmethod
     def dimensions_fixed() -> bool:
@@ -144,8 +149,8 @@ class Container2D(Container):
         else:
             return DataLayout.REAL_2D
 
-    @staticmethod
-    def available_data_layouts() -> List[DataLayout]:
+    @classmethod
+    def available_data_layouts(cls) -> List[DataLayout]:
         return [
             DataLayout.CPX_2D,
             DataLayout.REAL_2D,

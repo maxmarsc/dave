@@ -21,13 +21,20 @@ __1D (mono) containers__:
 - [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
 - `C array`
 - `pointer`
+- `choc::buffer::MonoView`
+- `choc::buffer::MonoVBuffer`
 
 __2D (multichannel) containers__:
-- Any nesting of 1D containers
+- Any nesting of C/C++ standards 1D containers
 - `juce::AudioBuffer`
 - `juce::dsp::AudioBlock`
+- `choc::buffer::InterleavedView`
+- `choc::buffer::InterleavedBuffer`
+- `choc::buffer::ChannelArrayView`
+- `choc::buffer::ChannelArrayBuffer`
 
-Currently supported OS are Linux and supposedly MacOS. Both GNU and LLVM stdlib
+
+Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.
 
 ---
@@ -133,14 +140,14 @@ Then you can use the following commands :
 - [x] JUCE 
 - [x] GSL
 - [x] Add samplerate support
-- [ ] Add a way for the user to add custom container support
+- [x] Add a way for the user to add custom container support
 - [ ] Add command to help diagnostic type for custom container support
 - [ ] Add argument parsing to `show` (view, layout, settings...)
 - [ ] Add versionning selection to dave_install
 - [ ] Add FISH shell support
 - [ ] command aliases
 - [ ] minimize call to render functions
-- [ ] CHOC
+- [x] CHOC
 - [ ] Eigen
 - [ ] Document the code
 - [ ] find testing strategy

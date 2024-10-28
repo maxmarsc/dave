@@ -81,6 +81,15 @@ set_target_properties(gsl PROPERTIES CXX_STANDARD 17)
 target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)
 
 ################################################################################
+###                               CHOC
+################################################################################
+add_executable(
+  choc
+  ${CMAKE_CURRENT_SOURCE_DIR}/choc.cpp
+)
+set_target_properties(choc PROPERTIES CXX_STANDARD 17)
+
+################################################################################
 ###                          Custom containers example
 ################################################################################
 add_executable(

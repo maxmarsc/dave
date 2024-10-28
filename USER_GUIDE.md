@@ -281,11 +281,19 @@ __1D (mono) containers__:
 - [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
 - `C array`
 - `pointer`
+- `choc::buffer::MonoView`
+- `choc::buffer::MonoVBuffer`
+
 
 __2D (multichannel) containers__:
-- Any nesting of 1D containers
+- Any nesting of C/C++ standards 1D containers
 - `juce::AudioBuffer`
 - `juce::dsp::AudioBlock`
+- `choc::buffer::InterleavedView`
+- `choc::buffer::InterleavedBuffer`
+- `choc::buffer::ChannelArrayView`
+- `choc::buffer::ChannelArrayBuffer`
+
 
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.

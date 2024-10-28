@@ -177,9 +177,9 @@ class DaveCustomInterleavedContainerVec(Container2D):
         assert isinstance(self._value, AbstractValue)
         try:
             return (
-                # if interleaved, the order should be inverted
-                int(self._value.attr("channels_")),
+                # Interleaved
                 int(self._value.attr("block_size_")),
+                int(self._value.attr("channels_")),
             )
         except:
             raise RuntimeError(

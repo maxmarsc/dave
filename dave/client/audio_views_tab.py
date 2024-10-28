@@ -48,7 +48,7 @@ class AudioViewsTab:
         )
         # frame packing
         self.__containers_actions_buttons_frame.pack(
-            side=tk.RIGHT, fill="y", pady=(0, 45)
+            side=tk.RIGHT, fill="y", pady=(0, 85)
         )
         self.__view_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.__master.bind("<Configure>", self.on_resize)

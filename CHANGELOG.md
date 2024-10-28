@@ -1,9 +1,11 @@
 # `main`
 ## Added
+- `choc` support
 ## Changed
 - Improved audio views tab, matplotlib now reacts to window resize
 ## Fixed
 - Fixed an error when restarting dave on gdb
+- Fixed an error with interleaved custom container example
 
 # v0.6.1
 ## Fixed
