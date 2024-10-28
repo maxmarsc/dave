@@ -1,6 +1,7 @@
 # `main`
 ## Added
 ## Changed
+- Improved audio views tab, matplotlib now reacts to window resize
 ## Fixed
 - Fixed an error when restarting dave on gdb
 

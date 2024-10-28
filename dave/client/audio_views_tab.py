@@ -33,10 +33,15 @@ class AudioViewsTab:
         self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__view_frame)
         self.__canvas_widget = self.__canvas.get_tk_widget()
         self.__canvas_widget.pack(fill=tk.BOTH, expand=True)
-        self.__canvas_widget.pack()
         self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__view_frame)
         self.__toolbar.update()
         self.__toolbar.pack()
+        self.__left_margin_px = 65
+        self.__right_margin_px = 40
+        self.__top_margin_px = 40
+        self.__bottom_margin_px = 40
+        self.__prev_canvas_dimensions = (1, 1)
+
         # Button rendering
         self.__containers_actions_buttons_frame = ContainersActionsGridFrame(
             self.__master, self.__container_models
@@ -46,6 +51,7 @@ class AudioViewsTab:
             side=tk.RIGHT, fill="y", pady=(0, 45)
         )
         self.__view_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.__master.bind("<Configure>", self.on_resize)
 
     def __subplots_hratios(self) -> List[int]:
         hratios = []
@@ -66,6 +72,40 @@ class AudioViewsTab:
                 hratios.extend([2 for _ in range(model.channels)])
 
         return hratios
+
+    def on_resize(self, event):
+        # Force the frame to update its size
+        self.__view_frame.update_idletasks()
+
+        # Get the canvas width and height in pixels
+        dimensions = (
+            self.__canvas_widget.winfo_width(),
+            self.__canvas_widget.winfo_height(),
+        )
+        if dimensions == self.__prev_canvas_dimensions:
+            return
+
+        # Convert the margin sizes from pixels to inches
+        dpi = self.__fig.get_dpi()
+        left_margin_in = self.__left_margin_px / dpi
+        right_margin_in = self.__right_margin_px / dpi
+        top_margin_in = self.__top_margin_px / dpi
+        bottom_margin_in = self.__bottom_margin_px / dpi
+
+        # Compute the figure width and height in inches
+        figure_width_in = dimensions[0] / dpi
+        figure_height_in = dimensions[1] / dpi
+
+        # Calculate subplot adjustments based on fixed margins
+        left = left_margin_in / figure_width_in
+        right = 1 - (right_margin_in / figure_width_in)
+        top = 1 - (top_margin_in / figure_height_in)
+        bottom = bottom_margin_in / figure_height_in
+
+        self.__fig.subplots_adjust(left=left, right=right, top=top, bottom=bottom)
+        self.__prev_canvas_dimensions = dimensions
+        if event is not None:
+            self.__canvas.draw_idle()
 
     def update_widgets(self):
         self.__update_figures()
@@ -92,25 +132,27 @@ class AudioViewsTab:
                 continue
             for channel in range(model.channels):
                 title = (
-                    f"{model.variable_name} channel {channel}"
+                    f"channel {channel}"
                     if not model.mid_side
                     else " {}".format("mid" if channel == 0 else "side")
                 )
 
                 if model.frozen and not model.is_view_superposable:
                     axes = subplots_axes[i : i + 2]
-                    axes[1].set_title(title + " (frozen)")
+                    axes[1].yaxis.set_label_position("right")
+                    axes[1].set_ylabel(
+                        title + " (f)", rotation=270, labelpad=10, va="bottom"
+                    )
                     i += 2
                 else:
                     axes = subplots_axes[i : i + 1]
                     i += 1
-                axes[0].set_title(title)
+
+                axes[0].yaxis.set_label_position("right")
+                axes[0].set_ylabel(title, rotation=270, labelpad=10, va="bottom")
                 model.draw_audio_view(axes, channel, self.__global_settings.samplerate)
-        roffset = 0.08
-        self.__fig.subplots_adjust(
-            left=roffset, bottom=roffset, right=1.0 - roffset + 0.01, top=1.0 - roffset
-        )
         self.__canvas.draw_idle()
+        self.on_resize(None)
 
 
 # =======================  ContainersActionsGridFrame  =========================
@@ -184,6 +226,11 @@ class ContainerActionsFrame(ctk.CTkFrame):
         self.__concat_var.trace_add("write", self.concat_button_clicked)
         self.__font = ctk.CTkFont(size=15)
 
+        # Create label
+        self.__name_label = ctk.CTkLabel(
+            self, text=self.__container.variable_name, font=self.__font
+        )
+
         # Create buttons
         self.__freeze_button = ctk.CTkSwitch(
             self,
@@ -209,13 +256,15 @@ class ContainerActionsFrame(ctk.CTkFrame):
         )
 
         # Create tooltips
-
         Tooltip(self.__save_button, text="Save to disc")
+        # Make available the full name
+        Tooltip(self.__name_label, text=self.__container.variable_name)
 
         # Packing
-        self.__freeze_button.grid(row=0, column=0, padx=(5, 5), pady=(5, 5))
-        self.__concat_button.grid(row=1, column=0, padx=(5, 5), pady=(5, 5))
-        self.__save_button.grid(row=2, column=0, padx=(5, 5), pady=(5, 5))
+        self.__name_label.grid(row=0, column=0, padx=(5, 5), pady=(5, 5))
+        self.__freeze_button.grid(row=1, column=0, padx=(5, 5), pady=(5, 5))
+        self.__concat_button.grid(row=2, column=0, padx=(5, 5), pady=(5, 5))
+        self.__save_button.grid(row=3, column=0, padx=(5, 5), pady=(5, 5))
         self.columnconfigure(0, weight=1)
 
     def update_widgets(self):
