@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.7.0
+## Added
 - `choc` support
 ## Changed
 - Improved audio views tab, matplotlib now reacts to window resize
