@@ -42,7 +42,15 @@ class SettingsTab:
             height=6,
             corner_radius=3,
         )
+        self.__container_settings_scrollable_frame = ctk.CTkScrollableFrame(
+            self.__master,
+            corner_radius=0,
+            orientation="vertical",
+        )
         self.__separator.pack(side=tk.TOP, anchor=tk.N, pady=(3, 5))
+        self.__container_settings_scrollable_frame.pack(
+            side=tk.TOP, fill=tk.BOTH, expand=True
+        )
         self.update_widgets()
 
     def add_container(self, container: ContainerModel):
@@ -50,7 +58,9 @@ class SettingsTab:
         assert container.id in self.__container_models
         assert container.in_scope
         self.__containers_settings[container.id] = ContainerSettingsFrame(
-            self.__master, container, self.__global_settings
+            self.__container_settings_scrollable_frame,
+            container,
+            self.__global_settings,
         )
 
     def delete_container(self, id: int):
@@ -151,8 +161,7 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         self.__channel_settings = ChannelSettingsFrame(
             self.__scrollable_frame, self.__model
         )
-        # self.__channel_settings.configure(fg_color="yellow")
-        self.__channel_settings.grid(row=1, column=1, sticky="w", padx=5)
+        self.__channel_settings.grid(row=1, column=1, sticky="w")
 
         # View selection
         self.__view_menu = None
@@ -166,24 +175,20 @@ class ContainerSettingsFrame(ctk.CTkFrame):
             width=125,
         )
         Tooltip(self.__view_menu, text="Select which view to render")
-        # self.__view_menu.configure(fg_color="green")
         self.__view_menu.grid(row=1, column=2, sticky="w", padx=(5, 5))
 
         #  View settings
         self.__view_settings_frame = ViewSettingsFrame(
             self.__scrollable_frame, self.__model
         )
-        # self.__view_settings_frame.configure(fg_color="orange")
-        self.__view_settings_frame.grid(row=1, column=3, sticky="w", padx=(5, 5))
+        self.__view_settings_frame.grid(row=1, column=3, sticky="w", padx=(5, 0))
 
         # General section
         self.__general_settings_frame = GeneralSettingsFrame(
             self.__scrollable_frame, self.__model, global_settings
         )
-        # self.__general_settings_frame.configure(fg_color="cyan")
-        self.__general_settings_frame.grid(row=1, column=4, sticky="e", padx=(5, 5))
+        self.__general_settings_frame.grid(row=1, column=4, sticky="e", padx=(0, 5))
 
-        # self.update()
         self.__scrollable_frame.grid_rowconfigure(0, weight=1)
         self.__scrollable_frame.grid_rowconfigure(1, weight=4)
         self.__scrollable_frame.grid_columnconfigure(0, weight=0)
@@ -312,6 +317,7 @@ class ChannelSettingsFrame(ctk.CTkFrame):
             state="normal" if self.__model.channels == 2 else "disabled"
         )
 
+
 # ===========================  GeneralSettingsFrame  ===========================
 class GeneralSettingsFrame(ctk.CTkFrame):
     def __init__(
@@ -371,6 +377,7 @@ class GeneralSettingsFrame(ctk.CTkFrame):
             )
         # Else the samplerate has been updated in the model
 
+
 # ===========================  GlobalSettingsFrame  ===========================
 class GlobalSettingsFrame(ctk.CTkFrame):
     def __init__(self, master: tk.Misc, global_settings: GlobalSettings):
@@ -425,6 +432,7 @@ class GlobalSettingsFrame(ctk.CTkFrame):
         else:
             self.__settings.samplerate = int(new_val)
             self.__settings.update_needed = True
+
 
 # ===========================  ViewSettingsFrame  ===========================
 class ViewSettingsFrame(ctk.CTkFrame):

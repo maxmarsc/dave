@@ -27,30 +27,48 @@ class AudioViewsTab:
         self.__container_models = container_models
         self.__global_settings = global_settings
         self.__master = master
+
         # Audio view rendering
-        self.__view_frame = ctk.CTkFrame(self.__master)
+        self.__central_frame_scrollable = ctk.CTkScrollableFrame(
+            self.__master,
+            corner_radius=0,
+            orientation="vertical",
+        )
+
+        self.__figures_frame = ctk.CTkFrame(self.__central_frame_scrollable)
         self.__fig = Figure()
-        self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__view_frame)
+        self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__figures_frame)
         self.__canvas_widget = self.__canvas.get_tk_widget()
         self.__canvas_widget.pack(fill=tk.BOTH, expand=True)
-        self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__view_frame)
-        self.__toolbar.update()
-        self.__toolbar.pack()
         self.__left_margin_px = 65
         self.__right_margin_px = 40
         self.__top_margin_px = 40
         self.__bottom_margin_px = 40
         self.__prev_canvas_dimensions = (1, 1)
 
-        # Button rendering
+        # Containers Actions
         self.__containers_actions_buttons_frame = ContainersActionsGridFrame(
-            self.__master, self.__container_models
+            self.__central_frame_scrollable, self.__container_models
         )
+
+        # Matplotlib toolbar at the bottom
+        self.__toolbar_frame = ctk.CTkFrame(
+            self.__master, corner_radius=0, fg_color="transparent", height=45
+        )
+        self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__toolbar_frame)
+        self.__toolbar.update()
+        self.__toolbar.pack()
+        self.__toolbar_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
         # frame packing
+        self.__central_frame_scrollable.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
         self.__containers_actions_buttons_frame.pack(
-            side=tk.RIGHT, fill="y", pady=(0, 85)
+            side=tk.RIGHT,
+            fill="y",
+            pady=(self.__top_margin_px, 0),
         )
-        self.__view_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.__figures_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.__master.bind("<Configure>", self.on_resize)
 
     def __subplots_hratios(self) -> List[int]:
@@ -74,9 +92,36 @@ class AudioViewsTab:
         return hratios
 
     def on_resize(self, event):
-        # Force the frame to update its size
-        self.__view_frame.update_idletasks()
+        # Compute the minimum required height for subplots
+        min_height_per_channel = 200  # example height in pixels
+        total_channels = sum(
+            model.channels
+            for model in self.__container_models.values()
+            if model.in_scope
+        )
+        min_height = total_channels * min_height_per_channel
 
+        # Get the current height of the scrollable frame
+        current_height = self.__master.winfo_height() - 45
+
+        # Determine the new height to apply
+        new_height = max(min_height, current_height)
+
+        # Apply the new height to the figures frame and containers actions frame
+        self.__figures_frame.configure(height=new_height)
+        self.__containers_actions_buttons_frame.configure(height=new_height)
+        self.__canvas_widget.configure(
+            height=new_height
+        )  # Adjust canvas height accordingly
+        self.__canvas.draw_idle()  # Redraw the canvas with the new configuration
+
+        # Update layout adjustments
+        self.__master.update_idletasks()  # Force layout update
+
+        # Force the frame to update its size
+        self.update_canva_adjustement()
+
+    def update_canva_adjustement(self):
         # Get the canvas width and height in pixels
         dimensions = (
             self.__canvas_widget.winfo_width(),
@@ -104,8 +149,7 @@ class AudioViewsTab:
 
         self.__fig.subplots_adjust(left=left, right=right, top=top, bottom=bottom)
         self.__prev_canvas_dimensions = dimensions
-        if event is not None:
-            self.__canvas.draw_idle()
+        self.__canvas.draw_idle()
 
     def update_widgets(self):
         self.__update_figures()
@@ -162,7 +206,7 @@ class ContainersActionsGridFrame(ctk.CTkFrame):
     """
 
     def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
-        super().__init__(master, width=130)
+        super().__init__(master, width=60, corner_radius=0, fg_color="transparent")
         self.__container_models = container_models
         self.__container_actions_frame: Dict[int, ContainerActionsFrame] = dict()
         self.grid_columnconfigure(0, weight=1)
@@ -187,7 +231,7 @@ class ContainersActionsGridFrame(ctk.CTkFrame):
         for i, button_frame in enumerate(self.__container_actions_frame.values()):
             # First reset its old row to weight 0
             self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
-            button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 0))
+            button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 5))
             button_frame.update_widgets()
 
         # Then add new containers
@@ -218,7 +262,9 @@ class ContainerActionsFrame(ctk.CTkFrame):
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
         # self.__master = master
-        super().__init__(master)
+        super().__init__(
+            master, fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"]
+        )
         self.__container = container
         self.__freeze_var = tk.BooleanVar(value=self.__container.frozen)
         self.__concat_var = tk.BooleanVar(value=self.__container.concat)
@@ -251,6 +297,7 @@ class ContainerActionsFrame(ctk.CTkFrame):
         self.__save_button = ctk.CTkButton(
             self,
             text="Save",
+            width=120,
             command=self.__save_button_clicked,
             font=self.__font,
         )

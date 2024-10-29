@@ -3,6 +3,9 @@
 - `choc` support
 ## Changed
 - Improved audio views tab, matplotlib now reacts to window resize
+- Fixed a minimum height for subfigures
+- Views tab is now scrollable vertically
+- Settings tab is now scrollable vertically
 ## Fixed
 - Fixed an error when restarting dave on gdb
 - Fixed an error with interleaved custom container example
