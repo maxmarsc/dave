@@ -9,6 +9,7 @@
 ## Fixed
 - Fixed an error when restarting dave on gdb
 - Fixed an error with interleaved custom container example
+- GDB was not tracking frame changes anymore
 
 # v0.6.1
 ## Fixed

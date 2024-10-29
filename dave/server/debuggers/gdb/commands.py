@@ -131,8 +131,8 @@ class GdbCommand(gdb.Command):
         except (ContainerError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():
-            FrameCheckerThread().start()
             DaveProcess().start()
+            FrameCheckerThread().start()
         DaveProcess().add_to_model(container)
 
     def delete_container(self, args):
