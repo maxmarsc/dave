@@ -141,16 +141,16 @@ Then you can use the following commands :
 - [x] GSL
 - [x] Add samplerate support
 - [x] Add a way for the user to add custom container support
-- [ ] Add command to help diagnostic type for custom container support
+- [x] Add command to help diagnostic type for custom container support
 - [ ] Add argument parsing to `show` (view, layout, settings...)
+- [ ] find testing strategy
 - [ ] Add versionning selection to dave_install
-- [ ] Add FISH shell support
 - [ ] command aliases
 - [ ] minimize call to render functions
-- [x] CHOC
 - [ ] Eigen
-- [ ] Document the code
-- [ ] find testing strategy
+- [ ] Add FISH shell support
+- [x] CHOC
+- [x] Document the code
 - [x] Restart dave process 
 - [x] Improve GUI proportions
 - [x] container deletion (GUI + delete command)
