@@ -1,6 +1,7 @@
 # `main`
 ## Added
 ## Changed
+- Updated user guide
 ## Fixed
 
 # v0.7.0

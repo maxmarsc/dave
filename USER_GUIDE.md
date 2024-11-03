@@ -157,10 +157,25 @@ the plots. The save button saves the figures, and not the data.
 ### The `Settings` tab
 ![Settings](.pictures/settings.png)
 
-On this tab you have a setting menu for each container currently in scope.
+The settings tab contains global settings and settings for each container currently
+in scope.
 
-#### Data layout
-On `1.` you have the *Data Layout* selection. The type of layout are :
+#### Global settings
+![Global settings](.pictures/settings_global.png)
+
+From left-to-right :
+- Appearance settings : select from dark, light or system
+- Default samplerate : the default samplerate to use for each container
+
+#### Container settings
+![Container settings](.pictures/settings_container.png)
+
+For each container in scope you can see a frame with settings for this container.
+
+From left-to-right :
+
+##### Data layout selection
+The type of layout are :
 - real 1D : monophonic pcm samples
 - real 2D : multichannel pcm samples
 - complex 1D : monophonic complex values
@@ -176,33 +191,29 @@ can be aliased. **Forcing a complex layout on real data requires an even number 
 A data layout dictates what views are available, so when changing the layout, the
 available views might changes as well.
 
-#### Channel section
-**This section only shows up when the container uses a 2D layout**
+##### Channel section
+First the number of channels of the containers. Editable if the container is 1D
+but you forced a 2D layout.
 
-On `2.` you have the channel section. If your container is 2D then it will show
-you how many channels it as. If it's 1D but you forced a 2D layout, you can 
-type how many channels it has.
+Then the interleaved switch. Editable if the container is 1D
+but you forced a 2D layout. Some containers might be interleaved by nature, this
+will reflect it.
+This will change how dave interpret each channel.
 
-When using a 2D layout on a 1D container, you can also indicates that the samples
-of each channel are interleaved by clicking on the `interleaved` button. DAVE 
-will then de-interleave the samples for rendering.
+Then the mid/side switch. Editable if the container contains 2 channels. If selected
+then dave will not render the channels but the mid/side channels.
 
-When using a container with 2 channels, you can decide to use mid/side rendering,
-by clicking on the `mid/side` button.
+##### View section
+You can use the selector to select which view 
+(see possibles views) to use to visualize your audio data.
 
-#### View section
-On `3.` you have the view section. You can use the selector to select which view 
-(see possibles views) to use to render your audio data.
-
-Some views (PSD, Spectrogram) have additional settings which you can change in 
+Some views (PSD, Spectrogram) have additional settings which you can edit in 
 this section.
 
-#### General section
-On `4.` you have the general section, where option are the same for every container.
-
-It contains the delete button (X), which marks the container for deletion 
-(like `dave delete`). TODO: It should also contains the samplerate setting.
-
+##### General section
+Finally the general section. From left-to-right it contains:
+- the samplerate setting
+- the delete button (X) to tell dave to stop track this container
 
 ## Possibles views
 ### Waveform
