@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.8.0
+## Added
 - Code documentation
 - `dave inspect` command to help add support for new audio container class
 - `dave help` command for a short help message in the debugger
