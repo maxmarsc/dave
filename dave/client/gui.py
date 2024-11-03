@@ -23,6 +23,11 @@ def load_icon() -> tk.PhotoImage:
 
 
 class DaveGUI:
+    """
+    Main GUI class, will create the GUI windows and automatically fetches
+    updates from the dave server (debugger)
+    """
+
     def __init__(
         self,
         connection: Connection,

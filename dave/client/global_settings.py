@@ -3,7 +3,11 @@ from dataclasses import dataclass
 
 @dataclass
 class GlobalSettings:
-    samplerate: int = 44100
+    """
+    Global settings for both the GUI and containers
+    """
+
+    samplerate: int = 44100  # default samplerate
     appearance: str = "System"
     update_needed = False
 

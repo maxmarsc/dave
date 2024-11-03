@@ -1,8 +1,11 @@
 # `main`
 ## Added
+- Code documentation
 ## Changed
 - Updated user guide
 ## Fixed
+- 1D container support class were forced to use regex matching
+- GDB logger was broken on the second process
 
 # v0.7.0
 ## Added

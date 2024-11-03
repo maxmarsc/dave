@@ -26,6 +26,14 @@ except KeyError:
 
 
 class DaveProcess(metaclass=SingletonMeta):
+    """
+    A singleton class that handles the management of the client (gui) process of dave
+
+    Since you have no garranties on the python interpreter used by the debugger,
+    dave needs to start another completely independent process, using a dedicated
+    venv.
+    """
+
     class Message(Enum):
         STOP = "stop"
 
@@ -47,9 +55,24 @@ class DaveProcess(metaclass=SingletonMeta):
         self.__process = None
 
     def start(self, use_external_env=True):
+        """
+        Starts the dave GUI process.
+
+        If the process was terminated calling this method will recreate it from
+        scratch
+
+        Parameters
+        ----------
+        use_external_env : bool, optional
+            Use the dedicated dave venv to start the new process, by default True
+
+        Raises
+        ------
+        RuntimeError
+            If the GUI process is already running
+        """
         if self.__process is not None:
-            exit_code = self.__process.poll()
-            if exit_code is None:
+            if self.is_alive():
                 raise RuntimeError("Dave process was already started")
             else:
                 # Process already ran and exit, needs to reset the object
@@ -87,6 +110,12 @@ class DaveProcess(metaclass=SingletonMeta):
         self.__process.wait()
 
     def dbgr_update_callback(self):
+        """
+        Check every container tracked by dave :
+        - if a container is in scope, this will read the samples from the debugger
+        memory and sends and update
+        - if a container is not in scope, this will tell it to the gui
+        """
         # First check for delete messages
         self.__handle_incoming_messages()
 

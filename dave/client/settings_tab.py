@@ -233,6 +233,10 @@ class ContainerSettingsFrame(ctk.CTkFrame):
 
 # ===========================  ChannelSettingsFrame  ===========================
 class ChannelSettingsFrame(ctk.CTkFrame):
+    """
+    Contains all the channels settings of a container
+    """
+
     def __init__(self, master: tk.Misc, model: ContainerModel):
         super().__init__(master, fg_color="transparent")
         self.__model = model

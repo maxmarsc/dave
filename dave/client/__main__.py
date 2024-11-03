@@ -4,7 +4,7 @@ from multiprocessing.connection import Connection
 
 
 """
-This runfile expect a pipe file descripto to communicate with the debugger server
+This runfile expect a pipe file descriptor to communicate with the debugger server
 
 It will starts the GUI of dave, and automatically shutdown if the connection is closed
 """

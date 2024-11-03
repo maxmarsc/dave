@@ -160,6 +160,10 @@ the plots. The save button saves the figures, and not the data.
 The settings tab contains global settings and settings for each container currently
 in scope.
 
+In several places you'll be able to edit values, either from a text entry or a 
+drop-down list. When editing through a text entry, your input will only be validated
+and used after pressing the `<Enter>` key.
+
 #### Global settings
 ![Global settings](.pictures/settings_global.png)
 

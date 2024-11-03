@@ -18,6 +18,13 @@ from .global_settings import GlobalSettings
 
 # ===========================  AudioViewsTab  ==================================
 class AudioViewsTab:
+    """
+    The Views tab of the dave GUI
+
+    This will contain audio views for each containers, concat/freeze switches,
+    the matplotlib toolbar...
+    """
+
     def __init__(
         self,
         master,
@@ -257,7 +264,7 @@ class ContainersActionsGridFrame(ctk.CTkFrame):
 # =========================  ContainerActionsFrame  ============================
 class ContainerActionsFrame(ctk.CTkFrame):
     """
-    Holds the action buttons (Freeze, Concatenate ...) of a single container
+    Holds the action switches (Freeze, Concatenate ...) of a single container
     """
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:

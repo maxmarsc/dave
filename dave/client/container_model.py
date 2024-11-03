@@ -109,25 +109,26 @@ class ContainerModel:
 
     @property
     def channels(self) -> int:
-        return self.__channels
+        """
+        Channels property, not editable
 
-    @channels.setter
-    def channels(self, value: int):
-        assert not self.is_channel_layout_fixed()
-        if self.channels != value:
-            self.__channels = value
-            self.__update_pending = True
+        To validate and update a new samplerate use the validate_and_update_channels method
+
+        Returns the number of channels for this container
+        """
+        return self.__channels
 
     @property
     def samplerate(self) -> Union[None, int]:
-        return self.__sr
+        """
+        Samplerate property, not editable
 
-    @samplerate.setter
-    def samplerate(self, value: Union[int, None]):
-        assert value is None or value >= 0
-        if self.__sr != value:
-            self.__sr = value
-            self.__update_pending = True
+        To validate and update a new samplerate use the validate_and_update_samplerate method
+
+        Returns None if no specific samplerate has been forced on this container
+        (ie: use the default), the specified samplerate otherwise
+        """
+        return self.__sr
 
     @property
     def interleaved(self) -> bool:
@@ -279,7 +280,8 @@ class ContainerModel:
             and self.__data.shape[1] % value == 0
         ):
             if value != self.channels:
-                self.channels = value
+                self.__channels = value
+                self.__update_pending = True
             return True
         return False
 
@@ -291,7 +293,8 @@ class ContainerModel:
                 return False
         if value > 0:
             if value != self.samplerate:
-                self.samplerate = value
+                self.__sr = value
+                self.__update_pending = True
             return True
         return False
 

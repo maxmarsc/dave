@@ -9,6 +9,9 @@ from dave.common.raw_container import RawContainer
 
 
 def to_dtype(sample_type: SampleType) -> np.dtype:
+    """
+    Convert a SampleType enum to the equivalent numpy dtype
+    """
     return {
         SampleType.FLOAT: np.float32,
         SampleType.DOUBLE: np.float64,
@@ -18,6 +21,9 @@ def to_dtype(sample_type: SampleType) -> np.dtype:
 
 
 def to_sampletype(dtype: np.dtype) -> SampleType:
+    """
+    Convert a numpy dtype to the equivalent SampleType enum
+    """
     return {
         np.float32: SampleType.FLOAT,
         np.float64: SampleType.DOUBLE,
@@ -63,12 +69,15 @@ def __convert_to_cpx(data: np.ndarray) -> np.ndarray:
 
 
 def convert_data_to_layout(data: np.ndarray, layout: DataLayout) -> np.ndarray:
-    if layout in (DataLayout.REAL_1D, DataLayout.REAL_2D):
+    """
+    Perform real <-> complex conversion if needed to fit the given data layout
+    """
+    if layout.is_real:
         return __convert_to_real(data)
     else:
         return __convert_to_cpx(data)
 
 
-def raw_to_numpy(raw_container: RawContainer):
+def raw_to_numpy(raw_container: RawContainer) -> np.ndarray:
     array = np.frombuffer(raw_container.data, dtype=to_dtype(raw_container.sample_type))
     return array.reshape(raw_container.original_shape)

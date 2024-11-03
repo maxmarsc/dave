@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Union
 import tkinter as tk
 
+"""
+This file contains the different types of settings available for each audio view
+"""
+
 
 class Setting(ABC):
     def __init__(self, name: str):

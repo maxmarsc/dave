@@ -12,6 +12,13 @@ from .debuggers.value import AbstractValue
 
 
 class Container(ABC):
+    """
+    The base class for every audio container class dave can support.
+
+    When implementing support for a new type of container, you need to derive from
+    either Container1D or Container2D
+    """
+
     __count = -1
 
     @staticmethod
@@ -30,6 +37,9 @@ class Container(ABC):
 
     @property
     def name(self) -> str:
+        """
+        The variable name of the audio container in the debugged process
+        """
         return self._name
 
     @property
@@ -60,9 +70,6 @@ class Container(ABC):
     def float_type(self) -> SampleType:
         return self.__type
 
-    # @property
-    # def dtype(self) -> np.dtype:
-    #     return self.__type.numpy_type()
     @property
     def byte_size(self) -> int:
         return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
@@ -79,6 +86,10 @@ class Container(ABC):
     @staticmethod
     @abstractmethod
     def dimensions_fixed() -> bool:
+        """
+        Should return true if the container class already indicates the number of
+        channels as part of its design
+        """
         pass
 
     @abstractmethod
