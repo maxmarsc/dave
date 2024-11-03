@@ -5,6 +5,8 @@ from .commands import (
     DeleteCommand,
     FreezeCommand,
     ConcatCommand,
+    InspectCommand,
+    HelpCommand,
 )
 import dave.common.server_type as st
 

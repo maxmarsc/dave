@@ -74,7 +74,22 @@ class FrameCheckerThread(metaclass=SingletonMeta):
 
 
 class GdbCommand(gdb.Command):
-    """Custom GDB 'dave' command for advanced debugging tasks."""
+    # fmt: off
+    """
+DAVE subcommands to communicate with the dave gui
+
+To have more information check the user guide : https://github.com/maxmarsc/dave/blob/main/USER_GUIDE.md
+
+The following subcommands are supported:
+
+    concat  -- Usage: dave delete VARIABLE|CONTAINER_ID
+    delete  -- Usage: dave delete VARIABLE|CONTAINER_ID
+    freeze  -- Usage: dave delete VARIABLE|CONTAINER_ID
+    help    -- Usage: dave help
+    inspect -- Usage: dave inspect VARIABLE
+    show    -- Usage: dave show VARIABLE [DIM1[,DIM2]]
+    """
+    # fmt: on
 
     def __init__(self):
         super(GdbCommand, self).__init__("dave", gdb.COMMAND_USER, gdb.COMPLETE_SYMBOL)
@@ -98,11 +113,8 @@ class GdbCommand(gdb.Command):
             return
 
         subcommand = args[0]
-        # self.msg_queue.put(args[1])
-        if subcommand == "p":
-            self.print_variable(args[1:])
-        elif subcommand == "p2":
-            self.print_attribute(args[1:])
+        if subcommand == "inspect":
+            self.inspect(args[1:])
         elif subcommand == "show":
             self.show(args[1:])
         elif subcommand == "delete":
@@ -111,6 +123,8 @@ class GdbCommand(gdb.Command):
             self.freeze_container(args[1:])
         elif subcommand == "concat":
             self.concat_container(args[1:])
+        elif subcommand == "help":
+            print(GdbCommand.__doc__)
         else:
             Logger().error(f"Unknown subcommand '{subcommand}'")
 
@@ -165,30 +179,9 @@ class GdbCommand(gdb.Command):
         if not DaveProcess().concat_container(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
-    def print_attribute(self, args):
-        if len(args) != 2:
-            raise gdb.GdbError("Usage: dave p2 <variable> <attribute>")
-
-        var_name = args[0]
-        attr_name = args[1].split(".")
-        try:
-            attr = gdb.parse_and_eval(var_name)
-            for name in attr_name:
-                attr = attr[name]
-            # attr = gdb.parse_and_eval(var_name)[attr_name]
-            print(f"Type: {attr.type}")
-            print(
-                f"(real) Type: {gdb.types.get_basic_type(attr.type).strip_typedefs()}"
-            )
-            print(f"Address: {attr.address}")
-            print(f"Value: {attr}")
-            print(f"(hex) Value: {hex(attr)}")
-        except (gdb.error, RuntimeError) as e:
-            print(f"Error accessing variable '{var_name}': {str(e)}")
-
-    def print_variable(self, args):
+    def inspect(self, args):
         if len(args) != 1:
-            raise gdb.GdbError("Usage: dave p <variable>")
+            raise gdb.GdbError("Usage: dave inspect VARIABLE")
 
         var_name = args[0]
         try:
@@ -196,13 +189,6 @@ class GdbCommand(gdb.Command):
             if var.is_optimized_out:
                 print(f"Variable '{var_name}' is optimized out.")
             else:
-                print(f"Type: {var.type}")
-                print(f"(real) Type: {gdb.types.get_basic_type(var.type)}")
-                print(f"Value: {var}")
-                # print(f"(hex) Value: {hex(var)}")
-                if var.address is not None:
-                    print(f"Address: {var.address}")
-                else:
-                    print(f"Address: <not available>")
+                print("Type: {}".format(gdb.types.get_basic_type(var.type).name))
         except (gdb.error, RuntimeError) as e:
             print(f"Error accessing variable '{var_name}': {str(e)}")

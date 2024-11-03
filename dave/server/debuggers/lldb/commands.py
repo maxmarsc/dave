@@ -112,7 +112,7 @@ class ShowCommand:
         args = shlex.split(command)
 
         if len(args) < 1 or len(args) > 2:
-            result.SetError("Usage: dave show <variable> [dim1[,dim2]]")
+            result.SetError("Usage: dave show VARIABLE [DIM1[,DIM2]]")
             return
 
         varname = args[0]
@@ -153,6 +153,82 @@ class ShowCommand:
 
     def get_repeat_command(self, command):
         return ""
+
+
+class InspectCommand:
+    def __init__(self, debugger: lldb.SBDebugger, internal_dict):
+        pass
+
+    def __call__(
+        self,
+        debugger: lldb.SBDebugger,
+        command: str,
+        exe_ctx: lldb.SBExecutionContext,
+        result: lldb.SBCommandReturnObject,
+    ):
+        args = shlex.split(command)
+
+        if len(args) < 1 or len(args) > 2:
+            result.SetError("Usage: dave inspect VARIABLE")
+            return
+
+        varname = args[0]
+        dims = [int(val) for val in args[1].split(",")] if len(args) > 1 else []
+
+        # Check for running process
+        if not exe_ctx.GetProcess().IsValid():
+            result.SetError("No processus detected")
+            return
+
+        # Get the frame
+        frame = exe_ctx.GetFrame()  # type: lldb.SBFrame
+        if not frame:
+            result.SetError("No valid frame to evaluate variable.")
+            return
+
+        var = LldbValue.find_variable_robust(varname, frame)
+        if not var.IsValid():
+            result.SetError(f"Variable '{varname}' not found.")
+            return
+
+        lldb_value = LldbValue(var, varname)
+        print(lldb_value.typename())
+
+    def get_short_help(self):
+        return "Usage: dave inspect VARIABLE"
+        # this call should return the short help text for this command[1]
+
+
+class HelpCommand:
+    def __init__(self, debugger: lldb.SBDebugger, internal_dict):
+        pass
+
+    def __call__(
+        self,
+        debugger: lldb.SBDebugger,
+        command: str,
+        exe_ctx: lldb.SBExecutionContext,
+        result: lldb.SBCommandReturnObject,
+    ):
+
+        # Get the command interpreter
+        interpreter = debugger.GetCommandInterpreter()
+
+        # Create an output object to capture the result
+        result = lldb.SBCommandReturnObject()
+
+        # Execute the command
+        interpreter.HandleCommand("help dave", result)
+
+        # Print the command output
+        if result.Succeeded():
+            print(result.GetOutput())
+        else:
+            print("Command failed:", result.GetError())
+
+    def get_short_help(self):
+        return "Usage: dave help"
+        # this call should return the short help text for this command[1]
 
 
 class DeleteCommand:

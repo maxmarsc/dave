@@ -38,6 +38,8 @@ try:
         FreezeCommand,
         ConcatCommand,
         StopHook,
+        InspectCommand,
+        HelpCommand,
         LLDBEventHandler,
     )
     from dave.common.logger import Logger
@@ -45,7 +47,7 @@ try:
     def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
         # Register dave commands
         debugger.HandleCommand(
-            'command container add -h "A container for my dave commands" dave'
+            'command container add -h "DAVE subcommands to communicate with the dave gui\nTo have more information check the user guide : https://github.com/maxmarsc/dave/blob/main/USER_GUIDE.md" dave'
         )
         # debugger.HandleCommand(f"command script add -f {__name__}.ShowCommand dave show")
         debugger.HandleCommand(
@@ -59,6 +61,12 @@ try:
         )
         debugger.HandleCommand(
             f"command script add -c {__name__}.ConcatCommand dave concat"
+        )
+        debugger.HandleCommand(
+            f"command script add -c {__name__}.InspectCommand dave inspect"
+        )
+        debugger.HandleCommand(
+            f"command script add -c {__name__}.HelpCommand dave help"
         )
 
         # Register stop event hook

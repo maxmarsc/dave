@@ -111,6 +111,24 @@ name. In case of naming conflicts, this first container added with this name wil
 be deleted.
 
 
+### `dave inspect`
+The usage is :
+```
+dave inspect VARIABLE
+```
+
+This is useful when you want to add support for a new type of audio container, it
+will print out the type as deduced by your debugger.
+
+It should resolve automatically typedefs and alias. If not please raise an issue.
+
+### `dave help`
+The usage is :
+```
+dave help
+```
+Display a short help message which redirects to this page
+
 ## Data update settings
 This settings affect how an update of containers's data affect the rendering.
 
@@ -317,10 +335,11 @@ implementation are supported.
 You can add support for custom containers using a bit of python scripting.
 
 To proceed you need to:
-1. Create a `~/.dave/custom_containers` folder. It should contains all your custom code
-2. Add a new `Container` python subclass for each container you want to support (see below)
-3. Register the container class using `ContainerFactory().register()`
-4. Import your container in the `~/.dave/custom_containers/__init__.py` file 
+1. Use the `dave inspect` debugger command to identify the name of the types you want to support
+2. Create a `~/.dave/custom_containers` folder. It should contains all your custom code
+3. Add a new `Container` python subclass for each container you want to support (see below)
+4. Register the container class using `ContainerFactory().register()`
+5. Import your container in the `~/.dave/custom_containers/__init__.py` file 
 
 #### Examples
 Some examples are provided :
@@ -345,7 +364,7 @@ When inheriting from `Container2D` you need to :
 - Implement the `shape` method, which indicates the shape of the container
 
 When inheriting from either you need to :
-- Implement the `typename_matcher` method to return a regex to match your typename
+- Implement the `typename_matcher` method to return a regex to match your typename. Make sure to use the `dave inspect` command to check how your type is parsed by the debugger.
 - Implement the `read_from_debugger` method to return a `bytearray` containing
 all the samples of your container.
 
