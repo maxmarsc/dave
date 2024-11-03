@@ -164,10 +164,10 @@ Some settings will require you to enter manually the value you'd like for the se
 On `1.` are the audio views of your audio data. One plot for each channel, for
 each container currently in scope.
 
-On `2.` are the actions buttons :
- - `F` enable/disable the *Freeze* setting of the container
- - `C` enable/disable the *Concatenate* setting of the container
- - `S` "Save to disc" : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
+On `2.` are the actions switches/buttons :
+ - `Freeze` enable/disable the *Freeze* setting of the container
+ - `Concat` enable/disable the *Concatenate* setting of the container
+ - `Save` : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
 
 On `3.` are the matplotlib controls. These allow you to navigate and zoom within
 the plots. The save button saves the figures, and not the data.
