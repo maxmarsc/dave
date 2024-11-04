@@ -13,7 +13,7 @@ should rather use the install script as show in the "Project Setup" section.
     long_description = pypi_header + fh.read()
     long_description.replace(
         'src=".pictures/phase.png"',
-        f'src="https://github.com/maxmarsc/dave/raw/refs/tags/v{VERSION}/.pictures/phase.png"',
+        f"unavailable picture",
     )
 
 setup(
@@ -23,6 +23,7 @@ setup(
     python_requires=">3.10.1",
     author_email="maxime.coutant@protonmail.com",
     url="https://github.com/maxmarsc/dave",
+    description="base module for the DAVE debugger extension",
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=["matplotlib==3.9.2", "customtkinter==5.2.2"],

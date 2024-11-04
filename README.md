@@ -9,7 +9,7 @@ it with nasty macros or fancy libs, just start your debugger !
     <b> The DAVE GUI </b>
 </p>
 <p align="center">
-    <img src=".pictures/phase.png">
+    <img src=".pictures/gui_demo.png">
 </p>
 
 Currently supported audio containers (both in `float` and `double`) are :
