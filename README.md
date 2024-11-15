@@ -34,8 +34,20 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayBuffer`
 
 
-Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
-implementation are supported.
+| Operating System  | Status       |
+|-------------------|--------------|
+| Linux             | ✅           |
+| MacOS             | ✅ (python 3.10/3.11 only)        |
+| Windows           | ❌           |
+
+| Debugger platform | GDB          | LLDB         |
+|-------------------|--------------|--------------|
+| CLI               | ✅           | ✅           |
+| VSCode            | ✅  (frame context broken]         | ❓           |
+| MacOS       | ✅ (python 3.10/3.11 only)        |
+| Windows     | ❌           |
+<!-- Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
+implementation are supported. -->
 
 ---
 
