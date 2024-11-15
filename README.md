@@ -49,6 +49,9 @@ __2D (multichannel) containers__:
 | XCode             | ❓ need testing             | ❓ need testing |
 | Visual Studio      | ❌           | ❌           |
 
+*update on frame broken* means DAVE is not able to react to frame change happening
+through the IDE ui
+
 ---
 
 To get started first follow the `Project Setup` guide below, then you can read 
