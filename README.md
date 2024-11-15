@@ -45,9 +45,9 @@ __2D (multichannel) containers__:
 |-------------------|--------------|--------------|
 | CLI               | ✅           | ✅           |
 | VSCode            | ✅ (update on frame broken) | ❓ need testing  |
-| CLion             | ✅ (update on frame broken) | ✅ ✅ (update on frame broken) |
+| CLion             | ✅ (update on frame broken) | ✅ (update on frame broken) |
 | XCode             | ❓ need testing             | ❓ need testing |
-| Visual Studo      | ❌           | ❌           |
+| Visual Studio      | ❌           | ❌           |
 
 ---
 
