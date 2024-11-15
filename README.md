@@ -34,6 +34,7 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayBuffer`
 
 
+### Current support
 | Operating System  | Status       |
 |-------------------|--------------|
 | Linux             | ✅           |
@@ -43,11 +44,10 @@ __2D (multichannel) containers__:
 | Debugger platform | GDB          | LLDB         |
 |-------------------|--------------|--------------|
 | CLI               | ✅           | ✅           |
-| VSCode            | ✅  (frame context broken]         | ❓           |
-| MacOS       | ✅ (python 3.10/3.11 only)        |
-| Windows     | ❌           |
-<!-- Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
-implementation are supported. -->
+| VSCode            | ✅ (update on frame broken) | ❓ need testing  |
+| CLion             | ✅ (update on frame broken) | ✅ ✅ (update on frame broken) |
+| XCode             | ❓ need testing             | ❓ need testing |
+| Visual Studo      | ❌           | ❌           |
 
 ---
 
