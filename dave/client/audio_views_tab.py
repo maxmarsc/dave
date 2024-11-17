@@ -73,7 +73,7 @@ class AudioViewsTab:
         self.__containers_actions_buttons_frame.pack(
             side=tk.RIGHT,
             fill="y",
-            pady=(self.__top_margin_px, 0),
+            pady=(0, self.__bottom_margin_px),
         )
         self.__figures_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         self.__master.bind("<Configure>", self.on_resize)
@@ -100,7 +100,7 @@ class AudioViewsTab:
 
     def on_resize(self, event):
         # Compute the minimum required height for subplots
-        min_height_per_channel = 200  # example height in pixels
+        min_height_per_channel = 200  # height in pixels
         total_channels = sum(
             model.channels
             for model in self.__container_models.values()
@@ -270,7 +270,10 @@ class ContainerActionsFrame(ctk.CTkFrame):
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
         # self.__master = master
         super().__init__(
-            master, fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"]
+            master,
+            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
+            # fg_color="orange",
+            height=200,
         )
         self.__container = container
         self.__freeze_var = tk.BooleanVar(value=self.__container.frozen)
@@ -279,9 +282,20 @@ class ContainerActionsFrame(ctk.CTkFrame):
         self.__concat_var.trace_add("write", self.concat_button_clicked)
         self.__font = ctk.CTkFont(size=15)
 
-        # Create label
+        # Create labels
         self.__name_label = ctk.CTkLabel(
             self, text=self.__container.variable_name, font=self.__font
+        )
+        self.__channels_label = ctk.CTkLabel(
+            self, text=f"channels: {self.__container.channels}", height=20
+        )
+        self.__samples_label = ctk.CTkLabel(
+            self, text=f"samples: {self.__container.samples}", height=20
+        )
+        self.__values_label = ctk.CTkLabel(
+            self,
+            text=f"NaN: {self.__container.nan} Inf: {self.__container.inf}",
+            height=20,
         )
 
         # Create buttons
@@ -315,15 +329,30 @@ class ContainerActionsFrame(ctk.CTkFrame):
         Tooltip(self.__name_label, text=self.__container.variable_name)
 
         # Packing
-        self.__name_label.grid(row=0, column=0, padx=(5, 5), pady=(5, 5))
-        self.__freeze_button.grid(row=1, column=0, padx=(5, 5), pady=(5, 5))
-        self.__concat_button.grid(row=2, column=0, padx=(5, 5), pady=(5, 5))
-        self.__save_button.grid(row=3, column=0, padx=(5, 5), pady=(5, 5))
+        self.__name_label.grid(row=0, column=0, padx=(5, 5), pady=(5, 2))
+        self.__channels_label.grid(row=1, column=0, padx=(5, 5), sticky="W")
+        self.__samples_label.grid(row=2, column=0, padx=(5, 5), sticky="W")
+        self.__values_label.grid(row=3, column=0, padx=(5, 5), sticky="W")
+        self.__freeze_button.grid(row=4, column=0, padx=(5, 5))
+        self.__concat_button.grid(row=5, column=0, padx=(5, 5))
+        self.__save_button.grid(row=6, column=0, padx=(5, 5), pady=(5, 5))
         self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
+        self.rowconfigure(4, weight=3)
+        self.rowconfigure(5, weight=3)
+        self.rowconfigure(6, weight=3)
 
     def update_widgets(self):
         self.__freeze_var.set(self.__container.frozen)
         self.__concat_var.set(self.__container.concat)
+        self.__channels_label.configure(text=f"channels: {self.__container.channels}")
+        self.__samples_label.configure(text=f"samples: {self.__container.samples}")
+        self.__values_label.configure(
+            text=f"NaN: {self.__container.nan} Inf: {self.__container.inf}"
+        )
 
     def freeze_button_clicked(self, *_):
         self.__container.frozen = self.__freeze_var.get()

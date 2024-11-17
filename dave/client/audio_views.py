@@ -126,7 +126,7 @@ class WaveformView(AudioView):
         # else:
         #     raise RuntimeError(f"{setting_name} is not a valid WaveformView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         # # axes.set_yscale(self.__y_scale.value)
         # if self.__y_scale.value == "log":
         #     eps = 1e-5
@@ -137,15 +137,39 @@ class WaveformView(AudioView):
 
         if color is None:
             color = DEFAULT_COLOR
-        axes.plot(data, color)
-        max_y = np.max(np.abs(data)) * 1.2
-        if max_y != 0.0:
-            try:
-                axes.set_ylim(-max_y, max_y)
-            except ValueError:
-                # Can fail with NaN/inf
-                pass
+        assert len(data.shape) == 1
+        full_time_vector = np.arange(data.shape[0]) / samplerate  # type: np.ndarray
+        nans = np.isnan(data)
+        infs = np.isinf(data)
+        finite_mask = ~nans & ~infs
+        nans_time_vector = full_time_vector[nans]
+        infs_time_vector = full_time_vector[infs]
+
+        axes.plot(full_time_vector[finite_mask], data[finite_mask], color)
+        max_y = np.max(np.abs(data[finite_mask])) * 1.2
+
+        if nans_time_vector.size > 0:
+            axes.vlines(
+                nans_time_vector,
+                -max_y,
+                max_y,
+                colors="red",
+                linestyles="dotted",
+                label="NaN",
+            )
+        if infs_time_vector.size > 0:
+            axes.vlines(
+                infs_time_vector,
+                -max_y,
+                max_y,
+                colors="green",
+                linestyles="dotted",
+                label="Inf",
+            )
+
+        axes.set_ylim(-max_y, max_y)
         axes.grid(visible=True)
+        axes.legend()
 
     def get_settings(self) -> List[Setting]:
         return []
@@ -173,13 +197,43 @@ class CurveView(AudioView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid CurveView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
-        axes.plot(data, color)
+
+        full_time_vector = np.arange(data.shape[0]) / samplerate  # type: np.ndarray
+        nans = np.isnan(data)
+        infs = np.isinf(data)
+        finite_mask = ~nans & ~infs
+        nans_time_vector = full_time_vector[nans]
+        infs_time_vector = full_time_vector[infs]
+
+        axes.plot(full_time_vector[finite_mask], data[finite_mask], color)
+        ylim = axes.get_ylim()
+
+        if nans_time_vector.size > 0:
+            axes.vlines(
+                nans_time_vector,
+                ylim[0],
+                ylim[1],
+                colors="red",
+                linestyles="dotted",
+                label="NaN",
+            )
+        if infs_time_vector.size > 0:
+            axes.vlines(
+                infs_time_vector,
+                ylim[0],
+                ylim[1],
+                colors="green",
+                linestyles="dotted",
+                label="Inf",
+            )
+
         axes.set_xscale(self.__x_scale.value)
         axes.set_yscale(self.__y_scale.value)
         axes.grid(visible=True)
+        axes.legend()
 
     def get_settings(self) -> List[Setting]:
         return [self.__x_scale, self.__y_scale]
@@ -215,10 +269,6 @@ class SpectrogramView(AudioView):
         return (self.__nfft, self.__overlap, self.__window)
 
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, _=None):
-        # import traceback
-        # samplerate = kwargs["samplerate"]
-
-        # traceback.print_stack(limit=15)
         overlap = int(self.__overlap.value * self.__nfft.value)
         with catch_warnings(record=True) as w:
             axes.specgram(data, NFFT=self.__nfft.value, Fs=samplerate, noverlap=overlap)
@@ -254,6 +304,17 @@ class PSDView(AudioView):
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
+        if any(np.isnan(data)) or any(np.isinf(data)):
+            axes.text(
+                0.5,
+                0.5,
+                "Non finite values, cannot compute PSD",
+                fontsize=14,
+                ha="center",
+                va="center",
+            )
+            return
+
         overlap = int(self.__overlap.value * self.__nfft.value)
         with catch_warnings(record=True) as w:
             axes.psd(
@@ -282,12 +343,44 @@ class MagnitudeView(AudioView):
     def get_settings(self) -> List[Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
-        axes.plot(np.abs(data), color)
+        data = np.abs(data)
+
+        full_x_vector = np.arange(data.shape[0])  # type: np.ndarray
+        nans = np.isnan(data)
+        infs = np.isinf(data)
+        finite_mask = ~nans & ~infs
+        nans_x_vector = full_x_vector[nans]
+        infs_x_vector = full_x_vector[infs]
+
+        axes.plot(
+            full_x_vector[finite_mask], data[finite_mask], color, label="magnitude"
+        )
+        ylim = axes.get_ylim()
+
+        if nans_x_vector.size > 0:
+            axes.vlines(
+                nans_x_vector,
+                ylim[0],
+                ylim[1],
+                colors="red",
+                linestyles="dotted",
+                label="NaN",
+            )
+        if infs_x_vector.size > 0:
+            axes.vlines(
+                infs_x_vector,
+                ylim[0],
+                ylim[1],
+                colors="green",
+                linestyles="dotted",
+                label="Inf",
+            )
+
         axes.grid(visible=True)
-        axes.set_ylabel("Magnitude")
+        axes.legend()
 
 
 # ===========================================================================
@@ -305,12 +398,44 @@ class PhaseView(AudioView):
     def get_settings(self) -> List[Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray, _, color=None):
+    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
-        axes.plot(np.angle(data), color)
+        data = np.angle(data)
+
+        x_vector = np.arange(data.shape[0])  # type: np.ndarray
+        nans = np.isnan(data)
+        infs = np.isinf(data)
+        print(f"nans {data[nans]}")
+        print(f"infs {data[infs]}")
+        finite_mask = ~nans & ~infs
+        nans_x_vector = x_vector[nans]
+        infs_x_vector = x_vector[infs]
+
+        axes.plot(x_vector[finite_mask], data[finite_mask], color, label="phase")
+        ylim = axes.get_ylim()
+
+        if nans_x_vector.size > 0:
+            axes.vlines(
+                nans_x_vector,
+                ylim[0],
+                ylim[1],
+                colors="red",
+                linestyles="dotted",
+                label="NaN",
+            )
+        if infs_x_vector.size > 0:
+            axes.vlines(
+                infs_x_vector,
+                ylim[0],
+                ylim[1],
+                colors="green",
+                linestyles="dotted",
+                label="Inf",
+            )
+
         axes.grid(visible=True)
-        axes.set_ylabel("Phase")
+        axes.legend()
 
 
 # ===========================================================================

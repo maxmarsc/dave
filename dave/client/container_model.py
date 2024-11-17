@@ -22,6 +22,7 @@ class ContainerModel:
     def __init__(self, raw: RawContainer):
         self.__raw = raw
         self.__data = raw_to_numpy(raw)
+        self.__count_special_values()
         self.__sr = None
         self.__frozen_data = None
         self.__concat = False
@@ -119,6 +120,13 @@ class ContainerModel:
         return self.__channels
 
     @property
+    def samples(self) -> int:
+        """
+        Num of samples per channel, not editable
+        """
+        return int(self.__data.size / self.__channels)
+
+    @property
     def samplerate(self) -> Union[None, int]:
         """
         Samplerate property, not editable
@@ -153,6 +161,14 @@ class ContainerModel:
         if self.mid_side != value:
             self.__mid_side = value
             self.__update_pending = True
+
+    @property
+    def nan(self):
+        return self.__nan
+
+    @property
+    def inf(self):
+        return self.__inf
 
     def is_layout_2D(self):
         if self.__data_layout in (DataLayout.REAL_2D, DataLayout.CPX_2D):
@@ -256,7 +272,7 @@ class ContainerModel:
         it accordingly
         """
         self.__raw.update(update)
-        # new_data = self.__data_layout.convert_to_layout(new_data)
+
         new_data = convert_data_to_layout(raw_to_numpy(self.__raw), self.__data_layout)
         if self.concat:
             self.__data = np.concatenate((self.__data, new_data), -1)
@@ -264,6 +280,15 @@ class ContainerModel:
             self.__data = new_data
         self.__in_scope = True
         self.__update_pending = True
+
+    def __count_special_values(self):
+        """
+        Checks the container data for special values : NaN, +inf, -inf
+
+        Will update self.__nan and self.__inf
+        """
+        self.__nan = int(np.sum(np.isnan(self.__data)))
+        self.__inf = int(np.sum(np.isinf(self.__data)))
 
     def mark_as_out_of_scope(self):
         self.__in_scope = False
