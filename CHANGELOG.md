@@ -1,6 +1,9 @@
 # `main`
 ## Added
+- NaN and Inf values are detected and indicated on the plots
+- NaN, Inf, num samples and num channels are indicated in the action frame
 ## Changed
+- Detect Tcl >= 9.0 in installation script and prevent from installing
 ## Fixed
 
 # v0.8.0
