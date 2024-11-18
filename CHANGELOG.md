@@ -5,6 +5,7 @@
 ## Changed
 - Detect Tcl >= 9.0 in installation script and prevent from installing
 ## Fixed
+- The installation script refused to install when having a custom_containers leftover
 
 # v0.8.0
 ## Added

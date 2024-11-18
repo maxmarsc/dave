@@ -132,8 +132,15 @@ echo ""
 # Create dave dir
 DAVE_DIR="$HOME"/.dave
 if [[ -d "$DAVE_DIR" ]]; then
-    echo "$DAVE_DIR folder already exists. Aborting"
-    exit 1
+    # count items in the ~/.dave folder
+    ITEM_COUNT=$(find "$DAVE_DIR" -mindepth 1 -maxdepth 1 | wc -l)
+
+    # if the only thing left is the custom_containers folder it's ok
+    if [[ $ITEM_COUNT -ne 1 || ! -d "$DAVE_DIR/custom_containers" ]];then
+        echo "Previous installation of dave found in $DAVE_DIR. Aborting"
+        echo "You're only allowed to keep $DAVE_DIR/custom_containers between installations"
+        exit 1
+    fi
 fi
 
 mkdir -p "$DAVE_DIR"
