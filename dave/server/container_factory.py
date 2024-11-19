@@ -17,6 +17,9 @@ class ContainerFactory(metaclass=SingletonMeta):
         self.__1D_containers: Set[Container1D] = set()
         self.__2D_containers: Set[Container2D] = set()
 
+    def get_containers_cls_set(self) -> Set[Container]:
+        return self.__1D_containers | self.__2D_containers
+
     def register(self, cls):
         """
         Every new container class should register itself to be available

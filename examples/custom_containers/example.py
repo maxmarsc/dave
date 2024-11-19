@@ -71,7 +71,7 @@ class DaveCustomContainerPtr(Container1D):
 
 
 # Required for 1D container
-ContainerFactory().register(DaveCustomContainerPtr)
+DaveCustomContainerPtr.register()
 
 
 ################################################################################
@@ -133,7 +133,7 @@ class DaveCustomContainerPtrPtr(Container2D):
 
 
 # Required for all containers
-ContainerFactory().register(DaveCustomContainerPtrPtr)
+DaveCustomContainerPtrPtr.register()
 
 
 ################################################################################
@@ -193,7 +193,7 @@ class DaveCustomInterleavedContainerVec(Container2D):
 
 
 # Required for all containers
-ContainerFactory().register(DaveCustomInterleavedContainerVec)
+DaveCustomInterleavedContainerVec.register()
 
 
 ################################################################################
@@ -255,4 +255,4 @@ class DaveCustomContainerVecRef(Container2D):
 
 
 # Required for all containers
-ContainerFactory().register(DaveCustomContainerVecRef)
+DaveCustomContainerVecRef.register()

@@ -64,6 +64,10 @@ class CArrayAny2D(Container2D):
             [container.read_from_debugger() for container in self.__nested_containers]
         )
 
+    @staticmethod
+    def formatter_compatible():
+        return False
+
 
 class CarrayCarray2D(Container2D):
     """
@@ -99,6 +103,10 @@ class CarrayCarray2D(Container2D):
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
         return self._value.readmemory(self._value.address(), self.byte_size)
+
+    @staticmethod
+    def formatter_compatible():
+        return False
 
 
 class Pointer2D(Container2D):
@@ -153,6 +161,10 @@ class Pointer2D(Container2D):
         return b"".join(
             [container.read_from_debugger() for container in self.__nested_containers]
         )
+
+    @staticmethod
+    def formatter_compatible():
+        return False
 
 
 class StdArray2D(Container2D):
@@ -218,6 +230,10 @@ class StdArray2D(Container2D):
             [container.read_from_debugger() for container in self.__nested_containers]
         )
 
+    @staticmethod
+    def formatter_compatible():
+        return False
+
 
 class StdVector2D(Container2D):
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
@@ -274,6 +290,10 @@ class StdVector2D(Container2D):
             [container.read_from_debugger() for container in self.__nested_containers]
         )
 
+    @staticmethod
+    def formatter_compatible():
+        return False
+
 
 class StdSpan2D(Container2D):
     __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*(.*)\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
@@ -325,10 +345,14 @@ class StdSpan2D(Container2D):
             [container.read_from_debugger() for container in self.__nested_containers]
         )
 
+    @staticmethod
+    def formatter_compatible():
+        return False
 
-ContainerFactory().register(CArrayAny2D)
-ContainerFactory().register(CarrayCarray2D)
-ContainerFactory().register(Pointer2D)
-ContainerFactory().register(StdArray2D)
-ContainerFactory().register(StdVector2D)
-ContainerFactory().register(StdSpan2D)
+
+CArrayAny2D.register()
+CarrayCarray2D.register()
+Pointer2D.register()
+StdArray2D.register()
+StdVector2D.register()
+StdSpan2D.register()

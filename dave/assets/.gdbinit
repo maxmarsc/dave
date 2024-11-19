@@ -26,7 +26,7 @@ if DAVE_VENV_PATH.is_file():
     # Delete duplicates and update the search list with dave venv
     sys.path = list(dict.fromkeys(sys.path + paths))
 try:
-    import dave.server.debuggers.gdb
+    import dave.server.debuggers.gdb_
 except ModuleNotFoundError as e:
     import os
     import logging

@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import re
 from typing import Any, Callable, List, Tuple, Type, Union
+from enum import Enum
+import struct
+import cmath
 
 from dave.common.data_layout import DataLayout
 from dave.common.sample_type import SampleType
@@ -51,6 +54,121 @@ class Container(ABC):
     @property
     def id(self) -> int:
         return self.__id
+
+    def compute_summary(self) -> str:
+        shape = self.shape()
+        channels, samples = shape if not self.__interleaved else shape[::-1]
+
+        samples_bytes = self.read_from_debugger()
+        byte_size = self.float_type.byte_size()
+        fmt = self.float_type.struct_name()
+
+        if self.float_type.is_complex():
+            # min_mag = abs(complex(*struct.unpack(fmt, samples_bytes[:sample_bytes])))
+            # max_mag = min_mag
+
+            # for i in range(1, channels * samples):
+            #     sample_bytes = samples_bytes[
+            #         i * samples_bytes : (i + 1) * samples_bytes
+            #     ]
+            #     magnitude = abs(complex(*struct.unpack(fmt, sample_bytes)))
+            #     min_mag = min(magnitude, min_mag)
+            #     max_mag = max(magnitude, max_mag)
+
+            return f"{channels} channels {samples} samples (complex data)"
+        else:
+            min_amp = struct.unpack(fmt, samples_bytes[:byte_size])[0]
+            max_amp = min_amp
+            for i in range(1, channels * samples):
+                sample_bytes = samples_bytes[i * byte_size : (i + 1) * byte_size]
+                sample = struct.unpack(fmt, sample_bytes)[0]
+                min_amp = min(min_amp, sample)
+                max_amp = max(max_amp, sample)
+            return f"{channels} channels {samples} samples, min {min_amp:.4E}, max {max_amp:.4E}"
+
+    def compute_sparklines(self) -> List[str]:
+        assert not self.float_type.is_complex()
+        shape = self.shape()
+        channels, num_samples = shape if not self.__interleaved else shape[::-1]
+        samples_bytes = self.read_from_debugger()
+        byte_size = self.float_type.byte_size()
+        fmt = self.float_type.struct_name()
+
+        sparklines = []
+
+        for channel in range(channels):
+            if self.__interleaved:
+                channel_samples = [
+                    struct.unpack(
+                        fmt,
+                        samples_bytes[
+                            (num_samples * i + channel)
+                            * byte_size : (num_samples * i + channel + 1)
+                            * byte_size
+                        ],
+                    )[0]
+                    for i in range(num_samples)
+                ]
+            else:
+                channel_samples = [
+                    struct.unpack(
+                        fmt,
+                        samples_bytes[
+                            (num_samples * channel + i)
+                            * byte_size : (num_samples * channel + i + 1)
+                            * byte_size
+                        ],
+                    )[0]
+                    for i in range(num_samples)
+                ]
+
+            waveform = "_⎽⎼—⎻⎺‾"
+            maxValue = max(channel_samples)
+            if maxValue > 0.0:
+                scale = maxValue
+            else:
+                scale = 1.0
+            num_zeros = 0
+            output = "["
+
+            for i in range(len(channel_samples)):
+                sample = channel_samples[i]
+                if sample == 0.0:
+                    if num_zeros == 0:
+                        output += "0"
+                    num_zeros += 1
+                    continue
+                else:
+                    num_zeros = 0
+
+                if num_zeros > 1:
+                    output += "(" + str(num_zeros) + ")"
+                    num_zeros = 0
+                # for some reason sys.float_info.epsilon is nowhere near
+                # the rounding error introduced by lldb when importing float values to python
+                if (abs(sample) - 0.00000015) > 1.0:  # out of bounds?
+                    output += "E"
+                elif sample == float("+inf") or sample == float("-inf"):
+                    output += "I"
+                elif sample == float("nan"):
+                    output += "N"
+                elif (i > 0) and ((sample < 0) is not (channel_samples[i - 1] < 0)):
+                    output += "x"  # zero crossing
+                else:
+                    # normalize so we can see detail
+                    sample /= scale
+                    # make it a positive number that varies from 0 to 6
+                    index = int((sample + 1) / 2.0 * 6.99)
+                    character = waveform[index]
+                    if output[-1] != character:
+                        output += character
+
+            if num_zeros > 1:
+                output += "(" + str(num_zeros) + ")"
+
+            output += "]"
+            sparklines.append(output)
+        return sparklines
 
     def as_raw(self) -> RawContainer:
         return RawContainer(
@@ -104,6 +222,24 @@ class Container(ABC):
     @abstractmethod
     def typename_matcher(cls) -> Union[re.Pattern, Callable[[str], bool]]:
         pass
+
+    @classmethod
+    def register(cls):
+        """
+        Register this container class in DAVE
+
+        1. Register the class to be available in the ContainerFactory
+        2. If the container should have a sparkline summary then it is registered
+        in the debugger
+
+        """
+        from .container_factory import ContainerFactory
+
+        ContainerFactory().register(cls)
+
+    @staticmethod
+    def formatter_compatible():
+        return True
 
 
 class Container1D(Container):

@@ -1,5 +1,6 @@
 # DAVE user guide
-This is the user guide for DAVE
+This is the user guide for DAVE. It's supposed to be the official documentation
+for DAVE. If you think something is not clear or missing, please open an issue.
 
 ## DAVE setup
 When adding DAVE to your system it's important to understand it's composed of
@@ -38,6 +39,47 @@ subcommands:
 options:
         -h, --help      show this help message and exit
 ```
+
+## Debugger formatting
+DAVE provides custom formatters for many audio containers, for both LLDB and GDB. They
+look like this :
+
+*Example:* `juce::dsp::AudioBlock<float>`
+```
+2 channels 256 samples, min -9.9998E-01, max 1.0000E+00 {
+  dSparkline[0] = "[0⎻⎺‾⎺⎻x⎼_⎽⎼x⎺‾⎺⎻x⎽_⎽—x⎺‾⎺⎻x⎽_⎽⎼x⎺‾⎺⎻x⎽_⎽—x⎺‾⎺⎻x⎽_⎼x⎺‾⎺—x_⎽—x⎺‾⎺⎻x⎽_⎽⎼x⎺‾⎺⎻x⎽_⎽—x⎺‾⎺—x_⎼x⎺‾⎺⎻x⎽_⎽⎼x⎺‾⎺x⎽_⎽⎼x⎺‾⎺—x_⎽⎼x⎺‾⎻x⎽_⎽—x‾⎺⎻x⎽_⎼x⎺‾⎺—x_⎽—x‾⎺⎻x_⎽⎼x‾⎺⎻x_⎽⎼x‾⎺⎻x_⎽—x‾⎺—x_]"
+  dSparkline[1] = "[0⎻⎺‾⎺⎻x⎼_⎽⎼x⎺‾⎺⎻x⎽_⎽—x⎺‾⎺⎻x⎽_⎽⎼x⎺‾⎺⎻x⎽_⎽—x⎺‾⎺⎻x⎽_⎼x⎺‾⎺—x_⎽—x⎺‾⎺⎻x⎽_⎽⎼x⎺‾⎺⎻x⎽_⎽—x⎺‾⎺—x_⎼x⎺‾⎺⎻x⎽_⎽⎼x⎺‾⎺x⎽_⎽⎼x⎺‾⎺—x_⎽⎼x⎺‾⎻x⎽_⎽—x‾⎺⎻x⎽_⎼x⎺‾⎺—x_⎽—x‾⎺⎻x_⎽⎼x‾⎺⎻x_⎽⎼x‾⎺⎻x_⎽—x‾⎺—x_]"
+  [...]
+}
+```
+
+They always provide :
+1. A summary with channels, samples, min and max values (only for scalar)
+2. A *sparkline* for each channel : *data-intense, design-simple, word-sized graphics*
+3. The member variables of the container
+
+This implementation is a replication of [Sudara's Sparklines](https://melatonin.dev/blog/audio-sparklines/) but
+for more containers, debuggers and frameworks.
+
+### Sparklines
+A sparkline is a **normalized** 3-bit decimated version of a waveform. It can contains the following chars :
+- 0 is a true 0
+- 0(234) shows a chunk of zeros, in this case 234
+- x represents a zero crossing
+- E is out of bounds (below -1.0, above 1.0)
+- I = Inf (Infinity, meaning you've divided by zero)
+- N = NaN (undefined calculation that's not INF)
+
+If the container are interleaved, the samples will be deinterleaved. 
+
+Samples are not downsampled, which means you have **a char for each sample** in 
+the channel. If you have a big block size, your debugger/IDE will likely truncate
+the ascii plot. If you need full resolution, consider using the GUI.
+
+### Supported containers
+Since the formatters will override any other formatter you might have, DAVE formatters
+are disabled for the the standard library (C, C++).
+
 
 ## Debugger commands
 DAVE adds a set of new commands to your debugger

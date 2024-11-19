@@ -12,7 +12,6 @@ from .audio_views import get_views_for_data_layout, AudioView, get_view_from_nam
 from dataclasses import dataclass
 import numpy as np
 
-# import gdb
 import tkinter as tk
 
 # import uuid

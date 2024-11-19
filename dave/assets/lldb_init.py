@@ -3,6 +3,7 @@ import logging
 import subprocess
 import sys
 import os
+import re
 
 # Update LLDB's Python paths with the `sys.path` values of the local
 from pathlib import Path
@@ -32,7 +33,7 @@ try:
 
     st.SERVER_TYPE = st.ServerType.LLDB
 
-    from dave.server.debuggers.lldb import (
+    from dave.server.debuggers.lldb_ import (
         ShowCommand,
         DeleteCommand,
         FreezeCommand,
@@ -41,8 +42,11 @@ try:
         InspectCommand,
         HelpCommand,
         LLDBEventHandler,
+        summary_provider,
+        SyntheticChildrenProvider,
     )
     from dave.common.logger import Logger
+    from dave.server.container_factory import ContainerFactory
 
     def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
         # Register dave commands
@@ -74,6 +78,22 @@ try:
 
         # Event handler to handle process stop
         event_handler = LLDBEventHandler(debugger)
+
+        # Register pretty printers
+        for cls in ContainerFactory().get_containers_cls_set():
+            if cls.formatter_compatible():
+                regex = cls.typename_matcher()
+                if isinstance(regex, re.Pattern):
+                    # Register summary - lldb does not support non capturing groups
+                    stripped_pattern = str(regex.pattern).replace("(?:", "(")
+                    debugger.HandleCommand(
+                        f'type summary add --expand -x "{stripped_pattern}" -F {__name__}.summary_provider -w dave'
+                    )
+                    # Register synthetic type
+                    debugger.HandleCommand(
+                        f'type synthetic add -x "{stripped_pattern}" --python-class {__name__}.SyntheticChildrenProvider -w dave'
+                    )
+        debugger.HandleCommand("type category enable dave")
 
         Logger().info("[dave] Successfully loaded")
 

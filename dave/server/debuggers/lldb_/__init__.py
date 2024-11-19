@@ -8,6 +8,7 @@ from .commands import (
     InspectCommand,
     HelpCommand,
 )
+from .formatters import summary_provider, SyntheticChildrenProvider
 import dave.common.server_type as st
 
 st.SERVER_TYPE = st.ServerType.LLDB

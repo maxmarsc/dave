@@ -3,7 +3,6 @@ from typing import List, Tuple
 import numpy as np
 
 from dave.server.container import SampleType, Container2D
-from dave.server.container_factory import ContainerFactory
 from dave.common.data_layout import DataLayout
 from dave.client import raw_to_numpy
 
@@ -53,5 +52,9 @@ class NumpyArray(Container2D):
         assert isinstance(self._value, np.ndarray)
         return self._value.reshape(self.shape())
 
+    @staticmethod
+    def formatter_compatible():
+        return False
 
-ContainerFactory().register(NumpyArray)
+
+NumpyArray.register()

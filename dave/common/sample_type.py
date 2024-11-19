@@ -34,3 +34,11 @@ class SampleType(Enum):
         if self in (SampleType.CPX_F, SampleType.CPX_D):
             return True
         return False
+
+    def struct_name(self) -> str:
+        return {
+            SampleType.FLOAT: "f",
+            SampleType.DOUBLE: "d",
+            SampleType.CPX_F: "ff",
+            SampleType.CPX_D: "dd",
+        }[self]

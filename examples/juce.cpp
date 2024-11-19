@@ -3,7 +3,7 @@
 #include <cmath>
 #include <complex>
 
-constexpr auto kBlockSize = 4096;
+constexpr auto kBlockSize = 256;
 constexpr auto kChannels  = 2;
 
 int main() {

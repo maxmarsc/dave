@@ -6,7 +6,6 @@ from typing import Callable, List, Tuple
 
 from dave.common.logger import Logger
 from ...container import SampleType, Container2D
-from ...container_factory import ContainerFactory
 from ...debuggers.value import AbstractValue
 
 
@@ -103,5 +102,5 @@ class JuceAudioBlock(Container2D):
         )
 
 
-ContainerFactory().register(JuceAudioBuffer)
-ContainerFactory().register(JuceAudioBlock)
+JuceAudioBuffer.register()
+JuceAudioBlock.register()

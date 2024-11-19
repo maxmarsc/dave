@@ -2,6 +2,7 @@
 ## Added
 - NaN and Inf values are detected and indicated on the plots
 - NaN, Inf, num samples and num channels are indicated in the action frame
+- Reimplementation of [Sudara's Sparklines](https://melatonin.dev/blog/audio-sparklines/)
 ## Changed
 - Detect Tcl >= 9.0 in installation script and prevent from installing
 ## Fixed

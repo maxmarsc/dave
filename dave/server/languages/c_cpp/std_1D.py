@@ -8,7 +8,6 @@ from typing import List, Tuple
 
 
 from ...container import SampleType, Container1D
-from ...container_factory import ContainerFactory
 from ...debuggers.value import AbstractValue
 from .std_base import StdVector, StdSpan
 
@@ -40,6 +39,10 @@ class CArray1D(Container1D):
         assert isinstance(self._value, AbstractValue)
         return self._value.readmemory(self._value.address(), self.byte_size)
 
+    @staticmethod
+    def formatter_compatible():
+        return False
+
 
 class Pointer1D(Container1D):
     __REGEX = rf"^(?:const\s+)?{SampleType.regex()}\s*\*$"
@@ -70,6 +73,10 @@ class Pointer1D(Container1D):
         assert isinstance(self._value, AbstractValue)
         return self._value.readmemory(int(self._value), self.byte_size)
 
+    @staticmethod
+    def formatter_compatible():
+        return False
+
 
 class StdArray1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<{SampleType.regex()},\s*(\d+)[a-z]*>\s*$"
@@ -97,6 +104,10 @@ class StdArray1D(Container1D):
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
         return self._value.readmemory(self._value.address(), self.byte_size)
+
+    @staticmethod
+    def formatter_compatible():
+        return False
 
 
 class StdVector1D(Container1D):
@@ -129,6 +140,10 @@ class StdVector1D(Container1D):
         assert isinstance(self._value, AbstractValue)
         return self._value.readmemory(int(self.__data_ptr_value()), self.byte_size)
 
+    @staticmethod
+    def formatter_compatible():
+        return False
+
 
 class StdSpan1D(Container1D):
     __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*{SampleType.regex()}\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
@@ -160,9 +175,13 @@ class StdSpan1D(Container1D):
         assert isinstance(self._value, AbstractValue)
         return self._value.readmemory(self.__data_ptr(), self.byte_size)
 
+    @staticmethod
+    def formatter_compatible():
+        return False
 
-ContainerFactory().register(CArray1D)
-ContainerFactory().register(StdArray1D)
-ContainerFactory().register(StdVector1D)
-ContainerFactory().register(StdSpan1D)
-ContainerFactory().register(Pointer1D)
+
+CArray1D.register()
+StdArray1D.register()
+StdVector1D.register()
+StdSpan1D.register()
+Pointer1D.register()
