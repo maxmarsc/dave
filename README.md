@@ -138,6 +138,15 @@ Then you can use the following commands :
 ---
 
 
+## Licensing
+This project is licensed under GPLv3.0. The goal is for you to be able to use it
+to debug any project, open or proprietary, but to prevent anyone from making a
+proprietary project out of DAVE's code.
+
+If you have any question or request about licensing, don't hesitate to ask !
+
+**Wikipedia:** *Software under the GPL may be run for all purposes, including commercial purposes and even as a tool for creating proprietary software, such as when using GPL-licensed compilers.*
+
 ## Milestones
 - [x] Freeze
 - [x] Concatenate 
