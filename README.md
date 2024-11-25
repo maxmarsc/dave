@@ -53,7 +53,7 @@ __2D (multichannel) containers__:
 | Operating System  | Status       |
 |-------------------|--------------|
 | Linux             | ✅           |
-| MacOS             | ✅ (python 3.10/3.11 only)        |
+| MacOS             | ✅           |
 | Windows           | ❌           |
 
 | Debugger platform | GDB          | LLDB         |
