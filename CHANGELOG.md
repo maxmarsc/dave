@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.9.0
+## Added
 - NaN and Inf values are detected and indicated on the plots
 - NaN, Inf, num samples and num channels are indicated in the action frame
 - Reimplementation of [Sudara's Sparklines](https://melatonin.dev/blog/audio-sparklines/)
