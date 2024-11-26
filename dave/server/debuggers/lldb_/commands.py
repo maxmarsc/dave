@@ -7,7 +7,10 @@ from dave.common.logger import Logger
 from .value import LldbValue
 import threading
 import time
+import os
 
+def xcode_detected() -> bool:
+    return os.environ.get("DYLD_FRAMEWORK_PATH", None) == '/Applications/Xcode.app/Contents/SharedFrameworks'
 
 class StopHook:
     def __init__(self, target: lldb.SBTarget, extra_args: lldb.SBStructuredData, _):

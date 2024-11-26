@@ -59,13 +59,13 @@ __2D (multichannel) containers__:
 | Debugger platform | GDB          | LLDB         |
 |-------------------|--------------|--------------|
 | CLI               | ✅           | ✅           |
-| VSCode            | ✅ (update on frame broken) | ❓ need testing  |
-| CLion             | ✅ (update on frame broken) | ✅ (update on frame broken) |
-| XCode             | ❓ need testing             | ❓ need testing |
+| VSCode            | ✅ (*) | ❓ need testing  |
+| CLion             | ✅ (*) | ✅ (*) |
+| XCode             | N/A      | ✅ (*)|
 | Visual Studio      | ❌           | ❌           |
 
-*update on frame broken* means DAVE is not able to react to frame change happening
-through the IDE ui
+(*) -  DAVE is not able to react when you go up/down in
+the stack using the IDE ui.
 
 ---
 

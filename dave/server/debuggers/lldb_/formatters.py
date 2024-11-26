@@ -10,7 +10,11 @@ import re
 def summary_provider(valobj: lldb.SBValue, _) -> str:
     lldb_value = LldbValue(valobj, "")
     container = ContainerFactory().build(lldb_value, lldb_value.typename(), "")
-    return container.compute_summary()
+    try:
+        return container.compute_summary()
+    except RuntimeError:
+        # Fails randomly on Xcode
+        return "Failed to fetch dave summary (random xcode bug sory)"
 
 
 class SyntheticChildrenProvider:
@@ -18,10 +22,20 @@ class SyntheticChildrenProvider:
         self.__sparklines: List[str] = list()
         self.__num_channels = 0
         self.__valobj = valobj
-        lldb_value = LldbValue(valobj, "")
-        self.__container = ContainerFactory().build(
-            lldb_value, lldb_value.typename(), ""
-        )
+        lldb_value = LldbValue(valobj, valobj.path)
+        # For some weird reason, Xcode will ask for the synthetic children twice
+        # Once with the object itself
+        # Then with a pointer to the object
+        try:
+            self.__container = ContainerFactory().build(
+                lldb_value, lldb_value.typename(), valobj.name
+            )
+        except TypeError:
+            deref = valobj.Dereference()
+            lldb_value = LldbValue(deref, deref.path)
+            self.__container = ContainerFactory().build(
+                lldb_value, lldb_value.typename(), valobj.name
+            )
 
     def num_children(self) -> int:
         if self.__container.float_type.is_complex():
@@ -46,8 +60,12 @@ class SyntheticChildrenProvider:
 
     def update(self):
         if not self.__container.float_type.is_complex():
-            self.__sparklines = self.__container.compute_sparklines()
-            self.__num_channels = len(self.__sparklines)
+            try:
+                self.__sparklines = self.__container.compute_sparklines()
+                self.__num_channels = len(self.__sparklines)
+            except RuntimeError:
+                self.__sparklines = []
+                self.__num_channels = 0
 
     def has_children(self) -> bool:
         return True

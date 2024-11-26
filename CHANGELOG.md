@@ -1,6 +1,10 @@
 # `main`
 ## Added
 ## Changed
+## Fixed
+- Fixed dave log output in Xcode
+- Fixed formatter error in Xcode
+- Fixed memory read error in Xcode
 
 # v0.9.1
 ## Fixed

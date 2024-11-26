@@ -2,10 +2,15 @@ from __future__ import annotations
 from typing import Union
 from ..value import AbstractValue
 import lldb
+import os
+import threading
 
+def xcode_detected() -> bool:
+    return os.environ.get("DYLD_FRAMEWORK_PATH", None) == '/Applications/Xcode.app/Contents/SharedFrameworks'
 
 class LldbValue(AbstractValue):
     __debugger = None  # type: Union[None, lldb.SBDebugger]
+    __debugger_tid = -1
 
     def __init__(self, lldb_value: lldb.SBValue, varname: str):
         if lldb_value.type.IsReferenceType():
@@ -16,6 +21,14 @@ class LldbValue(AbstractValue):
         self.__varname = varname
         if LldbValue.__debugger is None:
             LldbValue.__debugger = lldb.debugger
+            LldbValue.__debugger_tid = threading.get_native_id()
+
+    @staticmethod
+    def debugger() -> lldb.SBDebugger:
+        if xcode_detected() and LldbValue.__debugger_tid == threading.get_native_id():
+            return lldb.debugger
+        assert LldbValue.__debugger is not None
+        return LldbValue.__debugger
 
     def typename(self) -> str:
         return self.__value.type.GetCanonicalType().name
@@ -83,14 +96,14 @@ class LldbValue(AbstractValue):
 
     @staticmethod
     def readmemory(addr: int, bytesize: int) -> bytearray:
-        assert LldbValue.__debugger is not None
+        # assert LldbValue.__debugger is not None
         process = (
-            LldbValue.__debugger.GetSelectedTarget().GetProcess()
+            LldbValue.debugger().GetSelectedTarget().GetProcess()
         )  # type: lldb.SBProcess
         error = lldb.SBError()
         raw_mem = process.ReadMemory(addr, bytesize, error)
         if not error.Success():
-            raise RuntimeError(f"Failed to read {bytesize} bytes from {addr}")
+            raise RuntimeError(f"Failed to read {bytesize} bytes from 0x{addr:X}")
 
         return bytearray(raw_mem)
 
@@ -99,9 +112,8 @@ class LldbValue(AbstractValue):
         varname: str, frame: Union[lldb.SBFrame, None] = None
     ) -> lldb.SBValue:
         if frame is None:
-            assert LldbValue.__debugger is not None
             frame = (
-                LldbValue.__debugger.GetSelectedTarget()
+                 LldbValue.debugger().GetSelectedTarget()
                 .GetProcess()
                 .GetSelectedThread()
                 .GetSelectedFrame()
