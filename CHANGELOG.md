@@ -1,7 +1,10 @@
 # `main`
 ## Added
 ## Changed
+
+# v0.9.1
 ## Fixed
+- `dave update` failing to update the `dave` cli script
 
 # v0.9.0
 ## Added
