@@ -2,6 +2,9 @@
 ## Added
 ## Changed
 ## Fixed
+
+# v0.9.2
+## Fixed
 - Fixed dave log output in Xcode
 - Fixed formatter error in Xcode
 - Fixed memory read error in Xcode
