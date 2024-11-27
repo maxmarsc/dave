@@ -22,7 +22,7 @@ class Logger(
                 import lldb
 
                 self.__logger = None
-            except ModuleNotFoundError:
+            except (ModuleNotFoundError, ImportError):
                 self.__init_logger()
         else:
             try:
@@ -34,14 +34,13 @@ class Logger(
 
     @staticmethod
     def __internal_gdb_log(message: str):
-        import gdb 
+        import gdb
 
         gdb.write(message + "\n")
 
     @staticmethod
     def __internal_lldb_log(message: str):
         print(message)
-
 
     def __init_logger(self):
         self.__logger = logging.getLogger("dave")

@@ -5,6 +5,7 @@
 - Fixed dave log output in Xcode
 - Fixed formatter error in Xcode
 - Fixed memory read error in Xcode
+- UserWarning when in Waveform and Curve views
 
 # v0.9.1
 ## Fixed

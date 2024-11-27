@@ -167,9 +167,11 @@ class WaveformView(AudioView):
                 label="Inf",
             )
 
-        axes.set_ylim(-max_y, max_y)
         axes.grid(visible=True)
-        axes.legend()
+        if -max_y != max_y:
+            axes.set_ylim(-max_y, max_y)
+        if infs_time_vector.size > 0 or nans_time_vector.size > 0:
+            axes.legend()
 
     def get_settings(self) -> List[Setting]:
         return []
@@ -233,7 +235,8 @@ class CurveView(AudioView):
         axes.set_xscale(self.__x_scale.value)
         axes.set_yscale(self.__y_scale.value)
         axes.grid(visible=True)
-        axes.legend()
+        if infs_time_vector.size > 0 or nans_time_vector.size > 0:
+            axes.legend()
 
     def get_settings(self) -> List[Setting]:
         return [self.__x_scale, self.__y_scale]
