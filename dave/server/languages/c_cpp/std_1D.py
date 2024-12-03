@@ -3,6 +3,8 @@
 import re
 from typing import List, Tuple
 
+from dave.common.logger import Logger
+
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
 

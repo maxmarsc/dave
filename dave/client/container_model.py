@@ -48,7 +48,7 @@ class ContainerModel:
 
     @property
     def data(self) -> np.ndarray:
-        return self.__compute_render_array(self.__raw.data)
+        return self.__compute_render_array(self.__data)
 
     @property
     def possible_layouts(self) -> List[DataLayout]:
