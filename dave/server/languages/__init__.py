@@ -21,23 +21,19 @@ if "DAVE_VENV_FOLDER" in os.environ:
     import dave
 
     custom_module_path = (
-        Path(dave.__file__).parent.parent / "examples/custom_containers/__init__.py"
+        Path(dave.__file__).parent.parent / "examples/custom/__init__.py"
     )
 else:
-    custom_module_path = Path.home() / ".dave/custom_containers/__init__.py"
+    custom_module_path = Path.home() / ".dave/custom/__init__.py"
 
 if not custom_module_path.is_file():
     Logger().debug(
         f"Custom containers init file not found : {custom_module_path}, skipping"
     )
 else:
-    Logger().debug(
-        f"Trying to import custom containers from {custom_module_path}"
-    )
+    Logger().debug(f"Trying to import custom containers from {custom_module_path}")
 
-    spec = importlib.util.spec_from_file_location(
-        "custom_containers", custom_module_path
-    )
-    custom_containers_m = importlib.util.module_from_spec(spec)
-    sys.modules["custom_containers"] = custom_containers_m
-    spec.loader.exec_module(custom_containers_m)
+    spec = importlib.util.spec_from_file_location("custom", custom_module_path)
+    custom_m = importlib.util.module_from_spec(spec)
+    sys.modules["custom"] = custom_m
+    spec.loader.exec_module(custom_m)

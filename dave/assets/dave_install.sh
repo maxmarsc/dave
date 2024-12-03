@@ -135,10 +135,10 @@ if [[ -d "$DAVE_DIR" ]]; then
     # count items in the ~/.dave folder
     ITEM_COUNT=$(find "$DAVE_DIR" -mindepth 1 -maxdepth 1 | wc -l)
 
-    # if the only thing left is the custom_containers folder it's ok
-    if [[ $ITEM_COUNT -ne 1 || ! -d "$DAVE_DIR/custom_containers" ]];then
+    # if the only thing left is the custom folder it's ok
+    if [[ $ITEM_COUNT -ne 1 || ! -d "$DAVE_DIR/custom" ]];then
         echo "Previous installation of dave found in $DAVE_DIR. Aborting"
-        echo "You're only allowed to keep $DAVE_DIR/custom_containers between installations"
+        echo "You're only allowed to keep $DAVE_DIR/custom between installations"
         exit 1
     fi
 fi

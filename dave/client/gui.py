@@ -5,14 +5,17 @@ import tkinter as tk
 import customtkinter as ctk
 
 
+from dave.client.entity.model_factory import ModelFactory
 from dave.common.logger import Logger
-from dave.common.raw_container import RawContainer
+
+from dave.common.raw_entity import RawEntity
 from dave.server.process import DaveProcess
 
-from .container_model import ContainerModel
+from dave.client.entity.entity_model import EntityModel
+
 from .global_settings import GlobalSettings
 from .settings_tab import SettingsTab
-from .audio_views_tab import AudioViewsTab
+from .views_tab import AudioViewsTab
 
 
 def load_icon() -> tk.PhotoImage:
@@ -37,7 +40,7 @@ class DaveGUI:
         self.__conn = connection
 
         # GUI settings
-        self.__models: Dict[int, ContainerModel] = dict()
+        self.__models: Dict[int, EntityModel] = dict()
         self.__global_settings = GlobalSettings()
 
         ctk.set_appearance_mode(self.__global_settings.appearance)
@@ -92,20 +95,22 @@ class DaveGUI:
                 elif isinstance(msg, DaveProcess.ConcatMessage):
                     Logger().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
-                elif isinstance(msg, RawContainer):
+                elif isinstance(msg, RawEntity):
                     Logger().debug(f"Received new container : {msg.id}")
-                    new_model = ContainerModel(msg)
-                    self.__models[msg.id] = new_model
-                    self.__settings_tab.add_container(new_model)
+                    new_entity = ModelFactory().build(msg)
+                    self.__models[msg.id] = new_entity
+                    self.__settings_tab.add_model(new_entity)
                     update_needed = True
-                elif isinstance(msg, RawContainer.InScopeUpdate):
+                elif isinstance(msg, RawEntity.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)
                     update_needed = True
-                elif isinstance(msg, RawContainer.OutScopeUpdate):
+                elif isinstance(msg, RawEntity.OutScopeUpdate):
                     Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
+                else:
+                    Logger().warning(f"Received unknown data {type(msg)}:{msg}")
             except EOFError:
                 Logger().debug("Received EOF from debugger process, will shutdown")
                 self.on_closing()
@@ -134,7 +139,7 @@ class DaveGUI:
         # Delete the ones marked for delete
         for id in to_delete:
             del self.__models[id]
-            self.__settings_tab.delete_container(id)
+            self.__settings_tab.delete_model(id)
             self.__conn.send(DaveProcess.DeleteMessage(id))
 
         # If no container left we close the gui

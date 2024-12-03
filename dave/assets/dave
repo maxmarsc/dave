@@ -166,10 +166,10 @@ case "$ACTION" in
         fi
 
         # Delete the folder
-        if [[ -d "$HOME/.dave/custom_containers" ]];then
+        if [[ -d "$HOME/.dave/custom" ]];then
           echo ""
-          echo "A custom_containers folder was found"
-          read -rp "Delete custom containers ? [y/N]" response
+          echo "A .dave/custom folder was found"
+          read -rp "Delete custom entities ? [y/N]" response
           response=${response:-n}  # Set default to 'n' if no input is provided
           
           if [[ "$response" == "y" || "$response" == "Y" ]]; then

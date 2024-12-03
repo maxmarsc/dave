@@ -1,8 +1,8 @@
 # Debugger Audio Visualization Extension
 ![logo](.pictures/dave_logo_long_v6.png  )
 
-DAVE is a GDB & LLDB extension which provide commands to visualize audio data
-directly from your buffers/classes. No need to recompile your code and/or instrument
+DAVE is a GDB & LLDB extension which provide commands to visualize audio related data
+directly from your process's memory. No need to recompile your code and/or instrument
 it with nasty macros or fancy libs, just start your debugger !
 
 <p align="center">
@@ -27,6 +27,11 @@ it with nasty macros or fancy libs, just start your debugger !
     <img src=".pictures/pretty_printers.png">
 </p> -->
 
+DAVE supports plotting for different types of audio "entities" that might live in
+your program's memory :
+- audio sample containers (amplitude or spectral)
+- IIR filters
+
 Currently supported audio containers (both in `float` and `double`) are :
 
 __1D (mono) containers__:
@@ -48,6 +53,14 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayView`
 - `choc::buffer::ChannelArrayBuffer`
 
+Currently supported IIR filter/coefficients are :
+- `juce::dsp::IIR::Filter`
+- `juce::dsp::IIR:Coefficients`
+- `juce::dsp::StateVariableTPTFilter`
+- `juce::dsp::StateVariableFilter::Filter`
+- `juce::dsp::StateVariableFilter::Parameters`
+
+**You can also add supports for your own entity classes**
 
 ### Current support
 | Operating System  | Status       |
@@ -59,10 +72,10 @@ __2D (multichannel) containers__:
 | Debugger platform | GDB          | LLDB         |
 |-------------------|--------------|--------------|
 | CLI               | ✅           | ✅           |
-| VSCode            | ✅ (*) | ❓ need testing  |
-| CLion             | ✅ (*) | ✅ (*) |
-| XCode             | N/A      | ✅ (*)|
-| Visual Studio      | ❌           | ❌           |
+| VSCode            | ✅ (*)       | ❓ need testing  |
+| CLion             | ✅ (*)       | ✅ (*) |
+| XCode             | N/A          | ✅ (*)|
+| Visual Studio     | ❌           | ❌           |
 
 (*) -  DAVE is not able to react when you go up/down in
 the stack using the IDE ui.
@@ -205,8 +218,8 @@ If you have any question or request about licensing, don't hesitate to ask !
 When running into an issue, please activate the debug log level, by setting
 the env variable `DAVE_LOGLEVEL` to `debug` before starting the debugger.
 
-### LLDB on Ubuntu 22.04
-When starting lldb on ubuntu 22.04 you might get this error :
+### LLDB on Ubuntu 24.04
+When starting lldb on ubuntu 24.04 you might get this error :
 ```
 Traceback (most recent call last):
   File "<string>", line 1, in <module>
@@ -215,8 +228,8 @@ ModuleNotFoundError: No module named 'lldb'
 
 This is a [known bug](https://bugs.launchpad.net/ubuntu/+source/llvm-defaults/+bug/1972855). In the meantime you can fix these using a symbolic link :
 ```bash
-sudo mkdir -p /usr/lib/local/lib/python3.10/
-sudo ln -s /usr/lib/llvm-${VERSION}/lib/python3.10/dist-packages /usr/lib/local/lib/python3.10/dist-packages
+sudo mkdir -p /usr/lib/local/lib/python3.12/
+sudo ln -s /usr/lib/llvm-${VERSION}/lib/python3.12/dist-packages /usr/lib/local/lib/python3.12/dist-packages
 ```
 
 ### LLDB init

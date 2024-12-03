@@ -1,119 +1,26 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any, List
 import numpy as np
 from warnings import catch_warnings, warn
 
 from matplotlib.axes import Axes
-from dave.common.data_layout import DataLayout
-from dave.common.logger import Logger
-from .view_setting import (
-    FloatSetting,
-    IntSetting,
-    Setting,
-    StringSetting,
-    BoolSetting,
-)
 
-import numpy as np
+from dave.common.raw_container import RawContainer
+from dave.common.logger import Logger
+
+from ..entity.entity_view import EntityView
 
 DEFAULT_COLOR = "#1f77b4"
 
-# import matplotlib.pyplot as plt
-# from matplotlib import scale as mscale
-# from matplotlib.scale import ScaleBase
-# from matplotlib.transforms import Transform
-# from matplotlib.ticker import AutoLocator, NullFormatter
 
-
-# class CustomSymLogTransform(Transform):
-#     input_dims = output_dims = 1
-
-#     def __init__(self, threshold):
-#         super().__init__()
-#         self.threshold = threshold
-
-#     def transform_non_affine(self, a):
-#         masked = np.ma.masked_where(a == 0, a)
-#         sign = np.sign(masked)
-#         loged = sign * np.log10(np.abs(masked) + self.threshold)
-#         return np.ma.where(masked == 0, 0, loged)
-
-#     def inverted(self):
-#         return CustomSymLogInverseTransform(self.threshold)
-
-
-# class CustomSymLogInverseTransform(Transform):
-#     input_dims = output_dims = 1
-
-#     def __init__(self, threshold):
-#         super().__init__()
-#         self.threshold = threshold
-
-#     def transform_non_affine(self, a):
-#         return np.sign(a) * (10 ** (np.abs(a)) - self.threshold)
-
-#     def inverted(self):
-#         return CustomSymLogTransform(self.threshold)
-
-
-# class CustomSymmetricalLogScale(ScaleBase):
-#     name = "customsymlog"
-
-#     def __init__(self, axis, **kwargs):
-#         super().__init__(axis)
-#         self.threshold = kwargs.pop("threshold", 1e-5)
-
-#     def get_transform(self):
-#         return CustomSymLogTransform(self.threshold)
-
-#     def set_default_locators_and_formatters(self, axis):
-#         axis.set_major_locator(AutoLocator())
-#         axis.set_major_formatter(NullFormatter())
-#         axis.set_minor_locator(AutoLocator())
-#         axis.set_minor_formatter(NullFormatter())
-
-#     def limit_range_for_scale(self, vmin, vmax, minpos):
-#         return max(vmin, -1), min(vmax, 1)
-
-
-# Register the custom scale
-# plt.register_scale(CustomSymmetricalLogScale)
-# mscale.register_scale(CustomSymmetricalLogScale)
+# ===========================================================================
+class ContainerView(EntityView):
+    pass
 
 
 # ===========================================================================
-class AudioView(ABC):
-    def __init__(self, samplerate: float) -> None:
-        self._sr = samplerate
-
-    @staticmethod
-    @abstractmethod
-    def name() -> str:
+class WaveformView(ContainerView):
+    def __init__(self) -> None:
         pass
-
-    @staticmethod
-    def is_superposable() -> bool:
-        return True
-
-    @abstractmethod
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
-        pass
-
-    @abstractmethod
-    def get_settings(self) -> List[Setting]:
-        pass
-
-    @abstractmethod
-    def update_setting(self, setting_name: str, setting_value: Any):
-        pass
-
-
-# ===========================================================================
-class WaveformView(AudioView):
-    def __init__(self, samplerate: float) -> None:
-        super().__init__(samplerate)
-        # self.__y_scale = StringSetting("Y scale", ("linear", "log"))
 
     @staticmethod
     def name() -> str:
@@ -121,20 +28,8 @@ class WaveformView(AudioView):
 
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
-        # if setting_name == self.__y_scale.name:
-        #     self.__y_scale.value = setting_value
-        # else:
-        #     raise RuntimeError(f"{setting_name} is not a valid WaveformView setting")
 
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
-        # # axes.set_yscale(self.__y_scale.value)
-        # if self.__y_scale.value == "log":
-        #     eps = 1e-5
-        #     scale_fwd = lambda a: np.sign(a) * np.log10(np.abs(a) + eps)
-        #     scale_inv = lambda a: np.sign(a) * (10 ** (np.abs(a)))
-        #     # axes.set_yscale("customsymlog", threshold=1e-5)
-        #     axes.set_yscale("function", function=(scale_fwd, scale_inv))
-
         if color is None:
             color = DEFAULT_COLOR
         assert len(data.shape) == 1
@@ -167,13 +62,13 @@ class WaveformView(AudioView):
                 label="Inf",
             )
 
-        axes.grid(visible=True)
+        axes.grid(visible=True, which="both")
         if -max_y != max_y:
             axes.set_ylim(-max_y, max_y)
         if infs_time_vector.size > 0 or nans_time_vector.size > 0:
             axes.legend()
 
-    def get_settings(self) -> List[Setting]:
+    def get_settings(self) -> List[EntityView.Setting]:
         return []
         # return [
         #     self.__y_scale,
@@ -181,11 +76,10 @@ class WaveformView(AudioView):
 
 
 # ===========================================================================
-class CurveView(AudioView):
-    def __init__(self, samplerate: float) -> None:
-        super().__init__(samplerate)
-        self.__x_scale = StringSetting("X scale", ("linear", "log"))
-        self.__y_scale = StringSetting("Y scale", ("linear", "log"))
+class CurveView(ContainerView):
+    def __init__(self) -> None:
+        self.__x_scale = EntityView.StringSetting("X scale", ("linear", "log"))
+        self.__y_scale = EntityView.StringSetting("Y scale", ("linear", "log"))
 
     @staticmethod
     def name() -> str:
@@ -238,17 +132,18 @@ class CurveView(AudioView):
         if infs_time_vector.size > 0 or nans_time_vector.size > 0:
             axes.legend()
 
-    def get_settings(self) -> List[Setting]:
+    def get_settings(self) -> List[EntityView.Setting]:
         return [self.__x_scale, self.__y_scale]
 
 
 # ===========================================================================
-class SpectrogramView(AudioView):
-    def __init__(self, samplerate: float) -> None:
-        super().__init__(samplerate)
-        self.__nfft = IntSetting("nfft", 16, 4096, 256)
-        self.__overlap = FloatSetting("overlap", 0.01, 0.99, 0.5)
-        self.__window = StringSetting("window", ("hanning", "none", "blackman"))
+class SpectrogramView(ContainerView):
+    def __init__(self) -> None:
+        self.__nfft = EntityView.IntSetting("nfft", 16, 4096, 256)
+        self.__overlap = EntityView.FloatSetting("overlap", 0.01, 0.99, 0.5)
+        self.__window = EntityView.StringSetting(
+            "window", ("hanning", "none", "blackman")
+        )
 
     @staticmethod
     def name() -> str:
@@ -268,7 +163,7 @@ class SpectrogramView(AudioView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid Spectrogram setting")
 
-    def get_settings(self) -> List[Setting]:
+    def get_settings(self) -> List[EntityView.Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, _=None):
@@ -280,12 +175,13 @@ class SpectrogramView(AudioView):
 
 
 # ===========================================================================
-class PSDView(AudioView):
-    def __init__(self, samplerate: float) -> None:
-        super().__init__(samplerate)
-        self.__nfft = IntSetting("nfft", 16, 4096, 256)
-        self.__overlap = FloatSetting("overlap", 0.01, 0.99, 0.5)
-        self.__window = StringSetting("window", ("hanning", "none", "blackman"))
+class PSDView(ContainerView):
+    def __init__(self) -> None:
+        self.__nfft = EntityView.IntSetting("nfft", 16, 4096, 256)
+        self.__overlap = EntityView.FloatSetting("overlap", 0.01, 0.99, 0.5)
+        self.__window = EntityView.StringSetting(
+            "window", ("hanning", "none", "blackman")
+        )
 
     @staticmethod
     def name() -> str:
@@ -301,7 +197,7 @@ class PSDView(AudioView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid PSD setting")
 
-    def get_settings(self) -> List[Setting]:
+    def get_settings(self) -> List[EntityView.Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
@@ -332,9 +228,9 @@ class PSDView(AudioView):
 
 
 # ===========================================================================
-class MagnitudeView(AudioView):
-    def __init__(self, samplerate: float) -> None:
-        super().__init__(samplerate)
+class MagnitudeView(ContainerView):
+    def __init__(self) -> None:
+        pass
 
     @staticmethod
     def name() -> str:
@@ -343,7 +239,7 @@ class MagnitudeView(AudioView):
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
 
-    def get_settings(self) -> List[Setting]:
+    def get_settings(self) -> List[EntityView.Setting]:
         return []
 
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
@@ -387,9 +283,9 @@ class MagnitudeView(AudioView):
 
 
 # ===========================================================================
-class PhaseView(AudioView):
-    def __init__(self, samplerate: float) -> None:
-        super().__init__(samplerate)
+class PhaseView(ContainerView):
+    def __init__(self) -> None:
+        pass
 
     @staticmethod
     def name() -> str:
@@ -398,7 +294,7 @@ class PhaseView(AudioView):
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
 
-    def get_settings(self) -> List[Setting]:
+    def get_settings(self) -> List[EntityView.Setting]:
         return []
 
     def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
@@ -409,8 +305,6 @@ class PhaseView(AudioView):
         x_vector = np.arange(data.shape[0])  # type: np.ndarray
         nans = np.isnan(data)
         infs = np.isinf(data)
-        print(f"nans {data[nans]}")
-        print(f"infs {data[infs]}")
         finite_mask = ~nans & ~infs
         nans_x_vector = x_vector[nans]
         infs_x_vector = x_vector[infs]
@@ -456,8 +350,8 @@ def get_view_from_name(name: str):
     return views[name]
 
 
-def get_views_for_data_layout(model: DataLayout) -> List:
-    if model in (DataLayout.REAL_1D, DataLayout.REAL_2D):
+def get_views_for_data_layout(model: RawContainer.Layout) -> List:
+    if model in (RawContainer.Layout.REAL_1D, RawContainer.Layout.REAL_2D):
         return [WaveformView, CurveView, SpectrogramView, PSDView]
     else:
         return [MagnitudeView, PhaseView]

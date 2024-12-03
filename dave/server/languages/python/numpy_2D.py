@@ -3,8 +3,9 @@ from typing import List, Tuple
 import numpy as np
 
 from dave.server.container import SampleType, Container2D
-from dave.common.data_layout import DataLayout
-from dave.client import raw_to_numpy
+from dave.common.raw_container import RawContainer
+from dave.client.container.raw_to_numpy import convert_container_data_to_layout
+from dave.client.entity.raw_to_numpy import to_sampletype
 
 
 class NumpyArray(Container2D):
@@ -26,7 +27,9 @@ class NumpyArray(Container2D):
         ):
             try:
                 pdb_value = np.squeeze(
-                    raw_to_numpy.convert_data_to_layout(pdb_value, DataLayout.CPX_2D),
+                    convert_container_data_to_layout(
+                        pdb_value, RawContainer.Layout.CPX_2D
+                    ),
                     axis=-1,
                 )
             except RuntimeError:
@@ -35,7 +38,7 @@ class NumpyArray(Container2D):
         elif len(shape) < 0 or len(shape) > 2:
             raise TypeError(f"Numpy array support is limited to 1D and 2D arrays")
 
-        sample_type = raw_to_numpy.to_sampletype(pdb_value.dtype)
+        sample_type = to_sampletype(pdb_value.dtype)
         super().__init__(pdb_value, name, sample_type)
 
     def shape(self) -> Tuple[int, int]:

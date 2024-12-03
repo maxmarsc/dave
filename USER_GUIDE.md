@@ -76,7 +76,7 @@ Samples are not downsampled, which means you have **a char for each sample** in
 the channel. If you have a big block size, your debugger/IDE will likely truncate
 the ascii plot. If you need full resolution, consider using the GUI.
 
-### Supported containers
+### Supported entities
 Since the formatters will override any other formatter you might have, DAVE formatters
 are disabled for the the standard library (C, C++).
 
@@ -95,7 +95,7 @@ dave show VARIABLE [DIM1[,DIM2]]
 You'd use it as using `print` or `display` in gdb/lldb, by giving it a variable
 that it used in your program to hold/contains/points to audio data (mono or multichannel).
 
-On the first call it will open up the GUI window to show the audio content of the
+On the first call it will open up the GUI window to plot the content of the
 variable. Then, on each breakpoint/step/frame change, DAVE will check if the variable
 is in scope, and if so, updates its data and plot it again.
 
@@ -119,11 +119,11 @@ The usage is :
 dave delete VARIABLE|CONTAINER_ID
 ```
 
-This command tells dave to stop tracking an audio container. If you delete the
+This command tells dave to stop tracking an audio entity. If you delete the
 last container tracked, then the GUI automatically stops.
 
-You can give this command either (unique) id of a tracked container, or a variable
-name. In case of naming conflicts, this first container added with this name will
+You can give this command either (unique) id of a tracked entity, or a variable
+name. In case of naming conflicts, this first entity added with this name will
 be deleted.
 
 ### `dave freeze`
@@ -132,11 +132,11 @@ The usage is :
 dave freeze VARIABLE|CONTAINER_ID
 ```
 
-This command enable/disable the *Freeze* setting for the given audio container. See
+This command enable/disable the *Freeze* setting for the given audio entity. See
 Actions for details.
 
-You can give this command either (unique) id of a tracked container, or a variable
-name. In case of naming conflicts, this first container added with this name will
+You can give this command either (unique) id of a tracked entity, or a variable
+name. In case of naming conflicts, this first entity added with this name will
 be deleted.
 
 ### `dave concat`
@@ -145,11 +145,11 @@ The usage is :
 dave concat VARIABLE|CONTAINER_ID
 ```
 
-This command enable/disable the *Concatenate* setting for the given audio container.
+This command enable/disable the *Concatenate* setting for the given audio entity.
 See Actions for details.
 
-You can give this command either (unique) id of a tracked container, or a variable
-name. In case of naming conflicts, this first container added with this name will
+You can give this command either (unique) id of a tracked entity, or a variable
+name. In case of naming conflicts, this first entity added with this name will
 be deleted.
 
 
@@ -159,7 +159,7 @@ The usage is :
 dave inspect VARIABLE
 ```
 
-This is useful when you want to add support for a new type of audio container, it
+This is useful when you want to add support for a new type of audio entity, it
 will print out the type as deduced by your debugger.
 
 It should resolve automatically typedefs and alias. If not please raise an issue.
@@ -172,11 +172,11 @@ dave help
 Display a short help message which redirects to this page
 
 ## Data update settings
-This settings affect how an update of containers's data affect the rendering.
+This settings affect how an update of entity's data affect the rendering.
 
 ### Freeze
-When enabling "freeze" on a container, the current data (at the time of the 
-change of setting) of this container is kept in memory to be plotted at each update
+When enabling "freeze" on a entity, the current data (at the time of the 
+change of setting) of this entity is kept in memory to be plotted at each update
 alongside the new data
 
 Depending on the view type, it behaves differently :
@@ -188,6 +188,7 @@ then a subfigure is created for the frozen data
 When disabling the frozen setting, the frozen data is deleted.
 
 ### Concatenate
+*Not all type of entities are compatible with the concatenate feature*
 When enabling "concat" on a container, nothing happens yet. When new data comes in,
 it is concatenated, channel-wise, to the old data, left-to-right
 
@@ -204,11 +205,11 @@ Some settings will require you to enter manually the value you'd like for the se
 ![Views](.pictures/views.png)
 
 On `1.` are the audio views of your audio data. One plot for each channel, for
-each container currently in scope.
+each entity currently in scope.
 
 On `2.` are the actions switches/buttons :
- - `Freeze` enable/disable the *Freeze* setting of the container
- - `Concat` enable/disable the *Concatenate* setting of the container
+ - `Freeze` enable/disable the *Freeze* setting of the entity
+ - `Concat` enable/disable the *Concatenate* setting of the entity
  - `Save` : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
 
 On `3.` are the matplotlib controls. These allow you to navigate and zoom within
@@ -217,7 +218,7 @@ the plots. The save button saves the figures, and not the data.
 ### The `Settings` tab
 ![Settings](.pictures/settings.png)
 
-The settings tab contains global settings and settings for each container currently
+The settings tab contains global settings and settings for each entity currently
 in scope.
 
 In several places you'll be able to edit values, either from a text entry or a 
@@ -231,14 +232,14 @@ From left-to-right :
 - Appearance settings : select from dark, light or system
 - Default samplerate : the default samplerate to use for each container
 
-#### Container settings
-![Container settings](.pictures/settings_container.png)
+#### Entity settings
+![Entity settings](.pictures/settings_container.png)
 
-For each container in scope you can see a frame with settings for this container.
+For each entity in scope you can see a frame with settings for this entity.
 
 From left-to-right :
 
-##### Data layout selection
+##### `Container` Data layout selection
 The type of layout are :
 - real 1D : monophonic pcm samples
 - real 2D : multichannel pcm samples
@@ -256,9 +257,10 @@ A data layout dictates what views are available, so when changing the layout, th
 available views might changes as well.
 
 ##### Channel section
-First the number of channels of the containers. Editable if the container is 1D
+First the number of channels of the entity. Editable if the container is 1D
 but you forced a 2D layout.
 
+###### `Container` channel section 
 Then the interleaved switch. Editable if the container is 1D
 but you forced a 2D layout. Some containers might be interleaved by nature, this
 will reflect it.
@@ -277,10 +279,10 @@ this section.
 ##### General section
 Finally the general section. From left-to-right it contains:
 - the samplerate setting
-- the delete button (X) to tell dave to stop track this container
+- the delete button (X) to tell dave to stop track this entity
 
 ## Possibles views
-### Waveform
+### Container: Waveform
 Available on **real** (1D/2D) data layout.
 
 ![Waveform](.pictures/waveform.png)
@@ -289,7 +291,7 @@ The waveform view is the default and most basic audio view. It plots the audio
 samples, and centers vertically the plots on zero.
 
 
-### Curve
+### Container: Curve
 Available on **real** (1D/2D) data layout.
 
 ![Curve](.pictures/curve.png)
@@ -301,7 +303,7 @@ Available settings :
 - X scale : `linear` or `log`
 - Y scale : `linear` or `log`
 
-### PSD
+### Container: PSD
 Available on **real** (1D/2D) data layout.
 
 ![PSD](.pictures/psd.png)
@@ -314,7 +316,7 @@ Available settings :
 - overlap : `[0.01: 0.99]` default to `0.5`
 - window type : `hanning`, `blackman` or `none`
 
-### Spectrogram
+### Container: Spectrogram
 Available on **real** (1D/2D) data layout.
 
 ![Spectrogram](.pictures/spectrogram.png)
@@ -330,24 +332,36 @@ Available settings :
 **Note :** If for some reason the computation of the spectrogram is not possible
 (ex: divide by zero), the concerned channel will be left blanked like in the pictures.
 
-### Magnitude view
+### Container: Magnitude view
 Available on **complex** (1D/2D) data layout.
 
 ![Magnitude](.pictures/magnitude.png)
 
 The magnitude view computes and plot the magnitude of a complex signal.
 
-### Magnitude view
+### Container: Phase view
 Available on **complex** (1D/2D) data layout.
 
 ![Phase](.pictures/phase.png)
 
 The phase view computes and plot the phase of a complex signal.
 
-## Supported containers
+### IIR Filter: Magnitude view
+
+![IIR Magnitude](.pictures/iir_magnitude.png)
+
+The magnitude view plot the magnitude/frequency response of the filter
+
+### IIR Filter: Phase view
+
+![IIR Phase](.pictures/iir_phase.png)
+
+The magnitude view plot the magnitude/frequency response of the filter
+
+## Supported Entities
 For now DAVE support samples as `float`, `double`, `std::complex` and C's `complex`
 
-Supported audio containers are :
+Currently supported audio containers are :
 
 __1D (mono) containers__:
 - `std::array`
@@ -369,46 +383,46 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayView`
 - `choc::buffer::ChannelArrayBuffer`
 
+Currently supported IIR filter/coefficients are :
+- `juce::dsp::IIR::Filter`
+- `juce::dsp::IIR:Coefficients`
+- `juce::dsp::StateVariableTPTFilter`
+- `juce::dsp::StateVariableFilter::Filter`
+- `juce::dsp::StateVariableFilter::Parameters`
 
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.
 
-### Custom containers
+### Custom entities
 You can add support for custom containers using a bit of python scripting.
 
 To proceed you need to:
 1. Use the `dave inspect` debugger command to identify the name of the types you want to support
-2. Create a `~/.dave/custom_containers` folder. It should contains all your custom code
-3. Add a new `Container` python subclass for each container you want to support (see below)
-4. Register the container class using `ContainerFactory().register()`
-5. Import your container in the `~/.dave/custom_containers/__init__.py` file 
+2. Create a `~/.dave/custom` folder. It should contains all your custom code
+3. Add a new `Entity` python subclass for each entity you want to support (see below)
+4. Register the container class using `EntityFactory().register()`
+5. Import your container in the `~/.dave/custom/__init__.py` file 
 
 #### Examples
 Some examples are provided :
 - The [examples/custom_containers.cpp](examples/custom_containers.cpp) file contains some custom classes to add support to
-- The [examples/custom_containers]([examples/custom_containers) folder contains the python code to support these class
+- The [examples/custom]([examples/custom) folder contains the python code to support these class
 
-To test these examples, just copy (or symlink) the `examples/custom_containers` in
+To test these examples, just copy (or symlink) the `examples/custom` in
 the `.dave` folder.
 
-#### The `Container` class
-DAVE uses the abstract `Container` class as an abstraction layer to support all
-types of audio containers.
+#### The `Entity` class
+DAVE uses the abstract [`Entity`](dave/server/entity.py) class as an abstraction layer to support all
+types of audio entities.
 
-To add support for your own classes, you need to inherits either from `Container1D`
-or `Container2D`.
+To add support for your own classes, you should inherit from `Entity`. However, unless
+you wanna add support for a completely new type of Entity, you should inherits from
+one of the following classes :
 
-
-When inheriting from `Container1D` you need to :
-- Implement the `size` property, which indicates the number of samples in the object
-
-When inheriting from `Container2D` you need to :
-- Implement the `shape` method, which indicates the shape of the container
-
-When inheriting from either you need to :
-- Implement the `typename_matcher` method to return a regex to match your typename. Make sure to use the `dave inspect` command to check how your type is parsed by the debugger.
-- Implement the `read_from_debugger` method to return a `bytearray` containing
-all the samples of your container.
+- [`Container1D`, `Container2D`](dave/server/container.py) to add support for a 
+new type of audio container
+- [`IIR`](dave/server/iir.py) to add support for a new type of IIR filter
 
 
-If you need more examples you can look into the [languages folder](dave/server/languages/)
+Find examples on how to inherit from these in the [languages folder](dave/server/languages/). 
+To identify the actual typename of your classes as seen by DAVE you can use the `dave inspect` command

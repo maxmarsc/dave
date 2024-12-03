@@ -26,7 +26,7 @@ setup(
     description="base module for the DAVE debugger extension",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=["matplotlib==3.9.2", "customtkinter==5.2.2"],
+    install_requires=["matplotlib==3.9.2", "customtkinter==5.2.2", "scipy==1.15.2"],
     license="GPLV3",
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -6,7 +6,7 @@ import time
 
 from dave.common.singleton import SingletonMeta
 from dave.server.process import DaveProcess
-from dave.server.container_factory import ContainerFactory, ContainerError
+from dave.server.entity_factory import EntityFactory, EntityBuildError
 from dave.common.logger import Logger
 
 from .value import GdbValue
@@ -140,9 +140,9 @@ The following subcommands are supported:
         var = GdbValue(gdb.parse_and_eval(varname), varname)
         typename = var.typename()
         try:
-            container = ContainerFactory().build(var, typename, varname, dims)
+            container = EntityFactory().build(var, typename, varname, dims)
             Logger().info(f"Added {varname} : {container.id}")
-        except (ContainerError, TypeError) as e:
+        except (EntityBuildError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():
             DaveProcess().start()
@@ -156,7 +156,7 @@ The following subcommands are supported:
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().delete_container(args[0]):
+        if not DaveProcess().delete(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def freeze_container(self, args):
@@ -166,7 +166,7 @@ The following subcommands are supported:
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().freeze_container(args[0]):
+        if not DaveProcess().freeze(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def concat_container(self, args):
@@ -176,8 +176,11 @@ The following subcommands are supported:
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().concat_container(args[0]):
-            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
+        if not DaveProcess().concat(args[0]):
+            raise gdb.GdbError(
+                f"concat command failed. {args[0]} is not a valid"
+                "or compatible entity identifier"
+            )
 
     def inspect(self, args):
         if len(args) != 1:

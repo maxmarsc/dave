@@ -2,7 +2,7 @@ from typing import Union
 from dave.common.logger import Logger
 import gdb  # type: ignore
 from ...container import Container
-from ...container_factory import ContainerFactory, ContainerError
+from ...entity_factory import EntityFactory, EntityBuildError
 from .value import GdbValue
 
 
@@ -85,7 +85,9 @@ def dave_printer(valobj: gdb.Value):
 
     gdb_value = GdbValue(valobj, "")
     try:
-        container = ContainerFactory().build(gdb_value, gdb_value.typename(), "")
-        return ContainerPrettyPrinter(valobj, container)
-    except (ContainerError, TypeError):
+        container = EntityFactory().build(gdb_value, gdb_value.typename(), "")
+        if container.formatter_compatible():
+            return ContainerPrettyPrinter(valobj, container)
+        return None
+    except (EntityBuildError, TypeError):
         return None

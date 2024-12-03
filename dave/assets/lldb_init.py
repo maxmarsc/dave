@@ -49,7 +49,7 @@ try:
         SyntheticChildrenProvider,
     )
     from dave.common.logger import Logger
-    from dave.server.container_factory import ContainerFactory
+    from dave.server.entity_factory import EntityFactory
 
     def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
         # Register dave commands
@@ -83,7 +83,7 @@ try:
         event_handler = LLDBEventHandler(debugger)
 
         # Register pretty printers
-        for cls in ContainerFactory().get_containers_cls_set():
+        for cls in EntityFactory().get_containers_cls_set():
             if cls.formatter_compatible():
                 regex = cls.typename_matcher()
                 if isinstance(regex, re.Pattern):

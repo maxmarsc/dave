@@ -2,15 +2,20 @@ import lldb
 import shlex
 
 from ...process import DaveProcess
-from ...container_factory import ContainerFactory, ContainerError
+from ...entity_factory import EntityFactory, EntityBuildError
 from dave.common.logger import Logger
 from .value import LldbValue
 import threading
 import time
 import os
 
+
 def xcode_detected() -> bool:
-    return os.environ.get("DYLD_FRAMEWORK_PATH", None) == '/Applications/Xcode.app/Contents/SharedFrameworks'
+    return (
+        os.environ.get("DYLD_FRAMEWORK_PATH", None)
+        == "/Applications/Xcode.app/Contents/SharedFrameworks"
+    )
+
 
 class StopHook:
     def __init__(self, target: lldb.SBTarget, extra_args: lldb.SBStructuredData, _):
@@ -140,15 +145,15 @@ class ShowCommand:
         lldb_value = LldbValue(var, varname)
         typename = lldb_value.typename()
         try:
-            container = ContainerFactory().build(lldb_value, typename, varname, dims)
-            Logger().info(f"Added {varname} : {container.id}")
-        except (ContainerError, TypeError) as e:
+            entity = EntityFactory().build(lldb_value, typename, varname, dims)
+            Logger().info(f"Added {varname} : {entity.id}")
+        except (EntityBuildError, TypeError) as e:
             result.SetError(e.args[0])
             return
 
         if not DaveProcess().is_alive():
             DaveProcess().start()
-        DaveProcess().add_to_model(container)
+        DaveProcess().add_to_model(entity)
 
     def get_short_help(self):
         return "Usage: dave show VARIABLE [DIM1[,DIM2]]"
@@ -261,7 +266,7 @@ class DeleteCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().delete_container(args[0]):
+        if not DaveProcess().delete(args[0]):
             result.SetError(f"{args[0]} is not a valid name or container id")
 
     def get_short_help(self):
@@ -298,7 +303,7 @@ class FreezeCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().freeze_container(args[0]):
+        if not DaveProcess().freeze(args[0]):
             result.SetError(f"{args[0]} is not a valid name or container id")
 
     def get_short_help(self):
@@ -335,7 +340,7 @@ class ConcatCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().concat_container(args[0]):
+        if not DaveProcess().concat(args[0]):
             result.SetError(f"{args[0]} is not a valid name or container id")
 
     def get_short_help(self):

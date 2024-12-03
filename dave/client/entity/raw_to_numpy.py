@@ -3,9 +3,8 @@ from typing import Tuple
 
 import numpy as np
 
-from dave.common.data_layout import DataLayout
 from dave.common.sample_type import SampleType
-from dave.common.raw_container import RawContainer
+from dave.common.raw_container import RawEntity
 
 
 def to_dtype(sample_type: SampleType) -> np.dtype:
@@ -32,7 +31,7 @@ def to_sampletype(dtype: np.dtype) -> SampleType:
     }[dtype.type]
 
 
-def __complexify_layout(dtype: np.dtype) -> np.dtype:
+def complexify_dtype(dtype: np.dtype) -> np.dtype:
     if dtype == np.float32:
         return np.complex64
     elif dtype == np.float64:
@@ -40,10 +39,10 @@ def __complexify_layout(dtype: np.dtype) -> np.dtype:
     elif dtype == np.float128:
         return np.complex256
     else:
-        raise RuntimeError(f"{dtype} is not a supported type")
+        raise RuntimeError(f"Cannot complexify {dtype}")
 
 
-def __realify_layout(dtype: np.dtype) -> np.dtype:
+def realify_dtype(dtype: np.dtype) -> np.dtype:
     if dtype == np.complex64:
         return np.float32
     elif dtype == np.complex128:
@@ -51,33 +50,30 @@ def __realify_layout(dtype: np.dtype) -> np.dtype:
     elif dtype == np.complex256:
         return np.float128
     else:
-        raise RuntimeError(f"{dtype} is not a supported type")
+        raise RuntimeError(f"Cannot realify {dtype}")
 
 
-def __convert_to_real(data: np.ndarray) -> np.ndarray:
+def realify_array(data: np.ndarray) -> np.ndarray:
+    """
+    Cast a complex fp array into a fp array by splitting complex
+    values into two fp value in the last dimension.
+
+    If the array is already using a fp type this does nothing
+    """
     if data.dtype.kind == "f":
         return data
     else:
-        return data.view(dtype=__realify_layout(data.dtype))
+        return data.view(dtype=realify_dtype(data.dtype))
 
 
-def __convert_to_cpx(data: np.ndarray) -> np.ndarray:
+def complexify_array(data: np.ndarray) -> np.ndarray:
+    """
+    Cast a fp array into a complex array by pairing fp values
+    on the last dimension.
+
+    If the array is already using a complex type this does nothing
+    """
     if data.dtype.kind == "c":
         return data
     else:
-        return data.view(dtype=__complexify_layout(data.dtype))
-
-
-def convert_data_to_layout(data: np.ndarray, layout: DataLayout) -> np.ndarray:
-    """
-    Perform real <-> complex conversion if needed to fit the given data layout
-    """
-    if layout.is_real:
-        return __convert_to_real(data)
-    else:
-        return __convert_to_cpx(data)
-
-
-def raw_to_numpy(raw_container: RawContainer) -> np.ndarray:
-    array = np.frombuffer(raw_container.data, dtype=to_dtype(raw_container.sample_type))
-    return array.reshape(raw_container.original_shape)
+        return data.view(dtype=complexify_dtype(data.dtype))

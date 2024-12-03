@@ -2,21 +2,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 import multiprocessing as mp
 from multiprocessing.connection import Connection
-import queue
 import os
 import subprocess
-import sys
 from typing import Dict, List, Union
 from enum import Enum
 from pathlib import Path
 
 
-from .container import Container
+from .entity import Entity
 from .future_gdb import blocked_signals
 
 from dave.common.singleton import SingletonMeta
 from dave.common.logger import Logger
-from dave.common.raw_container import RawContainer
+from dave.common.raw_entity import RawEntity
+
+# from dave.common.raw_container import RawContainer
 from dave.common.server_type import *
 
 try:
@@ -50,7 +50,7 @@ class DaveProcess(metaclass=SingletonMeta):
         id: int
 
     def __init__(self) -> None:
-        self.__containers: Dict[int, Container] = dict()
+        self.__entities: Dict[int, Entity] = dict()
         self.__dbgr_con, self.__gui_con = mp.Pipe()
         self.__process = None
 
@@ -77,7 +77,7 @@ class DaveProcess(metaclass=SingletonMeta):
             else:
                 # Process already ran and exit, needs to reset the object
                 self.__process = None
-                self.__containers = dict()
+                self.__entities = dict()
                 self.__dbgr_con, self.__gui_con = mp.Pipe()
 
         if use_external_env:
@@ -111,42 +111,41 @@ class DaveProcess(metaclass=SingletonMeta):
 
     def dbgr_update_callback(self):
         """
-        Check every container tracked by dave :
-        - if a container is in scope, this will read the samples from the debugger
+        Check every entity tracked by dave :
+        - if a entity is in scope, this will read the samples from the debugger
         memory and sends and update
-        - if a container is not in scope, this will tell it to the gui
+        - if a entity is not in scope, this will tell it to the gui
         """
         # First check for delete messages
         self.__handle_incoming_messages()
 
         # Then update all the containers that are in the current scope
-        for container in self.__containers.values():
-            id = container.id
-            if not container.in_scope:
-                Logger().debug(f"{container.name} is out of scope")
-                self.__dbgr_con.send(RawContainer.OutScopeUpdate(id))
+        for entity in self.__entities.values():
+            id = entity.id
+            if not entity.in_scope:
+                Logger().debug(f"{entity.name} is out of scope")
+                self.__dbgr_con.send(RawEntity.OutScopeUpdate(id))
             else:
-                Logger().debug(f"{container.name} is in scope")
-                data = container.read_from_debugger()
-                shape = container.shape()
-                self.__dbgr_con.send(RawContainer.InScopeUpdate(id, data, shape))
+                Logger().debug(f"{entity.name} is in scope")
+                update = entity.as_raw().as_update()
+                self.__dbgr_con.send(update)
 
-    def add_to_model(self, container: Container):
-        self.__containers[container.id] = container
-        self.__dbgr_con.send(container.as_raw())
+    def add_to_model(self, entity: Entity):
+        self.__entities[entity.id] = entity
+        self.__dbgr_con.send(entity.as_raw())
 
-    def __identify_container(self, id: str) -> int:
+    def __identify_entity(self, id: str) -> int:
         try:
             return int(id)
         except ValueError:
-            for container in self.__containers.values():
+            for container in self.__entities.values():
                 if container.name == id:
                     return container.id
         return -1
 
-    def freeze_container(self, id: str) -> bool:
+    def freeze(self, id: str) -> bool:
         """
-        Freeze/Unfreeze a container. Returns True on success.
+        Freeze/Unfreeze an entity. Returns True on success.
 
         Parameters
         ----------
@@ -157,18 +156,19 @@ class DaveProcess(metaclass=SingletonMeta):
         # First check for delete messages
         self.__handle_incoming_messages()
 
-        id = self.__identify_container(id)
+        id = self.__identify_entity(id)
 
         # wtf is this flagged as unreachable
-        if id not in self.__containers:
+        if id not in self.__entities:
             return False
 
         self.__dbgr_con.send(DaveProcess.FreezeMessage(id))
         return True
 
-    def concat_container(self, id: str) -> bool:
+    def concat(self, id: str) -> bool:
         """
-        Enable/Disable the concatenation feature of a container. Returns True on success.
+        Enable/Disable the concatenation feature of an entity. Returns True on success.
+        Can fail if the entity does not support concatenation.
 
         Parameters
         ----------
@@ -179,16 +179,19 @@ class DaveProcess(metaclass=SingletonMeta):
         # First check for delete messages
         self.__handle_incoming_messages()
 
-        id = self.__identify_container(id)
+        id = self.__identify_entity(id)
 
         # wtf is this flagged as unreachable
-        if id not in self.__containers:
+        if id not in self.__entities:
+            return False
+
+        if not self.__entities[id].supports_concat():
             return False
 
         self.__dbgr_con.send(DaveProcess.ConcatMessage(id))
         return True
 
-    def delete_container(self, id: str) -> bool:
+    def delete(self, id: str) -> bool:
         """
         Mark a container as to be deleted. Returns True on success.
 
@@ -204,9 +207,9 @@ class DaveProcess(metaclass=SingletonMeta):
         # First check for delete messages
         self.__handle_incoming_messages()
 
-        id = self.__identify_container(id)
+        id = self.__identify_entity(id)
 
-        if id not in self.__containers:
+        if id not in self.__entities:
             return False
 
         # wtf is this flagged as unreachable
@@ -221,6 +224,6 @@ class DaveProcess(metaclass=SingletonMeta):
                     Logger().debug(
                         "Debugger process received delete command for {msg.id}"
                     )
-                    del self.__containers[msg.id]
+                    del self.__entities[msg.id]
             except EOFError:
                 Logger().debug("Received EOF from GUI process")

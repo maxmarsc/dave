@@ -3,8 +3,11 @@
 #include <cmath>
 #include <complex>
 
-constexpr auto kBlockSize = 256;
-constexpr auto kChannels  = 2;
+constexpr auto kBlockSize  = 256;
+constexpr auto kChannels   = 2;
+constexpr auto kSampleRate = 44100.0;
+constexpr auto kCutoff     = 6000.F;
+constexpr auto kQ          = 0.7F;
 
 int main() {
   //============================================================================
@@ -25,6 +28,46 @@ int main() {
 
   auto audio_block = juce::dsp::AudioBlock<float>(audio_block_p_arr.data(),
                                                   kChannels, kBlockSize);
+
+  //============================================================================
+  juce::dsp::ProcessSpec spec{};
+  spec.sampleRate       = kSampleRate;
+  spec.maximumBlockSize = kBlockSize;
+  spec.numChannels      = kChannels;
+  //============================================================================
+
+  auto lp_so_coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(
+      kSampleRate, kCutoff, kQ);
+  auto& lp_so_coeffs_r = *lp_so_coeffs.get();
+  auto lp_fo_coeffs =
+      juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(kSampleRate,
+                                                                 kCutoff);
+  auto& lp_fo_coeffs_r = *lp_fo_coeffs.get();
+  auto lp_so_filter    = juce::dsp::IIR::Filter<float>(lp_so_coeffs);
+  auto lp_fo_filter    = juce::dsp::IIR::Filter<float>(lp_fo_coeffs);
+
+  // Create the filter and set its coefficients
+  juce::dsp::IIR::Filter<float> filter;
+  filter.coefficients = lp_so_coeffs;
+
+  // Prepare the filter with processing specifications
+  filter.prepare(spec);
+
+  //============================================================================
+  /* Old (deprecated) JUCE implementation*/
+  auto old_svf_filter = juce::dsp::StateVariableFilter::Filter<float>();
+  old_svf_filter.prepare(spec);
+  auto& old_svf_coeffs = *old_svf_filter.parameters;
+  old_svf_filter.parameters->setCutOffFrequency(kSampleRate, kCutoff);
+  old_svf_filter.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+
+  //============================================================================
+  /* Modern JUCE implementation */
+  auto svf_filter = juce::dsp::StateVariableTPTFilter<float>();
+  svf_filter.prepare(spec);
+  svf_filter.setCutoffFrequency(kCutoff);
+  svf_filter.setType(juce::dsp::StateVariableTPTFilter<float>::Type::lowpass);
 
   //============================================================================
   // Fill with values
@@ -53,5 +96,22 @@ int main() {
     phase += step;
   }
 
+  //============================================================================
+  // Update the SVF filters
+  old_svf_filter.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+  svf_filter.setType(juce::dsp::StateVariableTPTFilter<float>::Type::bandpass);
+
+  //============================================================================
+  // Process with the filter
+  juce::dsp::ProcessContextReplacing<float> context(audio_block);
+
+  //============================================================================
+  // Update the SVF filters
+  old_svf_filter.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+  svf_filter.setType(juce::dsp::StateVariableTPTFilter<float>::Type::highpass);
+
+  //============================================================================
   return 0;
 }
