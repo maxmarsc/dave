@@ -373,22 +373,22 @@ __2D (multichannel) containers__:
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.
 
-### Custom containers
+### Custom entities
 You can add support for custom containers using a bit of python scripting.
 
 To proceed you need to:
 1. Use the `dave inspect` debugger command to identify the name of the types you want to support
-2. Create a `~/.dave/custom_containers` folder. It should contains all your custom code
+2. Create a `~/.dave/custom` folder. It should contains all your custom code
 3. Add a new `Container` python subclass for each container you want to support (see below)
 4. Register the container class using `ContainerFactory().register()`
-5. Import your container in the `~/.dave/custom_containers/__init__.py` file 
+5. Import your container in the `~/.dave/custom/__init__.py` file 
 
 #### Examples
 Some examples are provided :
 - The [examples/custom_containers.cpp](examples/custom_containers.cpp) file contains some custom classes to add support to
-- The [examples/custom_containers]([examples/custom_containers) folder contains the python code to support these class
+- The [examples/custom]([examples/custom) folder contains the python code to support these class
 
-To test these examples, just copy (or symlink) the `examples/custom_containers` in
+To test these examples, just copy (or symlink) the `examples/custom` in
 the `.dave` folder.
 
 #### The `Container` class

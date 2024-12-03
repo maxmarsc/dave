@@ -48,6 +48,7 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayView`
 - `choc::buffer::ChannelArrayBuffer`
 
+**You can also add supports for your custom containers**
 
 ### Current support
 | Operating System  | Status       |
@@ -59,10 +60,10 @@ __2D (multichannel) containers__:
 | Debugger platform | GDB          | LLDB         |
 |-------------------|--------------|--------------|
 | CLI               | ✅           | ✅           |
-| VSCode            | ✅ (*) | ❓ need testing  |
-| CLion             | ✅ (*) | ✅ (*) |
-| XCode             | N/A      | ✅ (*)|
-| Visual Studio      | ❌           | ❌           |
+| VSCode            | ✅ (*)       | ❓ need testing  |
+| CLion             | ✅ (*)       | ✅ (*) |
+| XCode             | N/A          | ✅ (*)|
+| Visual Studio     | ❌           | ❌           |
 
 (*) -  DAVE is not able to react when you go up/down in
 the stack using the IDE ui.

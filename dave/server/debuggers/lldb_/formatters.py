@@ -1,7 +1,7 @@
 from typing import Dict, List, Set
 from dave.common.singleton import SingletonMeta
 from ...container import Container
-from ...container_factory import ContainerFactory
+from ...entity_factory import EntityFactory
 from .value import LldbValue
 import lldb
 import re
@@ -9,7 +9,7 @@ import re
 
 def summary_provider(valobj: lldb.SBValue, _) -> str:
     lldb_value = LldbValue(valobj, "")
-    container = ContainerFactory().build(lldb_value, lldb_value.typename(), "")
+    container = EntityFactory().build(lldb_value, lldb_value.typename(), "")
     try:
         return container.compute_summary()
     except RuntimeError:
@@ -27,13 +27,13 @@ class SyntheticChildrenProvider:
         # Once with the object itself
         # Then with a pointer to the object
         try:
-            self.__container = ContainerFactory().build(
+            self.__container = EntityFactory().build(
                 lldb_value, lldb_value.typename(), valobj.name
             )
         except TypeError:
             deref = valobj.Dereference()
             lldb_value = LldbValue(deref, deref.path)
-            self.__container = ContainerFactory().build(
+            self.__container = EntityFactory().build(
                 lldb_value, lldb_value.typename(), valobj.name
             )
 

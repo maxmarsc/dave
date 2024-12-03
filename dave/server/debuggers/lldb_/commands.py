@@ -2,15 +2,20 @@ import lldb
 import shlex
 
 from ...process import DaveProcess
-from ...container_factory import ContainerFactory, ContainerError
+from ...entity_factory import EntityFactory, EntityBuildError
 from dave.common.logger import Logger
 from .value import LldbValue
 import threading
 import time
 import os
 
+
 def xcode_detected() -> bool:
-    return os.environ.get("DYLD_FRAMEWORK_PATH", None) == '/Applications/Xcode.app/Contents/SharedFrameworks'
+    return (
+        os.environ.get("DYLD_FRAMEWORK_PATH", None)
+        == "/Applications/Xcode.app/Contents/SharedFrameworks"
+    )
+
 
 class StopHook:
     def __init__(self, target: lldb.SBTarget, extra_args: lldb.SBStructuredData, _):
@@ -140,9 +145,9 @@ class ShowCommand:
         lldb_value = LldbValue(var, varname)
         typename = lldb_value.typename()
         try:
-            container = ContainerFactory().build(lldb_value, typename, varname, dims)
+            container = EntityFactory().build(lldb_value, typename, varname, dims)
             Logger().info(f"Added {varname} : {container.id}")
-        except (ContainerError, TypeError) as e:
+        except (EntityBuildError, TypeError) as e:
             result.SetError(e.args[0])
             return
 

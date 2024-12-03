@@ -36,7 +36,7 @@ except ModuleNotFoundError as e:
 
     LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
     gdb.write("WARNING : [dave] module not found. Commands will not be available\n")
-    if LOGLEVEL == "debug":
+    if LOGLEVEL == "DEBUG":
         gdb.write(f"DEBUG : failed with {e}\n")
         gdb.write(f"DEBUG : sys.path : {sys.path}\n")
 end

@@ -12,7 +12,7 @@ from dave.common.logger import Logger
 # import gdb.types  # type: ignore
 
 from ...container import SampleType, Container2D
-from ...container_factory import ContainerFactory
+from ...entity_factor import EntityFactory
 from ...debuggers.value import AbstractValue
 
 from .std_base import StdVector, StdSpan
@@ -37,14 +37,14 @@ class CArrayAny2D(Container2D):
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
-        if not ContainerFactory().check_valid_1D(nested):
+        if not EntityFactory().check_valid_simple(nested):
             raise TypeError(
                 f"CArrayAny2D could not parse nested type {nested} as a valid container type"
             )
 
         self.__size = int(re_match.group(2))
         self.__nested_containers = [
-            ContainerFactory().build_1D(
+            EntityFactory().build_simple(
                 dbg_value[i],
                 dbg_value[i].typename(),
                 "",
@@ -128,7 +128,7 @@ class Pointer2D(Container2D):
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
-        if not ContainerFactory().check_valid_1D(nested):
+        if not EntityFactory().check_valid_simple(nested):
             raise TypeError(
                 f"Pointer2D could not parse nested type {nested} as a valid container type"
             )
@@ -152,7 +152,7 @@ class Pointer2D(Container2D):
 
     def __update_nested(self):
         self.__nested_containers = [
-            ContainerFactory().build_1D(
+            EntityFactory().build_simple(
                 self._value[i],
                 self._value[i].typename(),
                 "",
@@ -198,7 +198,7 @@ class StdArray2D(Container2D):
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
-        if not ContainerFactory().check_valid_1D(nested):
+        if not EntityFactory().check_valid_simple(nested):
             raise TypeError(
                 f"StdArray2D could not parse nested type {nested} as a valid container type"
             )
@@ -206,7 +206,7 @@ class StdArray2D(Container2D):
         self.__size = int(re_match.group(2))
         self._value = dbg_value
         self.__nested_containers = [
-            ContainerFactory().build_1D(
+            EntityFactory().build_simple(
                 self.__data_ptr_value()[i],
                 self.__data_ptr_value()[i].typename(),
                 "",
@@ -264,7 +264,7 @@ class StdVector2D(Container2D):
 
         # Check if contains a nested valid 1D container
         nested = parsed_types[1]
-        if not ContainerFactory().check_valid_1D(nested):
+        if not EntityFactory().check_valid_simple(nested):
             raise TypeError(
                 f"StdVector2D could not parse nested type {nested} as a valid container type"
             )
@@ -281,7 +281,7 @@ class StdVector2D(Container2D):
 
     def __update_nested(self):
         self.__nested_containers = [
-            ContainerFactory().build_1D(
+            EntityFactory().build_simple(
                 self.__data_ptr_value()[i],
                 self.__data_ptr_value()[i].typename(),
                 "",
@@ -341,7 +341,7 @@ class StdSpan2D(Container2D):
 
         # Check if contains a nested valid 1D container
         nested = re_match.group(1)
-        if not ContainerFactory().check_valid_1D(nested):
+        if not EntityFactory().check_valid_simple(nested):
             raise TypeError(
                 f"StdSpan2D could not parse nested type {nested} as a valid container type"
             )
@@ -358,7 +358,7 @@ class StdSpan2D(Container2D):
 
     def __update_nested(self):
         self.__nested_containers = [
-            ContainerFactory().build_1D(
+            EntityFactory().build_simple(
                 self.__data_ptr_value()[i],
                 self.__data_ptr_value()[i].typename(),
                 "",

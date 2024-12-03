@@ -4,10 +4,12 @@ from typing import Callable, Dict, List, Tuple
 import tkinter as tk
 import customtkinter as ctk
 
-from dave.common.data_layout import DataLayout
 from dave.common.logger import Logger
-from .container_model import ContainerModel
-from .view_setting import FloatSetting, IntSetting, Setting, StringSetting
+
+from .entity.entity_view import EntityView
+
+# from .container.container_model import ContainerModel
+from .entity.entity_model import EntityModel
 from .tooltip import Tooltip
 from .global_settings import GlobalSettings
 
@@ -16,19 +18,19 @@ from .global_settings import GlobalSettings
 class SettingsTab:
     """
     The settings tab contains a frame for the general settings, then a frame of
-    settings for each container
+    settings for each entity
     """
 
     def __init__(
         self,
         master,
-        container_models: Dict[int, ContainerModel],
+        entity_models: Dict[int, EntityModel],
         global_settings: GlobalSettings,
     ):
         self.__master = master
-        self.__container_models = container_models
+        self.__entity_models = entity_models
         self.__global_settings = global_settings
-        self.__containers_settings: Dict[int, ContainerSettingsFrame] = dict()
+        self.__entity_settings: Dict[int, EntitySettings] = dict()
         self.__empty_label = None
         self.__bold_font = ctk.CTkFont(size=18, weight="bold")
         self.__global_settings_frame = GlobalSettingsFrame(
@@ -53,17 +55,17 @@ class SettingsTab:
         )
         self.update_widgets()
 
-    def add_container(self, container: ContainerModel):
-        assert container.id not in self.__containers_settings
-        assert container.id in self.__container_models
-        assert container.in_scope
-        self.__containers_settings[container.id] = ContainerSettingsFrame(
+    def add_model(self, model: EntityModel):
+        assert model.id not in self.__entity_settings
+        assert model.id in self.__entity_models
+        assert model.in_scope
+        self.__entity_settings[model.id] = EntitySettings(
             self.__container_settings_scrollable_frame,
-            container,
+            model,
             self.__global_settings,
         )
 
-    def delete_container(self, id: int):
+    def delete_model(self, id: int):
         """
         Calling this will remove the ContainerSettingsFrame from the given container.
 
@@ -72,48 +74,48 @@ class SettingsTab:
         """
         # Warning : This will mark the container for deletion, this should
         # not be called when just being out of scope
-        if id in self.__containers_settings:
-            self.__containers_settings[id].destroy()
-            del self.__containers_settings[id]
+        if id in self.__entity_settings:
+            self.__entity_settings[id].destroy()
+            del self.__entity_settings[id]
 
     def update_widgets(self):
-        for id, container in self.__container_models.items():
-            if id not in self.__containers_settings and container.in_scope:
+        for id, container in self.__entity_models.items():
+            if id not in self.__entity_settings and container.in_scope:
                 # Back in scope, let's add it
-                self.add_container(container)
-            elif id in self.__containers_settings and not container.in_scope:
+                self.add_model(container)
+            elif id in self.__entity_settings and not container.in_scope:
                 # Left the scope, let's remove it
-                self.__containers_settings[id].destroy()
-                del self.__containers_settings[id]
-            elif id in self.__containers_settings and container.in_scope:
+                self.__entity_settings[id].destroy()
+                del self.__entity_settings[id]
+            elif id in self.__entity_settings and container.in_scope:
                 # Still in scope, let's update it
-                self.__containers_settings[id].update_widgets()
+                self.__entity_settings[id].update_widgets()
 
-        if len(self.__containers_settings) == 0 and self.__empty_label is None:
+        if len(self.__entity_settings) == 0 and self.__empty_label is None:
             self.__empty_label = ctk.CTkLabel(
                 self.__master, text="No container in scope", font=self.__bold_font
             )
             self.__empty_label.pack(anchor=tk.CENTER, expand=True)
-        elif len(self.__containers_settings) != 0 and self.__empty_label is not None:
+        elif len(self.__entity_settings) != 0 and self.__empty_label is not None:
             self.__empty_label.destroy()
             self.__empty_label = None
 
 
 # ========================  ContainerSettingsFrame  =============================
-class ContainerSettingsFrame(ctk.CTkFrame):
+class EntitySettings(ctk.CTkFrame):
     """
-    Holds all the settings of a container (not the actions buttons)
+    Holds all the settings of an entity
 
     This will always contains, left-to-right :
     - Layout selector
-    - Channel selector/label
+    - Entity-specific settings
     - View type selector
     - View type settings
     - general settings (samplerate, delete button...)
     """
 
     def __init__(
-        self, master: tk.Misc, model: ContainerModel, global_settings: GlobalSettings
+        self, master: tk.Misc, model: EntityModel, global_settings: GlobalSettings
     ) -> None:
         super().__init__(
             master,
@@ -157,11 +159,11 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         Tooltip(self.__layout_menu, text="Select data layout of the container")
         self.__layout_menu.grid(row=1, column=0, sticky="w", padx=(5, 5))
 
-        # Optionnal channel menu
-        self.__channel_settings = ChannelSettingsFrame(
+        # Entity-specific settings frame
+        self.__entity_settings_frame = self.__model.settings_frame_class()(
             self.__scrollable_frame, self.__model
         )
-        self.__channel_settings.grid(row=1, column=1, sticky="w")
+        self.__entity_settings_frame.grid(row=1, column=1, sticky="w")
 
         # View selection
         self.__view_menu = None
@@ -201,7 +203,7 @@ class ContainerSettingsFrame(ctk.CTkFrame):
 
     def layout_var_callback(self, *_):
         # Update the model
-        self.__model.update_layout(DataLayout(self.__layout_var.get()))
+        self.__model.update_layout(self.__layout_var.get())
 
         # Trigger a redraw
         self.update_widgets()
@@ -220,7 +222,7 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         )
 
         # Update the channel menu
-        self.__channel_settings.update_widgets()
+        self.__entity_settings_frame.update_widgets()
 
         # Update the view selection
         if self.__view_var.get() not in self.__model.possible_views:
@@ -231,101 +233,10 @@ class ContainerSettingsFrame(ctk.CTkFrame):
         self.__view_settings_frame.update_widgets()
 
 
-# ===========================  ChannelSettingsFrame  ===========================
-class ChannelSettingsFrame(ctk.CTkFrame):
-    """
-    Contains all the channels settings of a container
-    """
-
-    def __init__(self, master: tk.Misc, model: ContainerModel):
-        super().__init__(master, fg_color="transparent")
-        self.__model = model
-        self.__font = ctk.CTkFont(size=15)
-
-        # Number of channels
-        self.__channel_var = tk.StringVar(value=str(self.__model.channels))
-        self.__channel_label = ctk.CTkLabel(self, text=f"channels :", font=self.__font)
-        self.__channel_entry = ctk.CTkEntry(
-            self,
-            textvariable=self.__channel_var,
-            width=40,
-            placeholder_text=str(self.__model.channels),
-            state=("normal" if self.channel_entry_enabled() else "disabled"),
-        )
-        self.__channel_entry.bind("<Return>", self.channel_var_callback)
-        self.__channel_label.pack(side=tk.LEFT, padx=(5, 5))
-        self.__channel_entry.pack(side=tk.LEFT, padx=(5, 5))
-
-        # Interleaved switch
-        self.__channel_interleaved_var = tk.BooleanVar(value=self.__model.interleaved)
-        self.__channel_interleaved_var.trace_add("write", self.interleaved_var_callback)
-        self.__channel_interleaved_switch = ctk.CTkSwitch(
-            self,
-            text="Interleaved",
-            font=self.__font,
-            variable=self.__channel_interleaved_var,
-            onvalue=True,
-            offvalue=False,
-            state=("normal" if self.interleaved_enabled() else "disabled"),
-        )
-        self.__channel_interleaved_switch.pack(side=tk.LEFT, padx=(5, 5))
-
-        # Mid/Side switch
-        self.__channel_midside_var = tk.BooleanVar(value=self.__model.mid_side)
-        self.__channel_midside_var.trace_add("write", self.midside_var_callback)
-        self.__channel_mid_side_switch = ctk.CTkSwitch(
-            self,
-            text="Mid/Side",
-            font=self.__font,
-            variable=self.__channel_midside_var,
-            onvalue=True,
-            offvalue=False,
-            state="normal" if self.__model.channels == 2 else "disabled",
-        )
-        self.__channel_mid_side_switch.pack(side=tk.LEFT, padx=(5, 5))
-
-    def interleaved_var_callback(self, *_):
-        self.__model.interleaved = self.__channel_interleaved_var.get()
-
-    def midside_var_callback(self, *_):
-        self.__model.mid_side = self.__channel_midside_var.get()
-
-    def interleaved_enabled(self) -> bool:
-        return not self.__model.is_channel_layout_fixed() and self.__model.channels != 1
-
-    def channel_entry_enabled(self) -> bool:
-        return (
-            self.__model.is_layout_2D() and not self.__model.is_channel_layout_fixed()
-        )
-
-    def channel_var_callback(self, *_):
-        new_val = self.__channel_var.get()
-        if not self.__model.validate_and_update_channel(new_val):
-            Logger().warning(
-                f"{new_val} is not a valid channel number for this container"
-            )
-            self.__channel_var.set(str(self.__model.channels))
-
-    def update_widgets(self):
-        # Update channel selector
-        self.__channel_entry.configure(
-            state=("normal" if self.channel_entry_enabled() else "disabled"),
-        )
-
-        # Update interleaved switch
-        self.__channel_interleaved_switch.configure(
-            state=("normal" if self.interleaved_enabled() else "disabled")
-        )
-        # Update mid/side switch
-        self.__channel_mid_side_switch.configure(
-            state="normal" if self.__model.channels == 2 else "disabled"
-        )
-
-
 # ===========================  GeneralSettingsFrame  ===========================
 class GeneralSettingsFrame(ctk.CTkFrame):
     def __init__(
-        self, master: tk.Misc, model: ContainerModel, global_settings: GlobalSettings
+        self, master: tk.Misc, model: EntityModel, global_settings: GlobalSettings
     ):
         super().__init__(master, fg_color="transparent")
         self.__model = model
@@ -448,34 +359,34 @@ class ViewSettingsFrame(ctk.CTkFrame):
     selected view type
     """
 
-    def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
+    def __init__(self, master: tk.Misc, model: EntityModel) -> None:
         super().__init__(master, height=28, fg_color="transparent")
-        self.__container = container
-        self.__container_suffix = "_" + str(container.id)
-        self.__vars: Dict[str, Tuple[tk.Variable, Setting]] = dict()
+        self.__model = model
+        self.__entity_suffix = "_" + str(model.id)
+        self.__vars: Dict[str, Tuple[tk.Variable, EntityView.Setting]] = dict()
         self.__widgets: List[tk.Misc] = list()
         self.__font = ctk.CTkFont(size=15)
         self.__width = 0
-        self.__crt_view_type = self.__container.selected_view
+        self.__crt_view_type = self.__model.selected_view
         self.__create_selectors()
 
     def __create_selectors(self):
         assert len(self.__widgets) == 0
         self.__width = 0
-        for setting in self.__container.view_settings:
-            if isinstance(setting, StringSetting):
+        for setting in self.__model.view_settings:
+            if isinstance(setting, EntityView.StringSetting):
                 self.create_string_selector(setting)
-            elif isinstance(setting, IntSetting):
+            elif isinstance(setting, EntityView.IntSetting):
                 self.create_int_selector(setting)
-            elif isinstance(setting, FloatSetting):
+            elif isinstance(setting, EntityView.FloatSetting):
                 self.create_float_selector(setting)
             else:
                 raise NotImplementedError()
         self.configure(width=self.__width)
 
-    def create_string_selector(self, setting: StringSetting):
+    def create_string_selector(self, setting: EntityView.StringSetting):
         # Create the StringVar to keep updated of changes
-        var_name = setting.name + self.__container_suffix
+        var_name = setting.name + self.__entity_suffix
         var = tk.StringVar(value=setting.value, name=var_name)
         self.__vars[var_name] = (var, setting)
         var.trace_add("write", self.update_setting)
@@ -494,9 +405,9 @@ class ViewSettingsFrame(ctk.CTkFrame):
         self.__widgets.append(label)
         self.__widgets.append(menu)
 
-    def create_float_selector(self, setting: FloatSetting):
+    def create_float_selector(self, setting: EntityView.FloatSetting):
         # Create the Var to keep the entry value before validating it
-        var_name = setting.name + self.__container_suffix
+        var_name = setting.name + self.__entity_suffix
         var = tk.StringVar(value=str(setting.value), name=var_name)
         self.__vars[var_name] = (var, setting)
         # Create the entry and the label
@@ -517,9 +428,9 @@ class ViewSettingsFrame(ctk.CTkFrame):
         self.__widgets.append(label)
         self.__widgets.append(entry)
 
-    def create_int_selector(self, setting: IntSetting):
+    def create_int_selector(self, setting: EntityView.IntSetting):
         # Create the Var to keep the entry value before validating it
-        var_name = setting.name + self.__container_suffix
+        var_name = setting.name + self.__entity_suffix
         var = tk.StringVar(value=str(setting.value), name=var_name)
         self.__vars[var_name] = (var, setting)
         # Create the entry and the label
@@ -542,7 +453,9 @@ class ViewSettingsFrame(ctk.CTkFrame):
 
     def entry_var_callback(self, varname, _):
         var, setting = self.__vars[varname]
-        assert isinstance(setting, FloatSetting) or isinstance(setting, IntSetting)
+        assert isinstance(setting, EntityView.FloatSetting) or isinstance(
+            setting, EntityView.IntSetting
+        )
         try:
             if setting.validate(setting.parse_tkvar(var)):
                 # New input was validated
@@ -563,18 +476,16 @@ class ViewSettingsFrame(ctk.CTkFrame):
         by validation
         """
         assert var_name in self.__vars
-        setting_name = var_name[: -len(self.__container_suffix)]
+        setting_name = var_name[: -len(self.__entity_suffix)]
         var, setting = self.__vars[var_name]
         try:
-            self.__container.update_view_settings(
-                setting_name, setting.parse_tkvar(var)
-            )
+            self.__model.update_view_settings(setting_name, setting.parse_tkvar(var))
         except tk.TclError:
             # Might fail when tk update the var with an empty string
             pass
 
     def update_widgets(self):
-        if self.__crt_view_type != self.__container.selected_view:
+        if self.__crt_view_type != self.__model.selected_view:
             # Delete old widgets & vars
             for widget in self.__widgets:
                 widget.destroy()
@@ -588,5 +499,5 @@ class ViewSettingsFrame(ctk.CTkFrame):
             self.__vars.clear()
 
             # Recreate new widgets
-            self.__crt_view_type = self.__container.selected_view
+            self.__crt_view_type = self.__model.selected_view
             self.__create_selectors()

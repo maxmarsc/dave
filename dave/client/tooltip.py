@@ -36,7 +36,7 @@ class Tooltip:
 
     def __init__(
         self,
-        widget,
+        widget: tk.Misc,
         *,
         bg=ctk.ThemeManager.theme["CTkFrame"]["fg_color"],
         pad=(5, 3, 5, 3),

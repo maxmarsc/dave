@@ -3,7 +3,7 @@ from typing import Any, Union, List
 import numpy as np
 from ...process import DaveProcess
 
-from ...container_factory import ContainerFactory
+from ...entity_factor import EntityFactory
 
 
 def show(var: Any, name: str = "", cpx_as_2: bool = False):
@@ -32,7 +32,7 @@ def show(var: Any, name: str = "", cpx_as_2: bool = False):
     if name == "":
         name = typename
 
-    container = ContainerFactory().build(var, typename, name, dims)
+    container = EntityFactory().build(var, typename, name, dims)
     if not DaveProcess().is_alive():
         DaveProcess().start(False)
     DaveProcess().add_to_model(container)

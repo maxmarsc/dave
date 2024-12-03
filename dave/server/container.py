@@ -1,20 +1,19 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import re
 from typing import Any, Callable, List, Tuple, Type, Union
-from enum import Enum
 import struct
 import cmath
 
-from dave.common.data_layout import DataLayout
+# from dave.common.data_layout import RawContainer.Layout
 from dave.common.sample_type import SampleType
 from dave.common.raw_container import RawContainer
 
 from .debuggers.value import AbstractValue
+from .entity import Entity
 
 
-class Container(ABC):
+class Container(Entity):
     """
     The base class for every audio container class dave can support.
 
@@ -22,38 +21,12 @@ class Container(ABC):
     either Container1D or Container2D
     """
 
-    __count = -1
-
-    @staticmethod
-    def __new_id() -> int:
-        Container.__count += 1
-        return Container.__count
-
     def __init__(
         self, dbg_value: Any, name: str, data_type: SampleType, interleaved: bool
     ) -> None:
-        self._value = dbg_value
-        self._name = name
+        super().__init__(dbg_value, name)
         self.__interleaved = interleaved
         self.__type = data_type
-        self.__id = Container.__new_id()
-
-    @property
-    def name(self) -> str:
-        """
-        The variable name of the audio container in the debugged process
-        """
-        return self._name
-
-    @property
-    def in_scope(self) -> bool:
-        if isinstance(self._value, AbstractValue):
-            return self._value.in_scope()
-        return True
-
-    @property
-    def id(self) -> int:
-        return self.__id
 
     def compute_summary(self) -> str:
         shape = self.shape()
@@ -64,17 +37,6 @@ class Container(ABC):
         fmt = self.float_type.struct_name()
 
         if self.float_type.is_complex():
-            # min_mag = abs(complex(*struct.unpack(fmt, samples_bytes[:sample_bytes])))
-            # max_mag = min_mag
-
-            # for i in range(1, channels * samples):
-            #     sample_bytes = samples_bytes[
-            #         i * samples_bytes : (i + 1) * samples_bytes
-            #     ]
-            #     magnitude = abs(complex(*struct.unpack(fmt, sample_bytes)))
-            #     min_mag = min(magnitude, min_mag)
-            #     max_mag = max(magnitude, max_mag)
-
             return f"{channels} channels {samples} samples (complex data)"
         else:
             min_amp = struct.unpack(fmt, samples_bytes[:byte_size])[0]
@@ -172,16 +134,17 @@ class Container(ABC):
 
     def as_raw(self) -> RawContainer:
         return RawContainer(
+            # base
             self.id,
-            self.read_from_debugger(),
             self.name,
+            self.default_layout(),
+            self.available_data_layouts(),
+            # container
+            self.read_from_debugger(),
             self.shape(),
             self.dimensions_fixed(),
             self.__interleaved,
             self.float_type,
-            # type(self),
-            self.default_layout(),
-            self.available_data_layouts(),
         )
 
     @property
@@ -198,7 +161,7 @@ class Container(ABC):
 
     @classmethod
     @abstractmethod
-    def available_data_layouts(cls) -> List[DataLayout]:
+    def available_data_layouts(cls) -> List[RawContainer.Layout]:
         pass
 
     @staticmethod
@@ -211,31 +174,12 @@ class Container(ABC):
         pass
 
     @abstractmethod
-    def default_layout() -> DataLayout:
+    def default_layout() -> RawContainer.Layout:
         pass
 
     @abstractmethod
     def read_from_debugger(self) -> bytearray:
         pass
-
-    @classmethod
-    @abstractmethod
-    def typename_matcher(cls) -> Union[re.Pattern, Callable[[str], bool]]:
-        pass
-
-    @classmethod
-    def register(cls):
-        """
-        Register this container class in DAVE
-
-        1. Register the class to be available in the ContainerFactory
-        2. If the container should have a sparkline summary then it is registered
-        in the debugger
-
-        """
-        from .container_factory import ContainerFactory
-
-        ContainerFactory().register(cls)
 
     @staticmethod
     def formatter_compatible():
@@ -254,29 +198,33 @@ class Container1D(Container):
     def shape(self) -> Tuple[int, int]:
         return (1, self.size)
 
-    def default_layout(self) -> DataLayout:
+    def default_layout(self) -> RawContainer.Layout:
         if self.float_type.is_complex():
-            return DataLayout.CPX_1D
+            return RawContainer.Layout.CPX_1D
         else:
-            return DataLayout.REAL_1D
+            return RawContainer.Layout.REAL_1D
 
     @classmethod
-    def available_data_layouts(cls) -> List[DataLayout]:
+    def available_data_layouts(cls) -> List[RawContainer.Layout]:
         if not cls.dimensions_fixed():
             return [
-                DataLayout.CPX_1D,
-                DataLayout.CPX_2D,
-                DataLayout.REAL_1D,
-                DataLayout.REAL_2D,
+                RawContainer.Layout.CPX_1D,
+                RawContainer.Layout.CPX_2D,
+                RawContainer.Layout.REAL_1D,
+                RawContainer.Layout.REAL_2D,
             ]
         else:
             return [
-                DataLayout.CPX_1D,
-                DataLayout.REAL_1D,
+                RawContainer.Layout.CPX_1D,
+                RawContainer.Layout.REAL_1D,
             ]
 
     @staticmethod
     def dimensions_fixed() -> bool:
+        return False
+
+    @staticmethod
+    def is_nested() -> bool:
         return False
 
 
@@ -290,19 +238,23 @@ class Container2D(Container):
     ) -> None:
         super().__init__(dbg_value, name, data_type, interleaved)
 
-    def default_layout(self) -> DataLayout:
+    def default_layout(self) -> RawContainer.Layout:
         if self.float_type.is_complex():
-            return DataLayout.CPX_2D
+            return RawContainer.Layout.CPX_2D
         else:
-            return DataLayout.REAL_2D
+            return RawContainer.Layout.REAL_2D
 
     @classmethod
-    def available_data_layouts(cls) -> List[DataLayout]:
+    def available_data_layouts(cls) -> List[RawContainer.Layout]:
         return [
-            DataLayout.CPX_2D,
-            DataLayout.REAL_2D,
+            RawContainer.Layout.CPX_2D,
+            RawContainer.Layout.REAL_2D,
         ]
 
     @staticmethod
     def dimensions_fixed() -> bool:
+        return True
+
+    @staticmethod
+    def is_nested() -> bool:
         return True

@@ -4,51 +4,49 @@ from typing import Any, List, Dict, Set, Union
 from dave.common.logger import Logger
 
 from dave.common.singleton import SingletonMeta
+from .entity import Entity
 from .container import Container, Container1D, Container2D
 from .debuggers.value import AbstractValue
 
 
-class ContainerError(Exception):
+class EntityBuildError(Exception):
     pass
 
 
-class ContainerFactory(metaclass=SingletonMeta):
+class EntityFactory(metaclass=SingletonMeta):
     def __init__(self) -> None:
-        self.__1D_containers: Set[Container1D] = set()
-        self.__2D_containers: Set[Container2D] = set()
+        self.__simple_entity_classes: Set[type[Entity]] = set()
+        self.__nested_entity_classes: Set[type[Entity]] = set()
 
-    def get_containers_cls_set(self) -> Set[Container]:
-        return self.__1D_containers | self.__2D_containers
+    def get_containers_cls_set(self) -> Set[type[Entity]]:
+        return self.__simple_entity_classes | self.__nested_entity_classes
 
     def register(self, cls):
         """
         Every new container class should register itself to be available
         at debugger runtime.
         """
+        assert issubclass(cls, Entity)
         try:
-            if issubclass(cls, Container1D):
-                if cls in self.__1D_containers:
+            if not cls.is_nested():
+                if cls in self.__simple_entity_classes:
                     raise KeyError
-                self.__1D_containers.add(cls)
-            elif issubclass(cls, Container2D):
-                if cls in self.__2D_containers:
-                    raise KeyError
-                self.__2D_containers.add(cls)
+                self.__simple_entity_classes.add(cls)
             else:
-                raise ContainerError(
-                    f"Error : {cls} is not a valid subclass of Container"
-                )
+                if cls in self.__nested_entity_classes:
+                    raise KeyError
+                self.__nested_entity_classes.add(cls)
         except KeyError:
-            raise ContainerError(
+            raise EntityBuildError(
                 f"Error : {cls} was already registered in the container factory"
             )
 
-    def check_valid_1D(self, typename: str) -> bool:
+    def check_valid_simple(self, typename: str) -> bool:
         """
-        Returns true if the given typename matches a registered 1D container class
+        Returns true if the given typename matches a registered simple container class
         """
-        for container_1D_cls in self.__1D_containers:
-            pattern = container_1D_cls.typename_matcher()
+        for simple_entity_cls in self.__simple_entity_classes:
+            pattern = simple_entity_cls.typename_matcher()
             if (
                 isinstance(pattern, re.Pattern) and pattern.match(typename) is not None
             ) or (callable(pattern) and pattern(typename)):
@@ -56,7 +54,7 @@ class ContainerFactory(metaclass=SingletonMeta):
 
         return False
 
-    def build_1D(
+    def build_simple(
         self,
         dbg_value: AbstractValue,
         typename: str,
@@ -64,7 +62,7 @@ class ContainerFactory(metaclass=SingletonMeta):
         dims: List[int] = [],
     ) -> Container1D:
         """
-        Try to build a 1D Container object from a debugger value
+        Try to build a simple Container object from a debugger value
 
         Parameters
         ----------
@@ -88,14 +86,14 @@ class ContainerFactory(metaclass=SingletonMeta):
         ContainerError
             If no registered class matched the typename
         """
-        for container_1D_cls in self.__1D_containers:
+        for container_1D_cls in self.__simple_entity_classes:
             new_container = self.__build_if_match(
                 container_1D_cls, dbg_value, typename, varname, dims
             )
             if new_container is not None:
                 return new_container
 
-        raise ContainerError(
+        raise EntityBuildError(
             f"Error : {typename} did not match any registered 1D container class"
         )
 
@@ -135,34 +133,34 @@ class ContainerFactory(metaclass=SingletonMeta):
 
         # First we check if it is a 1D container
         try:
-            return self.build_1D(dbg_value, typename, varname, dims)
-        except (ContainerError, TypeError):
+            return self.build_simple(dbg_value, typename, varname, dims)
+        except (EntityBuildError, TypeError):
             Logger().debug(f"{typename} is not a valid 1D container")
             pass
 
         # Then we check for 2D containers
-        for container_2D_cls in self.__2D_containers:
-            new_container = self.__build_if_match(
-                container_2D_cls, dbg_value, typename, varname, dims
+        for nested_entity in self.__nested_entity_classes:
+            new_entity = self.__build_if_match(
+                nested_entity, dbg_value, typename, varname, dims
             )
-            if new_container is not None:
-                return new_container
+            if new_entity is not None:
+                return new_entity
 
-        raise ContainerError(
+        raise EntityBuildError(
             f"Error : {typename} did not match any registered container class"
         )
 
     def __build_if_match(
         self,
-        container_cls: Container,
+        entity_cls: Entity,
         dbg_value: Any,
         typename: str,
         varname: str,
         dims: List[int],
     ):
-        pattern = container_cls.typename_matcher()
+        pattern = entity_cls.typename_matcher()
         if (
             isinstance(pattern, re.Pattern) and pattern.match(typename) is not None
         ) or (callable(pattern) and pattern(typename)):
-            return container_cls(dbg_value, varname, dims)
+            return entity_cls(dbg_value, varname, dims)
         return None

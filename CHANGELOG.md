@@ -1,6 +1,9 @@
 # `main`
 ## Added
+- Containers are now a specific type of audio Entity, this brings the possibility
+to support other audio related structure in memory like filters
 ## Changed
+- Renamed `custom_containers` to `custom` to support any type of Entity
 ## Fixed
 - Fixed a bug in dev mode : `dave` could not be loaded when installed in editable mode
 

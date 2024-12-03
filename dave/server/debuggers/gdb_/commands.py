@@ -6,7 +6,7 @@ import time
 
 from dave.common.singleton import SingletonMeta
 from dave.server.process import DaveProcess
-from dave.server.container_factory import ContainerFactory, ContainerError
+from dave.server.entity_factory import EntityFactory, EntityBuildError
 from dave.common.logger import Logger
 
 from .value import GdbValue
@@ -140,9 +140,9 @@ The following subcommands are supported:
         var = GdbValue(gdb.parse_and_eval(varname), varname)
         typename = var.typename()
         try:
-            container = ContainerFactory().build(var, typename, varname, dims)
+            container = EntityFactory().build(var, typename, varname, dims)
             Logger().info(f"Added {varname} : {container.id}")
-        except (ContainerError, TypeError) as e:
+        except (EntityBuildError, TypeError) as e:
             raise gdb.GdbError(e.args[0])
         if not DaveProcess().is_alive():
             DaveProcess().start()

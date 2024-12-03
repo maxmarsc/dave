@@ -11,9 +11,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 from dave.common.logger import Logger
-from .container_model import ContainerModel
-from .tooltip import Tooltip
+
+from .entity.entity_model import EntityModel
 from .global_settings import GlobalSettings
+from .side_panel import SidePanel
 
 
 # ===========================  AudioViewsTab  ==================================
@@ -21,17 +22,17 @@ class AudioViewsTab:
     """
     The Views tab of the dave GUI
 
-    This will contain audio views for each containers, concat/freeze switches,
+    This will contain audio views for each entity, concat/freeze switches,
     the matplotlib toolbar...
     """
 
     def __init__(
         self,
-        master,
-        container_models: Dict[int, ContainerModel],
+        master: tk.Misc,
+        entity_models: Dict[int, EntityModel],
         global_settings: GlobalSettings,
     ):
-        self.__container_models = container_models
+        self.__container_models = entity_models
         self.__global_settings = global_settings
         self.__master = master
 
@@ -54,7 +55,7 @@ class AudioViewsTab:
         self.__prev_canvas_dimensions = (1, 1)
 
         # Containers Actions
-        self.__containers_actions_buttons_frame = ContainersActionsGridFrame(
+        self.__containers_actions_buttons_frame = SidePanels(
             self.__central_frame_scrollable, self.__container_models
         )
 
@@ -201,197 +202,56 @@ class AudioViewsTab:
 
                 axes[0].yaxis.set_label_position("right")
                 axes[0].set_ylabel(title, rotation=270, labelpad=10, va="bottom")
-                model.draw_audio_view(axes, channel, self.__global_settings.samplerate)
+                model.draw_view(
+                    axes, self.__global_settings.samplerate, channel=channel
+                )
         self.__canvas.draw_idle()
         self.on_resize(None)
 
 
 # =======================  ContainersActionsGridFrame  =========================
-class ContainersActionsGridFrame(ctk.CTkFrame):
+class SidePanels(ctk.CTkFrame):
     """
-    Holds the ActionButtonsFrame for every (in scope) container
+    Holds the side panel for each (in-scope) entity
     """
 
-    def __init__(self, master: tk.Misc, container_models: Dict[int, ContainerModel]):
+    def __init__(self, master: tk.Misc, entity_models: Dict[int, EntityModel]):
         super().__init__(master, width=60, corner_radius=0, fg_color="transparent")
-        self.__container_models = container_models
-        self.__container_actions_frame: Dict[int, ContainerActionsFrame] = dict()
+        self.__entity_models = entity_models
+        self.__side_panels: Dict[int, SidePanel] = dict()
         self.grid_columnconfigure(0, weight=1)
 
     def update_widgets(self):
         # First delete old occurences
         to_delete = []
-        for id, button_frame in self.__container_actions_frame.items():
-            if (
-                id not in self.__container_models
-                or not self.__container_models[id].in_scope
-            ):
+        for id, button_frame in self.__side_panels.items():
+            if id not in self.__entity_models or not self.__entity_models[id].in_scope:
                 # Reset the weight of its grid
                 self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
                 button_frame.destroy()
                 to_delete.append(id)
 
         for id in to_delete:
-            del self.__container_actions_frame[id]
+            del self.__side_panels[id]
 
         # Then update the position of the left occurences
-        for i, button_frame in enumerate(self.__container_actions_frame.values()):
+        for i, button_frame in enumerate(self.__side_panels.values()):
             # First reset its old row to weight 0
             self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
             button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 5))
             button_frame.update_widgets()
 
         # Then add new containers
-        for id, container in self.__container_models.items():
-            if id not in self.__container_actions_frame and container.in_scope:
-                idx = len(self.__container_actions_frame)
-                self.__container_actions_frame[id] = ContainerActionsFrame(
-                    self, container
-                )
+        for id, container in self.__entity_models.items():
+            if id not in self.__side_panels and container.in_scope:
+                idx = len(self.__side_panels)
+                self.__side_panels[id] = SidePanel(self, container)
                 # Place the new button frame
-                self.__container_actions_frame[id].grid(
-                    row=idx, column=0, sticky="ew", padx=(5, 0)
-                )
+                self.__side_panels[id].grid(row=idx, column=0, sticky="ew", padx=(5, 0))
 
         self.__update_row_weights()
 
     def __update_row_weights(self):
-        for i, id in enumerate(self.__container_actions_frame):
-            weight = self.__container_models[id].channels
+        for i, id in enumerate(self.__side_panels):
+            weight = self.__entity_models[id].channels
             self.grid_rowconfigure(index=i, weight=weight)
-
-
-# =========================  ContainerActionsFrame  ============================
-class ContainerActionsFrame(ctk.CTkFrame):
-    """
-    Holds the action switches (Freeze, Concatenate ...) of a single container
-    """
-
-    def __init__(self, master: tk.Misc, container: ContainerModel) -> None:
-        # self.__master = master
-        super().__init__(
-            master,
-            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
-            # fg_color="orange",
-            height=200,
-        )
-        self.__container = container
-        self.__freeze_var = tk.BooleanVar(value=self.__container.frozen)
-        self.__concat_var = tk.BooleanVar(value=self.__container.concat)
-        self.__freeze_var.trace_add("write", self.freeze_button_clicked)
-        self.__concat_var.trace_add("write", self.concat_button_clicked)
-        self.__font = ctk.CTkFont(size=15)
-
-        # Create labels
-        self.__name_label = ctk.CTkLabel(
-            self, text=self.__container.variable_name, font=self.__font
-        )
-        self.__channels_label = ctk.CTkLabel(
-            self, text=f"channels: {self.__container.channels}", height=20
-        )
-        self.__samples_label = ctk.CTkLabel(
-            self, text=f"samples: {self.__container.samples}", height=20
-        )
-        self.__values_label = ctk.CTkLabel(
-            self,
-            text=f"NaN: {self.__container.nan} Inf: {self.__container.inf}",
-            height=20,
-        )
-
-        # Create buttons
-        self.__freeze_button = ctk.CTkSwitch(
-            self,
-            text="Freeze",
-            variable=self.__freeze_var,
-            onvalue=True,
-            offvalue=False,
-            font=self.__font,
-        )
-        self.__concat_button = ctk.CTkSwitch(
-            self,
-            text="Concat",
-            variable=self.__concat_var,
-            onvalue=True,
-            offvalue=False,
-            font=self.__font,
-        )
-        self.__save_button = ctk.CTkButton(
-            self,
-            text="Save",
-            width=120,
-            command=self.__save_button_clicked,
-            font=self.__font,
-        )
-
-        # Create tooltips
-        Tooltip(self.__save_button, text="Save to disc")
-        # Make available the full name
-        Tooltip(self.__name_label, text=self.__container.variable_name)
-
-        # Packing
-        self.__name_label.grid(row=0, column=0, padx=(5, 5), pady=(5, 2))
-        self.__channels_label.grid(row=1, column=0, padx=(5, 5), sticky="W")
-        self.__samples_label.grid(row=2, column=0, padx=(5, 5), sticky="W")
-        self.__values_label.grid(row=3, column=0, padx=(5, 5), sticky="W")
-        self.__freeze_button.grid(row=4, column=0, padx=(5, 5))
-        self.__concat_button.grid(row=5, column=0, padx=(5, 5))
-        self.__save_button.grid(row=6, column=0, padx=(5, 5), pady=(5, 5))
-        self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
-        self.rowconfigure(4, weight=3)
-        self.rowconfigure(5, weight=3)
-        self.rowconfigure(6, weight=3)
-
-    def update_widgets(self):
-        self.__freeze_var.set(self.__container.frozen)
-        self.__concat_var.set(self.__container.concat)
-        self.__channels_label.configure(text=f"channels: {self.__container.channels}")
-        self.__samples_label.configure(text=f"samples: {self.__container.samples}")
-        self.__values_label.configure(
-            text=f"NaN: {self.__container.nan} Inf: {self.__container.inf}"
-        )
-
-    def freeze_button_clicked(self, *_):
-        self.__container.frozen = self.__freeze_var.get()
-
-    def concat_button_clicked(self, *_):
-        self.__container.concat = self.__concat_var.get()
-
-    def __save_button_clicked(self):
-        filetypes = [("Numpy file", ".npy")]
-        if self.__container.selected_layout.is_real:
-            filetypes.append(("Wave - 16bit PCM", ".wav"))
-        filename: str = filedialog.asksaveasfilename(parent=self, filetypes=filetypes)
-        if not filename:
-            return
-        if filename.endswith(".wav"):
-            self.__save_as_wave(filename)
-        elif filename.endswith(".npy"):
-            self.__save_as_npy(filename)
-        else:
-            raise RuntimeError(f"Unsupported extension : {filename}")
-
-    def __save_as_wave(self, filename: str):
-        data = self.__container.data.T
-        if np.max(np.abs(data)) > 1.0:
-            messagebox.showwarning(
-                title="Saturation detected",
-                message="Values outside the [-1;1] range were detected, values will be truncated",
-            )
-            # Truncate values
-            data[np.where(data < -1.0)] = -1.0
-            data[np.where(data > 1.0)] = 1.0
-        pcm_data = np.int16(data * (2**15 - 1))
-
-        with wave.open(filename, "w") as f:
-            f.setnchannels(self.__container.channels)
-            # 2 bytes per sample.
-            f.setsampwidth(2)
-            f.setframerate(44100)
-            f.writeframes(pcm_data.tobytes())
-
-    def __save_as_npy(self, filename: str):
-        np.save(filename, self.__container.data)

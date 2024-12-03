@@ -2,16 +2,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 import multiprocessing as mp
 from multiprocessing.connection import Connection
-import queue
 import os
 import subprocess
-import sys
 from typing import Dict, List, Union
 from enum import Enum
 from pathlib import Path
 
 
-from .container import Container
+from .entity import Entity
 from .future_gdb import blocked_signals
 
 from dave.common.singleton import SingletonMeta
@@ -50,7 +48,7 @@ class DaveProcess(metaclass=SingletonMeta):
         id: int
 
     def __init__(self) -> None:
-        self.__containers: Dict[int, Container] = dict()
+        self.__containers: Dict[int, Entity] = dict()
         self.__dbgr_con, self.__gui_con = mp.Pipe()
         self.__process = None
 
@@ -131,7 +129,7 @@ class DaveProcess(metaclass=SingletonMeta):
                 shape = container.shape()
                 self.__dbgr_con.send(RawContainer.InScopeUpdate(id, data, shape))
 
-    def add_to_model(self, container: Container):
+    def add_to_model(self, container: Entity):
         self.__containers[container.id] = container
         self.__dbgr_con.send(container.as_raw())
 

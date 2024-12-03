@@ -9,10 +9,10 @@ from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 from dave.server.process import DaveProcess
 
-from .container_model import ContainerModel
+from .container.container_model import ContainerModel
 from .global_settings import GlobalSettings
 from .settings_tab import SettingsTab
-from .audio_views_tab import AudioViewsTab
+from .views_tab import AudioViewsTab
 
 
 def load_icon() -> tk.PhotoImage:
@@ -96,7 +96,7 @@ class DaveGUI:
                     Logger().debug(f"Received new container : {msg.id}")
                     new_model = ContainerModel(msg)
                     self.__models[msg.id] = new_model
-                    self.__settings_tab.add_container(new_model)
+                    self.__settings_tab.add_model(new_model)
                     update_needed = True
                 elif isinstance(msg, RawContainer.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
@@ -134,7 +134,7 @@ class DaveGUI:
         # Delete the ones marked for delete
         for id in to_delete:
             del self.__models[id]
-            self.__settings_tab.delete_container(id)
+            self.__settings_tab.delete_model(id)
             self.__conn.send(DaveProcess.DeleteMessage(id))
 
         # If no container left we close the gui
