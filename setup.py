@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "0.9.2"
+VERSION = "0.9.3"
 
 with open("README.md", encoding="utf-8") as fh:
     pypi_header = """

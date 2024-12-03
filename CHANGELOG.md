@@ -2,6 +2,9 @@
 ## Added
 ## Changed
 ## Fixed
+
+# v0.9.3
+## Fixed
 - Debugger crash when using 2D nested containers
 - Save to disc fails
 
