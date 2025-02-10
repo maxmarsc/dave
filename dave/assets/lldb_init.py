@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 import re
+import site
 
 # Update LLDB's Python paths with the `sys.path` values of the local
 from pathlib import Path
@@ -26,7 +27,9 @@ if DAVE_VENV_PATH.is_file():
         .split()
     )
     # Delete duplicates and update the search list with dave venv
-    sys.path = list(dict.fromkeys(sys.path + paths))
+    for path in paths:
+        if path not in sys.path:
+            site.addsitedir(path)
 
 try:
     import dave.common.server_type as st

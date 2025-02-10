@@ -2,6 +2,7 @@
 ## Added
 ## Changed
 ## Fixed
+- Fixed a bug in dev mode : `dave` could not be loaded when installed in editable mode
 
 # v0.9.3
 ## Fixed

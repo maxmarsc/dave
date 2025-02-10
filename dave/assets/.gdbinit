@@ -3,7 +3,7 @@ python
 # Update GDB's Python paths with the `sys.path` values of the local
 # This is needed to find the common and server parts of dave
 
-import os, subprocess, sys
+import os, subprocess, sys, site
 from pathlib import Path
 
 try:
@@ -24,7 +24,9 @@ if DAVE_VENV_PATH.is_file():
         .split()
     )
     # Delete duplicates and update the search list with dave venv
-    sys.path = list(dict.fromkeys(sys.path + paths))
+    for path in paths:
+        if path not in sys.path:
+            site.addsitedir(path)
 try:
     import dave.server.debuggers.gdb_
 except ModuleNotFoundError as e:
