@@ -3,7 +3,7 @@ from typing import Any, Union, List
 import numpy as np
 from ...process import DaveProcess
 
-from ...entity_factor import EntityFactory
+from ...entity_factory import EntityFactory
 
 
 def show(var: Any, name: str = "", cpx_as_2: bool = False):

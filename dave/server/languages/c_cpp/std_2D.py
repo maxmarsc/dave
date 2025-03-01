@@ -12,7 +12,7 @@ from dave.common.logger import Logger
 # import gdb.types  # type: ignore
 
 from ...container import SampleType, Container2D
-from ...entity_factor import EntityFactory
+from ...entity_factory import EntityFactory
 from ...debuggers.value import AbstractValue
 
 from .std_base import StdVector, StdSpan

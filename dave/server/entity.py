@@ -54,7 +54,7 @@ class Entity(ABC):
         2. If the container should have a sparkline summary then it is registered
         in the debugger
         """
-        from .entity_factor import EntityFactory
+        from .entity_factory import EntityFactory
 
         EntityFactory().register(cls)
 
