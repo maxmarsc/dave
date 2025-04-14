@@ -186,8 +186,8 @@ class Container(Entity):
         return True
 
     @staticmethod
-    def support_concat() -> bool:
-        return True
+    def supports_concat() -> bool:
+        return RawContainer.supports_concat()
 
 
 class Container1D(Container):

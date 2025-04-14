@@ -24,6 +24,11 @@ class RawEntity(ABC):
     def channels(self) -> int:
         pass
 
+    @staticmethod
+    @abstractmethod
+    def supports_concat() -> bool:
+        pass
+
     class Layout(Enum):
         # Cannot inherit from both Enum and ABC metaclass
         """

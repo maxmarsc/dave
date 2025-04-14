@@ -33,6 +33,10 @@ class RawContainer(RawEntity):
             self.original_shape[0] if not self.interleaved else self.original_shape[1]
         )
 
+    @staticmethod
+    def supports_concat() -> bool:
+        return True
+
     class Layout(RawEntity.Layout):
         REAL_1D = "Scalar 1D"
         REAL_2D = "Scalar 2D"

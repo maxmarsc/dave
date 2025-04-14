@@ -48,7 +48,7 @@ class ContainerModel(EntityModel):
     # ==============================================================================
     @staticmethod
     def compatible_concatenate() -> bool:
-        return True
+        return RawContainer.supports_concat()
 
     @staticmethod
     def get_views_for_layout(layout: RawContainer.Layout) -> List[ContainerView]:

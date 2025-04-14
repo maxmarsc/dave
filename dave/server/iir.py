@@ -76,5 +76,5 @@ class IIR(Entity):
         return False
 
     @staticmethod
-    def support_concat() -> bool:
-        return False
+    def supports_concat() -> bool:
+        return RawIir.supports_concat()

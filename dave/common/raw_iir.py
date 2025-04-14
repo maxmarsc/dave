@@ -21,6 +21,10 @@ class RawIir(RawEntity):
     def channels(self) -> int:
         return self.original_shape[0]
 
+    @staticmethod
+    def supports_concat() -> bool:
+        return False
+
     class Layout(RawEntity.Layout):
         JUCE = "JUCE"
         SCIPY = "Scipy"
