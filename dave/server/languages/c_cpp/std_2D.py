@@ -70,6 +70,10 @@ class CArrayAny2D(Container2D):
     def formatter_compatible():
         return False
 
+    @staticmethod
+    def is_nested() -> bool:
+        return True
+
 
 class CarrayCarray2D(Container2D):
     """
@@ -184,6 +188,10 @@ class Pointer2D(Container2D):
     def formatter_compatible():
         return False
 
+    @staticmethod
+    def is_nested() -> bool:
+        return True
+
 
 class StdArray2D(Container2D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<(.*),\s*(\d+)[a-z]*>\s*$"
@@ -251,6 +259,10 @@ class StdArray2D(Container2D):
     @staticmethod
     def formatter_compatible():
         return False
+
+    @staticmethod
+    def is_nested() -> bool:
+        return True
 
 
 class StdVector2D(Container2D):
@@ -327,6 +339,10 @@ class StdVector2D(Container2D):
     def formatter_compatible():
         return False
 
+    @staticmethod
+    def is_nested() -> bool:
+        return True
+
 
 class StdSpan2D(Container2D):
     __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*(.*)\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
@@ -396,6 +412,10 @@ class StdSpan2D(Container2D):
     @staticmethod
     def formatter_compatible():
         return False
+
+    @staticmethod
+    def is_nested() -> bool:
+        return True
 
 
 CArrayAny2D.register()

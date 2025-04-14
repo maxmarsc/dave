@@ -3,8 +3,11 @@
 #include <cmath>
 #include <complex>
 
-constexpr auto kBlockSize = 256;
-constexpr auto kChannels  = 2;
+constexpr auto kBlockSize  = 256;
+constexpr auto kChannels   = 2;
+constexpr auto kSampleRate = 44100.0;
+constexpr auto kCutoff     = 1000.F;
+constexpr auto kQ          = 0.7F;
 
 int main() {
   //============================================================================
@@ -25,6 +28,22 @@ int main() {
 
   auto audio_block = juce::dsp::AudioBlock<float>(audio_block_p_arr.data(),
                                                   kChannels, kBlockSize);
+
+  //============================================================================
+  auto coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(
+      kSampleRate, kCutoff, kQ);
+  auto& coeff_r = *coefficients.get();
+
+  // Create the filter and set its coefficients
+  juce::dsp::IIR::Filter<float> filter;
+  filter.coefficients = coefficients;
+
+  // Prepare the filter with processing specifications
+  juce::dsp::ProcessSpec spec{};
+  spec.sampleRate       = kSampleRate;
+  spec.maximumBlockSize = kBlockSize;
+  spec.numChannels      = kChannels;
+  filter.prepare(spec);
 
   //============================================================================
   // Fill with values
@@ -52,6 +71,9 @@ int main() {
       step *= 1.01F;
     phase += step;
   }
+
+  // Process with the filter
+  juce::dsp::ProcessContextReplacing<float> context(audio_block);
 
   return 0;
 }

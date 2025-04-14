@@ -48,7 +48,7 @@ def freeze(container_id: Union[str, int]):
     if not DaveProcess().is_alive():
         raise RuntimeWarning("Dave is not started")
 
-    if not DaveProcess().freeze_container(container_id):
+    if not DaveProcess().freeze(container_id):
         raise RuntimeWarning(f"{container_id} is not a valid name or container id")
 
 
@@ -56,7 +56,7 @@ def concat(container_id: Union[str, int]):
     if not DaveProcess().is_alive():
         raise RuntimeWarning("Dave is not started")
 
-    if not DaveProcess().concat_container(container_id):
+    if not DaveProcess().concat(container_id):
         raise RuntimeWarning(f"{container_id} is not a valid name or container id")
 
 
@@ -64,5 +64,5 @@ def delete(container_id: Union[str, int]):
     if not DaveProcess().is_alive():
         raise RuntimeWarning("Dave is not started")
 
-    if not DaveProcess().delete_container(container_id):
+    if not DaveProcess().delete(container_id):
         raise RuntimeWarning(f"{container_id} is not a valid name or container id")

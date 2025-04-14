@@ -8,6 +8,10 @@ from dave.common.raw_entity import RawEntity
 from .debuggers.value import AbstractValue
 
 
+class EntityBuildError(Exception):
+    pass
+
+
 class Entity(ABC):
     """
     The base generalization of audio concepts : containers, filter...
@@ -50,7 +54,7 @@ class Entity(ABC):
         """
         Register this entity class in DAVE
 
-        1. Register the class to be available in the ConceptFactory
+        1. Register the class to be available in the EntityFactory
         2. If the container should have a sparkline summary then it is registered
         in the debugger
         """
@@ -71,4 +75,9 @@ class Entity(ABC):
     @classmethod
     @abstractmethod
     def typename_matcher(cls) -> Union[re.Pattern, Callable[[str], bool]]:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def support_concat() -> bool:
         pass

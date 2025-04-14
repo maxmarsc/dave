@@ -156,7 +156,7 @@ The following subcommands are supported:
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().delete_container(args[0]):
+        if not DaveProcess().delete(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def freeze_container(self, args):
@@ -166,7 +166,7 @@ The following subcommands are supported:
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().freeze_container(args[0]):
+        if not DaveProcess().freeze(args[0]):
             raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
 
     def concat_container(self, args):
@@ -176,8 +176,11 @@ The following subcommands are supported:
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().concat_container(args[0]):
-            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
+        if not DaveProcess().concat(args[0]):
+            raise gdb.GdbError(
+                f"concat command failed. {args[0]} is not a valid"
+                "or compatible entity identifier"
+            )
 
     def inspect(self, args):
         if len(args) != 1:

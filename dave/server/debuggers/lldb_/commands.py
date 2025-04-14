@@ -266,7 +266,7 @@ class DeleteCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().delete_container(args[0]):
+        if not DaveProcess().delete(args[0]):
             result.SetError(f"{args[0]} is not a valid name or container id")
 
     def get_short_help(self):
@@ -303,7 +303,7 @@ class FreezeCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().freeze_container(args[0]):
+        if not DaveProcess().freeze(args[0]):
             result.SetError(f"{args[0]} is not a valid name or container id")
 
     def get_short_help(self):
@@ -340,7 +340,7 @@ class ConcatCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().concat_container(args[0]):
+        if not DaveProcess().concat(args[0]):
             result.SetError(f"{args[0]} is not a valid name or container id")
 
     def get_short_help(self):

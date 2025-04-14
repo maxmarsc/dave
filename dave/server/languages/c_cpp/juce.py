@@ -5,7 +5,9 @@ from typing import Callable, List, Tuple
 
 
 from dave.common.logger import Logger
+from dave.common.raw_iir import RawIir
 from ...container import SampleType, Container2D
+from ...iir import IIR
 from ...debuggers.value import AbstractValue
 
 
@@ -102,5 +104,61 @@ class JuceAudioBlock(Container2D):
         )
 
 
+class JuceIIRCoefficients(IIR):
+    __REGEX = rf"^(?:const\s+)?juce::dsp::IIR::Coefficients<{SampleType.regex()}>\s*$"
+
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
+        typename = dbg_value.typename()
+        re_match = self.typename_matcher().match(typename)
+        print("Building JuceIIRCoefficients")
+        if re_match is None:
+            raise TypeError(
+                f"Could not parse {typename} as a valid juce::dsp::IIR::Coefficients type"
+            )
+
+        self._value = dbg_value
+        datatype = SampleType.parse(re_match.group(1))
+        super().__init__(dbg_value, name, datatype)
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        print(cls.__REGEX)
+        return re.compile(cls.__REGEX)
+
+    @property
+    def num_coeffs(self) -> int:
+        assert isinstance(self._value, AbstractValue)
+        return int(self._value.attr("coefficients").attr("values").attr("numUsed"))
+
+    @property
+    def data_ptr(self) -> int:
+        return int(
+            self._value.attr("coefficients")
+            .attr("values")
+            .attr("elements")
+            .attr("data")
+        )
+
+    def shape(self) -> Tuple[int, int]:
+        return (1, self.num_coeffs)
+
+    @staticmethod
+    def default_layout() -> RawIir.Layout:
+        return RawIir.Layout.JUCE
+
+    @classmethod
+    def available_data_layouts(cls) -> List[RawIir.Layout]:
+        return [
+            cls.default_layout(),
+        ]
+
+    def read_from_debugger(self) -> bytearray:
+        return self._value.readmemory(
+            self.data_ptr,
+            self.byte_size,
+        )
+
+
 JuceAudioBuffer.register()
 JuceAudioBlock.register()
+JuceIIRCoefficients.register()

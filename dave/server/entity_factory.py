@@ -4,13 +4,9 @@ from typing import Any, List, Dict, Set, Union
 from dave.common.logger import Logger
 
 from dave.common.singleton import SingletonMeta
-from .entity import Entity
+from .entity import Entity, EntityBuildError
 from .container import Container, Container1D, Container2D
 from .debuggers.value import AbstractValue
-
-
-class EntityBuildError(Exception):
-    pass
 
 
 class EntityFactory(metaclass=SingletonMeta):
@@ -23,7 +19,7 @@ class EntityFactory(metaclass=SingletonMeta):
 
     def register(self, cls):
         """
-        Every new container class should register itself to be available
+        Every new entity class should register itself to be available
         at debugger runtime.
         """
         assert issubclass(cls, Entity)
@@ -60,7 +56,7 @@ class EntityFactory(metaclass=SingletonMeta):
         typename: str,
         varname: str,
         dims: List[int] = [],
-    ) -> Container1D:
+    ) -> Entity:
         """
         Try to build a simple Container object from a debugger value
 
@@ -86,15 +82,16 @@ class EntityFactory(metaclass=SingletonMeta):
         ContainerError
             If no registered class matched the typename
         """
-        for container_1D_cls in self.__simple_entity_classes:
+        for simple_entity_cls in self.__simple_entity_classes:
+            print(f"Trying with {simple_entity_cls}")
             new_container = self.__build_if_match(
-                container_1D_cls, dbg_value, typename, varname, dims
+                simple_entity_cls, dbg_value, typename, varname, dims
             )
             if new_container is not None:
                 return new_container
 
         raise EntityBuildError(
-            f"Error : {typename} did not match any registered 1D container class"
+            f"Error : {typename} did not match any registered simple Entity class"
         )
 
     def build(
@@ -103,9 +100,9 @@ class EntityFactory(metaclass=SingletonMeta):
         typename: str,
         varname: str,
         dims: List[int] = [],
-    ) -> Container:
+    ) -> Entity:
         """
-        Try to build a Container object from a debugger value
+        Try to build a Entity from a debugger value
 
         Parameters
         ----------
@@ -126,19 +123,21 @@ class EntityFactory(metaclass=SingletonMeta):
 
         Raises
         ------
-        ContainerError
+        EntityBuildError
             If no registered class matched the typename
         """
         Logger().debug(f"Building {varname} from type |{typename}|")
 
-        # First we check if it is a 1D container
+        # First we check if it is a simple (not nested) class
         try:
             return self.build_simple(dbg_value, typename, varname, dims)
-        except (EntityBuildError, TypeError):
-            Logger().debug(f"{typename} is not a valid 1D container")
+        except EntityBuildError as e:
+            Logger().debug(f"{typename} is not a valid simple Entity class")
             pass
+        except TypeError as e:
+            raise EntityBuildError(f"Failed to build {typename} with {e}")
 
-        # Then we check for 2D containers
+        # Then we check for nested entity classes
         for nested_entity in self.__nested_entity_classes:
             new_entity = self.__build_if_match(
                 nested_entity, dbg_value, typename, varname, dims
@@ -147,7 +146,7 @@ class EntityFactory(metaclass=SingletonMeta):
                 return new_entity
 
         raise EntityBuildError(
-            f"Error : {typename} did not match any registered container class"
+            f"Error : {typename} did not match any registered Entity class"
         )
 
     def __build_if_match(

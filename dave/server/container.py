@@ -185,6 +185,10 @@ class Container(Entity):
     def formatter_compatible():
         return True
 
+    @staticmethod
+    def support_concat() -> bool:
+        return True
+
 
 class Container1D(Container):
     def __init__(self, dbg_value: Any, name: str, data_type: SampleType) -> None:
@@ -257,4 +261,4 @@ class Container2D(Container):
 
     @staticmethod
     def is_nested() -> bool:
-        return True
+        return False

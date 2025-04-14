@@ -106,6 +106,8 @@ class DaveGUI:
                     Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True
+                else:
+                    Logger.warning(f"Received unknown data {type(msg)}:{msg}")
             except EOFError:
                 Logger().debug("Received EOF from debugger process, will shutdown")
                 self.on_closing()

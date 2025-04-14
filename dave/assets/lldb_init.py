@@ -49,7 +49,7 @@ try:
         SyntheticChildrenProvider,
     )
     from dave.common.logger import Logger
-    from dave.server.entity_factor import EntityFactory
+    from dave.server.entity_factory import EntityFactory
 
     def __lldb_init_module(debugger: lldb.SBDebugger, internal_dict):
         # Register dave commands

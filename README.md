@@ -206,8 +206,8 @@ If you have any question or request about licensing, don't hesitate to ask !
 When running into an issue, please activate the debug log level, by setting
 the env variable `DAVE_LOGLEVEL` to `debug` before starting the debugger.
 
-### LLDB on Ubuntu 22.04
-When starting lldb on ubuntu 22.04 you might get this error :
+### LLDB on Ubuntu 24.04
+When starting lldb on ubuntu 24.04 you might get this error :
 ```
 Traceback (most recent call last):
   File "<string>", line 1, in <module>
@@ -216,8 +216,8 @@ ModuleNotFoundError: No module named 'lldb'
 
 This is a [known bug](https://bugs.launchpad.net/ubuntu/+source/llvm-defaults/+bug/1972855). In the meantime you can fix these using a symbolic link :
 ```bash
-sudo mkdir -p /usr/lib/local/lib/python3.10/
-sudo ln -s /usr/lib/llvm-${VERSION}/lib/python3.10/dist-packages /usr/lib/local/lib/python3.10/dist-packages
+sudo mkdir -p /usr/lib/local/lib/python3.12/
+sudo ln -s /usr/lib/llvm-${VERSION}/lib/python3.12/dist-packages /usr/lib/local/lib/python3.12/dist-packages
 ```
 
 ### LLDB init

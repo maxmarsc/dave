@@ -5,7 +5,7 @@ from typing import Callable, List, Tuple
 
 from dave.common.logger import Logger
 from dave.server.container import SampleType, Container1D, Container2D
-from dave.server.entity_factor import EntityFactory
+from dave.server.entity_factory import EntityFactory
 from dave.server.debuggers.value import AbstractValue
 from dave.server.languages import c_cpp
 
