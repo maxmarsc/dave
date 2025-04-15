@@ -79,5 +79,5 @@ class Entity(ABC):
 
     @staticmethod
     @abstractmethod
-    def support_concat() -> bool:
+    def supports_concat() -> bool:
         pass

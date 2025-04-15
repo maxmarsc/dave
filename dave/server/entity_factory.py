@@ -83,7 +83,6 @@ class EntityFactory(metaclass=SingletonMeta):
             If no registered class matched the typename
         """
         for simple_entity_cls in self.__simple_entity_classes:
-            print(f"Trying with {simple_entity_cls}")
             new_container = self.__build_if_match(
                 simple_entity_cls, dbg_value, typename, varname, dims
             )

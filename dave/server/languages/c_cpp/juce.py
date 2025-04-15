@@ -110,7 +110,6 @@ class JuceIIRCoefficients(IIR):
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
         re_match = self.typename_matcher().match(typename)
-        print("Building JuceIIRCoefficients")
         if re_match is None:
             raise TypeError(
                 f"Could not parse {typename} as a valid juce::dsp::IIR::Coefficients type"
@@ -122,7 +121,6 @@ class JuceIIRCoefficients(IIR):
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
-        print(cls.__REGEX)
         return re.compile(cls.__REGEX)
 
     @property
@@ -143,14 +141,8 @@ class JuceIIRCoefficients(IIR):
         return (1, self.num_coeffs)
 
     @staticmethod
-    def default_layout() -> RawIir.Layout:
-        return RawIir.Layout.JUCE
-
-    @classmethod
-    def available_data_layouts(cls) -> List[RawIir.Layout]:
-        return [
-            cls.default_layout(),
-        ]
+    def layout() -> RawIir.Layout:
+        return RawIir.Layout.BIQUAD
 
     def read_from_debugger(self) -> bytearray:
         return self._value.readmemory(

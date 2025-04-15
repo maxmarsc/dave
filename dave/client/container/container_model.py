@@ -37,8 +37,9 @@ import wave
 
 class ContainerModel(EntityModel):
     def __init__(self, raw: RawContainer):
+        assert isinstance(raw, RawContainer)
+        self.__data_layout: RawContainer.Layout = raw.default_layout
         super().__init__(raw)
-        assert isinstance(self._raw, RawContainer)
         self._data = raw_container_to_numpy(raw)
         self.__count_special_values()
         self.__concat = False
@@ -58,12 +59,6 @@ class ContainerModel(EntityModel):
             return [MagnitudeView, PhaseView]
 
     @staticmethod
-    def convert_data_to_layout(
-        data: np.ndarray, layout: RawContainer.Layout
-    ) -> np.ndarray:
-        return convert_container_data_to_layout(data, layout)
-
-    @staticmethod
     def settings_frame_class() -> type[EntitySettingsFrame]:
         from .container_settings_frames import ContainerSettingsFrame
 
@@ -76,6 +71,19 @@ class ContainerModel(EntityModel):
         return ContainerSidePanelInfo
 
     # ==============================================================================
+    @property
+    def possible_layouts(self) -> List[RawContainer.Layout]:
+        assert isinstance(self._raw, RawContainer)
+        return self._raw.possible_layout
+
+    @property
+    def selected_layout(self) -> RawContainer.Layout:
+        return self.__data_layout
+
+    @property
+    def possible_views(self) -> List[ContainerView]:
+        return self.get_views_for_layout(self.__data_layout)
+
     @property
     def concat(self) -> bool:
         return self.__concat
@@ -131,7 +139,7 @@ class ContainerModel(EntityModel):
         assert isinstance(self._raw, RawContainer)
         if self._raw.dimensions_fixed:
             return True
-        elif self._data_layout in (
+        elif self.__data_layout in (
             RawContainer.Layout.REAL_1D,
             RawContainer.Layout.CPX_1D,
         ):
@@ -184,14 +192,28 @@ class ContainerModel(EntityModel):
         """
         self._raw.update(update)
 
-        new_data = self.convert_data_to_layout(
-            raw_container_to_numpy(self._raw), self._data_layout
+        new_data = convert_container_data_to_layout(
+            raw_container_to_numpy(self._raw), self.__data_layout, None
         )
         if self.concat:
             self._data = np.concatenate((self._data, new_data), -1)
         else:
             self._data = new_data
         self._in_scope = True
+        self._update_pending = True
+
+    def update_layout(self, new_layout: Union[str, RawContainer.Layout]):
+        if isinstance(new_layout, str):
+            new_layout = self._raw.Layout(new_layout)
+        assert new_layout in self.possible_layouts
+        self.__data_layout = new_layout
+        self._data = convert_container_data_to_layout(self._data, new_layout)
+        if self.frozen:
+            self._frozen_data = convert_container_data_to_layout(
+                self._frozen_data, new_layout
+            )
+        # Update the view since the layout dictates possible views
+        self._view = self.possible_views[0]()
         self._update_pending = True
 
     # ==========================================================================

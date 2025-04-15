@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple
+from enum import Enum
 
 from .raw_entity import RawEntity
 from .sample_type import SampleType
@@ -14,6 +15,7 @@ class RawIir(RawEntity):
     This should contains every piece of information needed by the GUI
     """
 
+    layout: Layout
     coeffs: bytearray
     original_shape: Tuple[int, int]
     sample_type: SampleType
@@ -25,13 +27,11 @@ class RawIir(RawEntity):
     def supports_concat() -> bool:
         return False
 
-    class Layout(RawEntity.Layout):
-        JUCE = "JUCE"
-        SCIPY = "Scipy"
-        ZPK = "ZPK"
-        SOS = "SOS"
-        BIQUAD = "BIQUAD"
-        SVF = "SVF"
+    class Layout(Enum):
+        BIQUAD = "Biquad"
+        DIRECT = "Direct Form"
+        SCIPY = "Zero-Pole-Gain"
+        SVF = "State Variable"
 
     @dataclass
     class InScopeUpdate(RawEntity.InScopeUpdate):

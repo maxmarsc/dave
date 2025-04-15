@@ -23,26 +23,12 @@ class EntityModel:
         self._in_scope = True
         self._update_pending = True
         self._deletion_pending = False
-        self._data_layout = self._raw.default_layout
-        self._view: EntityView = self.get_views_for_layout(self.selected_layout)[0]()
-        # self._view:
+        self._view: EntityView = self.possible_views[0]()
 
     # ==========================================================================
     @staticmethod
     @abstractmethod
     def compatible_concatenate() -> bool:
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def get_views_for_layout(layout: RawEntity.Layout) -> List[type[EntityView]]:
-        pass
-
-    @staticmethod
-    @abstractmethod
-    def convert_data_to_layout(
-        data: np.ndarray, layout: RawEntity.Layout
-    ) -> np.ndarray:
         pass
 
     @staticmethod
@@ -61,16 +47,13 @@ class EntityModel:
         return self._in_scope
 
     @property
-    def possible_layouts(self) -> List[RawEntity.Layout]:
-        return self._raw.possible_layout
+    @abstractmethod
+    def possible_views(self) -> List[EntityView]:
+        pass
 
     @property
-    def selected_layout(self) -> RawEntity.Layout:
-        return self._data_layout
-
-    @property
-    def possible_views(self) -> List[str]:
-        return [view.name() for view in self.get_views_for_layout(self._data_layout)]
+    def possible_views_names(self) -> List[str]:
+        return [view.name() for view in self.possible_views]
 
     @property
     def selected_view(self) -> str:
@@ -152,20 +135,8 @@ class EntityModel:
             return True
         return False
 
-    def update_layout(self, new_layout: Union[str, RawEntity.Layout]):
-        if isinstance(new_layout, str):
-            new_layout = self._raw.Layout(new_layout)
-        assert new_layout in self.possible_layouts
-        self._data_layout = new_layout
-        self._data = self.convert_data_to_layout(self._data, new_layout)
-        if self.frozen:
-            self._frozen_data = self.convert_data_to_layout(
-                self._frozen_data, new_layout
-            )
-        self._view = self.get_views_for_layout(self._data_layout)[0]()
-
     def update_view_type(self, view_name: str):
-        for view_type in self.get_views_for_layout(self._data_layout):
+        for view_type in self.possible_views:
             if view_type.name() == view_name:
                 self._view = view_type()
                 self._update_pending = True
@@ -220,10 +191,10 @@ class EntityModel:
     @abstractmethod
     def draw_view(self, axes: List[Axes], default_sr: int, **kwargs):
         """
-        Draw the view of the audio concept.
+        Draw the view of the audio entity.
 
-        If the container is frozen, both frozen and live data will be drawn.
-        If the container is frozen and the current selected view type does not support
+        If the entity is frozen, both frozen and live data will be drawn.
+        If the entity is frozen and the current selected view type does not support
         superposable data (eg: spectrogram), then the caller must provide two Axes to draw
 
         Parameters

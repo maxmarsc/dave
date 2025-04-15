@@ -309,8 +309,6 @@ class PhaseView(ContainerView):
         x_vector = np.arange(data.shape[0])  # type: np.ndarray
         nans = np.isnan(data)
         infs = np.isinf(data)
-        print(f"nans {data[nans]}")
-        print(f"infs {data[infs]}")
         finite_mask = ~nans & ~infs
         nans_x_vector = x_vector[nans]
         infs_x_vector = x_vector[infs]

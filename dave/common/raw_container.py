@@ -18,6 +18,8 @@ class RawContainer(RawEntity):
     This should contains every piece of information needed by the GUI
     """
 
+    default_layout: Layout
+    possible_layout: List[Layout]
     # id: int
     data: bytearray
     # name: str
@@ -25,8 +27,6 @@ class RawContainer(RawEntity):
     dimensions_fixed: bool
     interleaved: bool
     sample_type: SampleType
-    # default_layout: Layout
-    # possible_layout: List[Layout]
 
     def channels(self):
         return (
@@ -37,7 +37,7 @@ class RawContainer(RawEntity):
     def supports_concat() -> bool:
         return True
 
-    class Layout(RawEntity.Layout):
+    class Layout(Enum):
         REAL_1D = "Scalar 1D"
         REAL_2D = "Scalar 2D"
         CPX_1D = "Complex 1D"

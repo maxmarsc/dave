@@ -17,8 +17,6 @@ class RawEntity(ABC):
 
     id: int
     name: str
-    default_layout: Layout
-    possible_layout: List[Layout]
 
     @abstractmethod
     def channels(self) -> int:
@@ -27,15 +25,6 @@ class RawEntity(ABC):
     @staticmethod
     @abstractmethod
     def supports_concat() -> bool:
-        pass
-
-    class Layout(Enum):
-        # Cannot inherit from both Enum and ABC metaclass
-        """
-        The layout subclass should enumerate the different memory layout possible
-        for a specific audio concept
-        """
-
         pass
 
     @dataclass

@@ -9,6 +9,7 @@ from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 from dave.server.process import DaveProcess
 
+from dave.client.entity.entity_model import EntityModel
 from .container.container_model import ContainerModel
 from .global_settings import GlobalSettings
 from .settings_tab import SettingsTab
@@ -37,7 +38,7 @@ class DaveGUI:
         self.__conn = connection
 
         # GUI settings
-        self.__models: Dict[int, ContainerModel] = dict()
+        self.__models: Dict[int, EntityModel] = dict()
         self.__global_settings = GlobalSettings()
 
         ctk.set_appearance_mode(self.__global_settings.appearance)

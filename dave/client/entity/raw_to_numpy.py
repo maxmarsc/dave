@@ -54,6 +54,12 @@ def realify_dtype(dtype: np.dtype) -> np.dtype:
 
 
 def realify_array(data: np.ndarray) -> np.ndarray:
+    """
+    Cast a complex fp array into a fp array by splitting complex
+    values into two fp value in the last dimension.
+
+    If the array is already using a fp type this does nothing
+    """
     if data.dtype.kind == "f":
         return data
     else:
@@ -61,6 +67,12 @@ def realify_array(data: np.ndarray) -> np.ndarray:
 
 
 def complexify_array(data: np.ndarray) -> np.ndarray:
+    """
+    Cast a fp array into a complex array by pairing fp values
+    on the last dimension.
+
+    If the array is already using a complex type this does nothing
+    """
     if data.dtype.kind == "c":
         return data
     else:

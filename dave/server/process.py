@@ -129,9 +129,9 @@ class DaveProcess(metaclass=SingletonMeta):
                 shape = entity.shape()
                 self.__dbgr_con.send(RawContainer.InScopeUpdate(id, data, shape))
 
-    def add_to_model(self, container: Entity):
-        self.__entities[container.id] = container
-        self.__dbgr_con.send(container.as_raw())
+    def add_to_model(self, entity: Entity):
+        self.__entities[entity.id] = entity
+        self.__dbgr_con.send(entity.as_raw())
 
     def __identify_entity(self, id: str) -> int:
         try:
@@ -184,7 +184,7 @@ class DaveProcess(metaclass=SingletonMeta):
         if id not in self.__entities:
             return False
 
-        if not self.__entities[id].support_concat():
+        if not self.__entities[id].supports_concat():
             return False
 
         self.__dbgr_con.send(DaveProcess.ConcatMessage(id))

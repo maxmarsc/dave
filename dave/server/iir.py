@@ -37,8 +37,7 @@ class IIR(Entity):
             # base
             self.id,
             self.name,
-            self.default_layout(),
-            self.available_data_layouts(),
+            self.layout(),
             # container
             self.read_from_debugger(),
             self.shape(),
@@ -57,14 +56,19 @@ class IIR(Entity):
     def shape(self) -> Tuple[int, int]:
         pass
 
-    @classmethod
-    @abstractmethod
-    def available_data_layouts(cls) -> List[RawIir.Layout]:
-        pass
+    # @classmethod
+    # @abstractmethod
+    # def available_data_layouts(cls) -> List[RawIir.Layout]:
+    #     pass
+
+    # @staticmethod
+    # @abstractmethod
+    # def default_layout() -> RawIir.Layout:
+    #     pass
 
     @staticmethod
     @abstractmethod
-    def default_layout() -> RawIir.Layout:
+    def layout() -> RawIir.Layout:
         pass
 
     @abstractmethod

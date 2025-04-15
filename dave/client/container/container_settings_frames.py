@@ -2,6 +2,7 @@ import customtkinter as ctk
 import tkinter as tk
 
 from dave.common.logger import Logger
+from dave.client.tooltip import Tooltip
 from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from .container_model import ContainerModel
 
@@ -15,6 +16,19 @@ class ContainerSettingsFrame(EntitySettingsFrame):
         super().__init__(master)
         self.__model = model
 
+        # Layout selection
+        self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
+        self.__layout_var.trace_add("write", self.layout_var_callback)
+        self.__layout_menu = ctk.CTkOptionMenu(
+            self,
+            values=[layout.value for layout in self.__model.possible_layouts],
+            variable=self.__layout_var,
+            font=self._font,
+            width=125,
+        )
+        Tooltip(self.__layout_menu, text="Select data layout of the container")
+        self.__layout_menu.pack(side=tk.LEFT, padx=(5, 5))
+
         # Number of channels
         self.__channel_var = tk.StringVar(value=str(self.__model.channels))
         self.__channel_label = ctk.CTkLabel(self, text=f"channels :", font=self._font)
@@ -22,6 +36,7 @@ class ContainerSettingsFrame(EntitySettingsFrame):
             self,
             textvariable=self.__channel_var,
             width=40,
+            font=self._font,
             placeholder_text=str(self.__model.channels),
             state=("normal" if self.channel_entry_enabled() else "disabled"),
         )
@@ -57,6 +72,13 @@ class ContainerSettingsFrame(EntitySettingsFrame):
         )
         self.__channel_mid_side_switch.pack(side=tk.LEFT, padx=(5, 5))
 
+    def layout_var_callback(self, *_):
+        # Update the model
+        self.__model.update_layout(self.__layout_var.get())
+
+        # Trigger a redraw
+        self.update_widgets()
+
     def interleaved_var_callback(self, *_):
         self.__model.interleaved = self.__channel_interleaved_var.get()
 
@@ -78,6 +100,11 @@ class ContainerSettingsFrame(EntitySettingsFrame):
             self.__channel_var.set(str(self.__model.channels))
 
     def update_widgets(self):
+        # Update the layout selection
+        self.__layout_menu.configure(
+            values=[layout.value for layout in self.__model.possible_layouts]
+        )
+
         # Update channel selector
         self.__channel_entry.configure(
             state=("normal" if self.channel_entry_enabled() else "disabled"),

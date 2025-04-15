@@ -107,7 +107,6 @@ class EntitySettings(ctk.CTkFrame):
     Holds all the settings of an entity
 
     This will always contains, left-to-right :
-    - Layout selector
     - Entity-specific settings
     - View type selector
     - View type settings
@@ -145,25 +144,11 @@ class EntitySettings(ctk.CTkFrame):
         )
         self.__name_label.grid(row=0, column=0, sticky="w", padx=(5, 5), columnspan=5)
 
-        # Layout selection
-        self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
-        self.__layout_var.trace_add("write", self.layout_var_callback)
-        self.__layout_menu = ctk.CTkOptionMenu(
-            self.__scrollable_frame,
-            values=[layout.value for layout in self.__model.possible_layouts],
-            variable=self.__layout_var,
-            font=self.__font,
-            width=125,
-        )
-        # self.__layout_menu.configure(fg_color="red")
-        Tooltip(self.__layout_menu, text="Select data layout of the container")
-        self.__layout_menu.grid(row=1, column=0, sticky="w", padx=(5, 5))
-
         # Entity-specific settings frame
         self.__entity_settings_frame = self.__model.settings_frame_class()(
             self.__scrollable_frame, self.__model
         )
-        self.__entity_settings_frame.grid(row=1, column=1, sticky="w")
+        self.__entity_settings_frame.grid(row=1, column=0, sticky="w")
 
         # View selection
         self.__view_menu = None
@@ -171,42 +156,35 @@ class EntitySettings(ctk.CTkFrame):
         self.__view_var.trace_add("write", self.view_var_callback)
         self.__view_menu = ctk.CTkOptionMenu(
             self.__scrollable_frame,
-            values=self.__model.possible_views,
+            values=self.__model.possible_views_names,
             variable=self.__view_var,
             font=self.__font,
             width=125,
         )
         Tooltip(self.__view_menu, text="Select which view to render")
-        self.__view_menu.grid(row=1, column=2, sticky="w", padx=(5, 5))
+        self.__view_menu.grid(row=1, column=1, sticky="w", padx=(5, 5))
 
         #  View settings
         self.__view_settings_frame = ViewSettingsFrame(
             self.__scrollable_frame, self.__model
         )
-        self.__view_settings_frame.grid(row=1, column=3, sticky="w", padx=(5, 0))
+        self.__view_settings_frame.grid(row=1, column=2, sticky="w", padx=(5, 0))
 
         # General section
         self.__general_settings_frame = GeneralSettingsFrame(
             self.__scrollable_frame, self.__model, global_settings
         )
-        self.__general_settings_frame.grid(row=1, column=4, sticky="e", padx=(0, 5))
+        self.__general_settings_frame.grid(row=1, column=3, sticky="e", padx=(0, 5))
 
         self.__scrollable_frame.grid_rowconfigure(0, weight=1)
         self.__scrollable_frame.grid_rowconfigure(1, weight=4)
         self.__scrollable_frame.grid_columnconfigure(0, weight=0)
         self.__scrollable_frame.grid_columnconfigure(1, weight=0)
-        self.__scrollable_frame.grid_columnconfigure(2, weight=0)
-        self.__scrollable_frame.grid_columnconfigure(3, weight=1)
-        self.__scrollable_frame.grid_columnconfigure(4, weight=0)
+        self.__scrollable_frame.grid_columnconfigure(2, weight=1)
+        self.__scrollable_frame.grid_columnconfigure(3, weight=0)
+        # self.__scrollable_frame.grid_columnconfigure(4, weight=0)
         self.__scrollable_frame.pack(fill=tk.BOTH)
         self.pack(side=tk.TOP, fill=tk.BOTH, padx=2, pady=2)
-
-    def layout_var_callback(self, *_):
-        # Update the model
-        self.__model.update_layout(self.__layout_var.get())
-
-        # Trigger a redraw
-        self.update_widgets()
 
     def view_var_callback(self, *_):
         # Update the model
@@ -216,17 +194,12 @@ class EntitySettings(ctk.CTkFrame):
         self.update_widgets()
 
     def update_widgets(self):
-        # Update the layout selection
-        self.__layout_menu.configure(
-            values=[layout.value for layout in self.__model.possible_layouts]
-        )
-
         # Update the channel menu
         self.__entity_settings_frame.update_widgets()
 
         # Update the view selection
-        if self.__view_var.get() not in self.__model.possible_views:
-            self.__view_menu.configure(values=self.__model.possible_views)
+        if self.__view_var.get() not in self.__model.possible_views_names:
+            self.__view_menu.configure(values=self.__model.possible_views_names)
             self.__view_var.set(self.__model.selected_view)
 
         # Update the view settings
