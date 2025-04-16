@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Tuple
+from typing import List, Tuple, Union
 from enum import Enum
 
 from .raw_entity import RawEntity
@@ -15,23 +15,27 @@ class RawIir(RawEntity):
     This should contains every piece of information needed by the GUI
     """
 
-    layout: Layout
-    coeffs: bytearray
-    original_shape: Tuple[int, int]
-    sample_type: SampleType
+    coeffs: Union[BiquadCoeffs, ZPKCoeffs]
 
     def channels(self) -> int:
-        return self.original_shape[0]
+        # Only support mono filter so far - multichannel with same
+        # coefficients on each channel
+        return 1
 
     @staticmethod
     def supports_concat() -> bool:
         return False
 
-    class Layout(Enum):
-        BIQUAD = "Biquad"
-        DIRECT = "Direct Form"
-        SCIPY = "Zero-Pole-Gain"
-        SVF = "State Variable"
+    @dataclass
+    class BiquadCoeffs:
+        # One tuple per section
+        values: List[Tuple[float, float, float, float, float, float]]
+
+    @dataclass
+    class ZPKCoeffs:
+        zeros: List[float]
+        poles: List[float]
+        gain: float
 
     @dataclass
     class InScopeUpdate(RawEntity.InScopeUpdate):
@@ -40,10 +44,11 @@ class RawIir(RawEntity):
         """
 
         id: int
-        coeffs: bytearray
-        shape: Tuple[int, int]
+        coeffs: Union[RawIir.BiquadCoeffs, RawIir.ZPKCoeffs]
 
     def update(self, update: InScopeUpdate):
         assert self.id == update.id
         self.coeffs = update.coeffs
-        self.original_shape = update.shape
+
+    def as_update(self) -> InScopeUpdate:
+        return RawIir.InScopeUpdate(self.id, self.coeffs)

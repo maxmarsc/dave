@@ -72,3 +72,6 @@ class RawContainer(RawEntity):
         assert self.id == update.id
         self.data = update.data
         self.original_shape = update.shape
+
+    def as_update(self) -> InScopeUpdate:
+        return RawContainer.InScopeUpdate(self.id, self.data, self.original_shape)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import struct
 from typing import Callable, List, Tuple
 
 
@@ -140,15 +141,23 @@ class JuceIIRCoefficients(IIR):
     def shape(self) -> Tuple[int, int]:
         return (1, self.num_coeffs)
 
-    @staticmethod
-    def layout() -> RawIir.Layout:
-        return RawIir.Layout.BIQUAD
-
-    def read_from_debugger(self) -> bytearray:
-        return self._value.readmemory(
-            self.data_ptr,
-            self.byte_size,
-        )
+    def read_from_debugger(self) -> RawIir.BiquadCoeffs:
+        byte_size = self.float_type.byte_size() * self.num_coeffs
+        byte_array = self._value.readmemory(self.data_ptr, byte_size)
+        fmt = "".join([self.float_type.struct_name() for _ in range(self.num_coeffs)])
+        coeffs = struct.unpack(fmt, byte_array)
+        if self.num_coeffs == 3:
+            return RawIir.BiquadCoeffs(
+                [
+                    (coeffs[0], coeffs[1], 0, 1.0, coeffs[2], 0),
+                ]
+            )
+        else:
+            return RawIir.BiquadCoeffs(
+                [
+                    (coeffs[0], coeffs[1], coeffs[2], 1.0, coeffs[3], coeffs[4]),
+                ]
+            )
 
 
 JuceAudioBuffer.register()

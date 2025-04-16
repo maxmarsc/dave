@@ -30,13 +30,17 @@ int main() {
                                                   kChannels, kBlockSize);
 
   //============================================================================
-  auto coefficients = juce::dsp::IIR::Coefficients<float>::makeLowPass(
+  auto lp_so_coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(
       kSampleRate, kCutoff, kQ);
-  auto& coeff_r = *coefficients.get();
+  auto& lp_so_coeffs_r = *lp_so_coeffs.get();
+  auto lp_fo_coeffs =
+      juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(kSampleRate,
+                                                                 kCutoff);
+  auto& lp_fo_coeffs_r = *lp_fo_coeffs.get();
 
   // Create the filter and set its coefficients
   juce::dsp::IIR::Filter<float> filter;
-  filter.coefficients = coefficients;
+  filter.coefficients = lp_so_coeffs;
 
   // Prepare the filter with processing specifications
   juce::dsp::ProcessSpec spec{};

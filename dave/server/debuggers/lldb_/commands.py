@@ -145,15 +145,15 @@ class ShowCommand:
         lldb_value = LldbValue(var, varname)
         typename = lldb_value.typename()
         try:
-            container = EntityFactory().build(lldb_value, typename, varname, dims)
-            Logger().info(f"Added {varname} : {container.id}")
+            entity = EntityFactory().build(lldb_value, typename, varname, dims)
+            Logger().info(f"Added {varname} : {entity.id}")
         except (EntityBuildError, TypeError) as e:
             result.SetError(e.args[0])
             return
 
         if not DaveProcess().is_alive():
             DaveProcess().start()
-        DaveProcess().add_to_model(container)
+        DaveProcess().add_to_model(entity)
 
     def get_short_help(self):
         return "Usage: dave show VARIABLE [DIM1[,DIM2]]"

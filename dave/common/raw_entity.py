@@ -49,3 +49,7 @@ class RawEntity(ABC):
         Updates the pickable representation with the content of the update
         """
         pass
+
+    @abstractmethod
+    def as_update(self) -> InScopeUpdate:
+        pass

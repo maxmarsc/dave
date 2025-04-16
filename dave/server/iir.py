@@ -23,6 +23,7 @@ class IIR(Entity):
     def __init__(self, dbg_value: Any, name: str, data_type: SampleType):
         super().__init__(dbg_value, name)
         self.__type = data_type
+        # self._coeffs = Union[RawIir.BiquadCoeffs, RawIir.ZPKCoeffs]
 
     @staticmethod
     def formatter_compatible():
@@ -37,24 +38,21 @@ class IIR(Entity):
             # base
             self.id,
             self.name,
-            self.layout(),
-            # container
+            # IIr
             self.read_from_debugger(),
-            self.shape(),
-            self.float_type,
         )
 
     @property
     def float_type(self) -> SampleType:
         return self.__type
 
-    @property
-    def byte_size(self) -> int:
-        return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
+    # @property
+    # def byte_size(self) -> int:
+    #     return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
 
-    @abstractmethod
-    def shape(self) -> Tuple[int, int]:
-        pass
+    # @abstractmethod
+    # def shape(self) -> Tuple[int, int]:
+    #     pass
 
     # @classmethod
     # @abstractmethod
@@ -66,13 +64,13 @@ class IIR(Entity):
     # def default_layout() -> RawIir.Layout:
     #     pass
 
-    @staticmethod
-    @abstractmethod
-    def layout() -> RawIir.Layout:
-        pass
+    # @staticmethod
+    # @abstractmethod
+    # def layout() -> RawIir.Layout:
+    #     pass
 
     @abstractmethod
-    def read_from_debugger(self) -> bytearray:
+    def read_from_debugger(self) -> Union[RawIir.BiquadCoeffs, RawIir.ZPKCoeffs]:
         pass
 
     @staticmethod

@@ -14,7 +14,9 @@ from .future_gdb import blocked_signals
 
 from dave.common.singleton import SingletonMeta
 from dave.common.logger import Logger
-from dave.common.raw_container import RawContainer
+from dave.common.raw_entity import RawEntity
+
+# from dave.common.raw_container import RawContainer
 from dave.common.server_type import *
 
 try:
@@ -122,12 +124,11 @@ class DaveProcess(metaclass=SingletonMeta):
             id = entity.id
             if not entity.in_scope:
                 Logger().debug(f"{entity.name} is out of scope")
-                self.__dbgr_con.send(RawContainer.OutScopeUpdate(id))
+                self.__dbgr_con.send(RawEntity.OutScopeUpdate(id))
             else:
                 Logger().debug(f"{entity.name} is in scope")
-                data = entity.read_from_debugger()
-                shape = entity.shape()
-                self.__dbgr_con.send(RawContainer.InScopeUpdate(id, data, shape))
+                update = entity.as_raw().as_update()
+                self.__dbgr_con.send(update)
 
     def add_to_model(self, entity: Entity):
         self.__entities[entity.id] = entity
