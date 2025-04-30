@@ -15,7 +15,7 @@ class RawIir(RawEntity):
     This should contains every piece of information needed by the GUI
     """
 
-    coeffs: Union[BiquadCoeffs, ZPKCoeffs]
+    coeffs: Union[SOSCoeffs, ZPKCoeffs]
 
     def channels(self) -> int:
         # Only support mono filter so far - multichannel with same
@@ -27,14 +27,14 @@ class RawIir(RawEntity):
         return False
 
     @dataclass
-    class BiquadCoeffs:
+    class SOSCoeffs:
         # One tuple per section
         values: List[Tuple[float, float, float, float, float, float]]
 
     @dataclass
     class ZPKCoeffs:
-        zeros: List[float]
-        poles: List[float]
+        zeros: List[complex]
+        poles: List[complex]
         gain: float
 
     @dataclass
@@ -44,7 +44,7 @@ class RawIir(RawEntity):
         """
 
         id: int
-        coeffs: Union[RawIir.BiquadCoeffs, RawIir.ZPKCoeffs]
+        coeffs: Union[RawIir.SOSCoeffs, RawIir.ZPKCoeffs]
 
     def update(self, update: InScopeUpdate):
         assert self.id == update.id

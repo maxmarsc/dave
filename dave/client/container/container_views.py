@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any, List
 import numpy as np
 from warnings import catch_warnings, warn
@@ -10,8 +8,6 @@ from dave.common.raw_container import RawContainer
 from dave.common.logger import Logger
 
 from ..entity.entity_view import EntityView
-
-import numpy as np
 
 DEFAULT_COLOR = "#1f77b4"
 
@@ -66,7 +62,7 @@ class WaveformView(ContainerView):
                 label="Inf",
             )
 
-        axes.grid(visible=True)
+        axes.grid(visible=True, which="both")
         if -max_y != max_y:
             axes.set_ylim(-max_y, max_y)
         if infs_time_vector.size > 0 or nans_time_vector.size > 0:

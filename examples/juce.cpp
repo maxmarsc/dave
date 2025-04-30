@@ -6,7 +6,7 @@
 constexpr auto kBlockSize  = 256;
 constexpr auto kChannels   = 2;
 constexpr auto kSampleRate = 44100.0;
-constexpr auto kCutoff     = 1000.F;
+constexpr auto kCutoff     = 6000.F;
 constexpr auto kQ          = 0.7F;
 
 int main() {

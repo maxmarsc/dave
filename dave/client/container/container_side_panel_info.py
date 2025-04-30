@@ -13,9 +13,6 @@ class ContainerSidePanelInfo(EntitySidePanelInfo):
     - channels
     - samples
     - amount of inf/NaN
-    - concatenate switch
-    - freeze switch
-    - save button
     """
 
     def __init__(self, master: tk.Misc, container: ContainerModel) -> None:

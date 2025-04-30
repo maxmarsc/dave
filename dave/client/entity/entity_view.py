@@ -20,7 +20,7 @@ class EntityView(ABC):
         return True
 
     @abstractmethod
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
+    def render_view(self, axes: Axes, data: Any, samplerate: int, color=None):
         pass
 
     @abstractmethod

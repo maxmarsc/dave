@@ -5,12 +5,14 @@ import tkinter as tk
 import customtkinter as ctk
 
 
+from dave.client.entity.model_factory import ModelFactory
 from dave.common.logger import Logger
-from dave.common.raw_container import RawContainer
+
+from dave.common.raw_entity import RawEntity
 from dave.server.process import DaveProcess
 
 from dave.client.entity.entity_model import EntityModel
-from .container.container_model import ContainerModel
+
 from .global_settings import GlobalSettings
 from .settings_tab import SettingsTab
 from .views_tab import AudioViewsTab
@@ -93,17 +95,17 @@ class DaveGUI:
                 elif isinstance(msg, DaveProcess.ConcatMessage):
                     Logger().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
-                elif isinstance(msg, RawContainer):
+                elif isinstance(msg, RawEntity):
                     Logger().debug(f"Received new container : {msg.id}")
-                    new_model = ContainerModel(msg)
-                    self.__models[msg.id] = new_model
-                    self.__settings_tab.add_model(new_model)
+                    new_entity = ModelFactory().build(msg)
+                    self.__models[msg.id] = new_entity
+                    self.__settings_tab.add_model(new_entity)
                     update_needed = True
-                elif isinstance(msg, RawContainer.InScopeUpdate):
+                elif isinstance(msg, RawEntity.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)
                     update_needed = True
-                elif isinstance(msg, RawContainer.OutScopeUpdate):
+                elif isinstance(msg, RawEntity.OutScopeUpdate):
                     Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     update_needed = True

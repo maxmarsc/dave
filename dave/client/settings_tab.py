@@ -8,7 +8,6 @@ from dave.common.logger import Logger
 
 from .entity.entity_view import EntityView
 
-# from .container.container_model import ContainerModel
 from .entity.entity_model import EntityModel
 from .tooltip import Tooltip
 from .global_settings import GlobalSettings
@@ -44,15 +43,13 @@ class SettingsTab:
             height=6,
             corner_radius=3,
         )
-        self.__container_settings_scrollable_frame = ctk.CTkScrollableFrame(
+        self.__settings_scrollable_frame = ctk.CTkScrollableFrame(
             self.__master,
             corner_radius=0,
             orientation="vertical",
         )
         self.__separator.pack(side=tk.TOP, anchor=tk.N, pady=(3, 5))
-        self.__container_settings_scrollable_frame.pack(
-            side=tk.TOP, fill=tk.BOTH, expand=True
-        )
+        self.__settings_scrollable_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.update_widgets()
 
     def add_model(self, model: EntityModel):
@@ -60,16 +57,16 @@ class SettingsTab:
         assert model.id in self.__entity_models
         assert model.in_scope
         self.__entity_settings[model.id] = EntitySettings(
-            self.__container_settings_scrollable_frame,
+            self.__settings_scrollable_frame,
             model,
             self.__global_settings,
         )
 
     def delete_model(self, id: int):
         """
-        Calling this will remove the ContainerSettingsFrame from the given container.
+        Calling this will remove the SettingsFrame from the given entity.
 
-        This will never delete the containermodel itself, at is is the responsibility
+        This will never delete the model itself, at is is the responsibility
         of the main GUI handler
         """
         # Warning : This will mark the container for deletion, this should

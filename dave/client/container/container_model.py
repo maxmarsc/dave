@@ -7,6 +7,7 @@ from matplotlib.axes import Axes
 from dave.common.raw_container import RawContainer
 
 from dave.client.entity.entity_model import EntityModel
+from dave.client.entity.model_factory import ModelFactory
 from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 from .raw_to_numpy import (
@@ -52,7 +53,7 @@ class ContainerModel(EntityModel):
         return RawContainer.supports_concat()
 
     @staticmethod
-    def get_views_for_layout(layout: RawContainer.Layout) -> List[ContainerView]:
+    def get_views_for_layout(layout: RawContainer.Layout) -> List[type[ContainerView]]:
         if layout in (RawContainer.Layout.REAL_1D, RawContainer.Layout.REAL_2D):
             return [WaveformView, CurveView, SpectrogramView, PSDView]
         else:
@@ -81,7 +82,7 @@ class ContainerModel(EntityModel):
         return self.__data_layout
 
     @property
-    def possible_views(self) -> List[ContainerView]:
+    def possible_views(self) -> List[type[ContainerView]]:
         return self.get_views_for_layout(self.__data_layout)
 
     @property
@@ -263,10 +264,10 @@ class ContainerModel(EntityModel):
         axes : List[Axes]
             Either a single Axes in a list, or two if the container is frozen
             with a non-superposable view type
-        channel : int
-            The channel to draw
         default_sr: int
             The default samplerate to use if not set in this specific model
+        channel : int
+            The channel to draw
         """
         # Compute the rendering shape
         samplerate = self._sr if self._sr is not None else default_sr
@@ -288,6 +289,13 @@ class ContainerModel(EntityModel):
                     axes[0], frozen_data[channel], samplerate, "#ff7f0e"
                 )
             self._view.render_view(axes[0], live_data[channel], samplerate)
+
+    def channel_name(self, channel):
+        return (
+            f"channel {channel}"
+            if not self.mid_side
+            else " {}".format("mid" if channel == 0 else "side")
+        )
 
     # ==============================================================================
 

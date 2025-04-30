@@ -16,7 +16,7 @@ from .entity_side_panel_info import EntitySidePanelInfo
 class EntityModel:
     def __init__(self, raw: RawEntity):
         self._raw = raw
-        self._data: np.ndarray = None
+        self._data: Any = None
         self._frozen_data = None
         self._sr = None
         self._channels = raw.channels()
@@ -96,6 +96,12 @@ class EntityModel:
 
     @property
     def are_dimensions_fixed(self) -> bool:
+        """
+        Returns True if the entity somehow supports multiple dimension layouts
+
+        example: a std::vector could be used to represent mono/stereo or plain/interleaved
+        samples, a JUCE buffer couldn't, hence its dimensions are fixed
+        """
         pass
 
     @property
@@ -203,7 +209,10 @@ class EntityModel:
             Either a single Axes in a list, or two if the container is frozen
             with a non-superposable view type
         default_sr : int
-            The default samplerate to use if not set in this specific model
+            The default samplerate to use RawEntityif not set in this specific model
         kwargs: additional parameters for the concrete class's method
         """
         pass
+
+    def channel_name(_, channel: int) -> str:
+        return f"channel {channel}"

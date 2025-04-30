@@ -32,7 +32,7 @@ class AudioViewsTab:
         entity_models: Dict[int, EntityModel],
         global_settings: GlobalSettings,
     ):
-        self.__container_models = entity_models
+        self.__entity_models = entity_models
         self.__global_settings = global_settings
         self.__master = master
 
@@ -56,7 +56,7 @@ class AudioViewsTab:
 
         # Containers Actions
         self.__containers_actions_buttons_frame = SidePanels(
-            self.__central_frame_scrollable, self.__container_models
+            self.__central_frame_scrollable, self.__entity_models
         )
 
         # Matplotlib toolbar at the bottom
@@ -81,7 +81,7 @@ class AudioViewsTab:
 
     def __subplots_hratios(self) -> List[int]:
         hratios = []
-        for model in self.__container_models.values():
+        for model in self.__entity_models.values():
             if not model.in_scope:
                 continue
             if model.channels > 16:
@@ -103,9 +103,7 @@ class AudioViewsTab:
         # Compute the minimum required height for subplots
         min_height_per_channel = 200  # height in pixels
         total_channels = sum(
-            model.channels
-            for model in self.__container_models.values()
-            if model.in_scope
+            model.channels for model in self.__entity_models.values() if model.in_scope
         )
         min_height = total_channels * min_height_per_channel
 
@@ -179,15 +177,11 @@ class AudioViewsTab:
         if isinstance(subplots_axes, Axes):
             subplots_axes = np.array([subplots_axes])
         i = 0
-        for model in self.__container_models.values():
+        for model in self.__entity_models.values():
             if not model.in_scope or model.channels > 16:
                 continue
             for channel in range(model.channels):
-                title = (
-                    f"channel {channel}"
-                    if not model.mid_side
-                    else " {}".format("mid" if channel == 0 else "side")
-                )
+                title = model.channel_name(channel)
 
                 if model.frozen and not model.is_view_superposable:
                     axes = subplots_axes[i : i + 2]

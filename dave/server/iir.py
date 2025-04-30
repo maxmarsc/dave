@@ -70,7 +70,7 @@ class IIR(Entity):
     #     pass
 
     @abstractmethod
-    def read_from_debugger(self) -> Union[RawIir.BiquadCoeffs, RawIir.ZPKCoeffs]:
+    def read_from_debugger(self) -> Union[RawIir.SOSCoeffs, RawIir.ZPKCoeffs]:
         pass
 
     @staticmethod
