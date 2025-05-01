@@ -384,6 +384,7 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayBuffer`
 
 Currently supported IIR filter/coefficients are :
+- `juce::dsp::IIR::Filter`
 - `juce::dsp::IIR:Coefficients`
 
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib

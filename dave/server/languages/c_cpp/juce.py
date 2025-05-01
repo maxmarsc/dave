@@ -160,6 +160,34 @@ class JuceIIRCoefficients(IIR):
             )
 
 
+class JuceIIRFilter(IIR):
+    __REGEX = rf"^(?:const\s+)?juce::dsp::IIR::Filter<{SampleType.regex()}>\s*$"
+
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
+        typename = dbg_value.typename()
+        re_match = self.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"Could not parse {typename} as a valid juce::dsp::IIR::Filter type"
+            )
+
+        self._value = dbg_value
+        datatype = SampleType.parse(re_match.group(1))
+        super().__init__(dbg_value, name, datatype)
+        self.__inner_coeffs = JuceIIRCoefficients(
+            dbg_value.attr("coefficients").attr("referencedObject")[0],
+            name + ".coefficients",
+        )
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    def read_from_debugger(self) -> RawIir.SOSCoeffs:
+        return self.__inner_coeffs.read_from_debugger()
+
+
 JuceAudioBuffer.register()
 JuceAudioBlock.register()
 JuceIIRCoefficients.register()
+JuceIIRFilter.register()

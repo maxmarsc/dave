@@ -37,6 +37,8 @@ int main() {
       juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(kSampleRate,
                                                                  kCutoff);
   auto& lp_fo_coeffs_r = *lp_fo_coeffs.get();
+  auto lp_so_filter    = juce::dsp::IIR::Filter<float>(lp_so_coeffs);
+  auto lp_fo_filter    = juce::dsp::IIR::Filter<float>(lp_fo_coeffs);
 
   // Create the filter and set its coefficients
   juce::dsp::IIR::Filter<float> filter;

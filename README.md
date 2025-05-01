@@ -54,6 +54,7 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayBuffer`
 
 Currently supported IIR filter/coefficients are :
+- `juce::dsp::IIR::Filter`
 - `juce::dsp::IIR:Coefficients`
 
 **You can also add supports for your own entity classes**
