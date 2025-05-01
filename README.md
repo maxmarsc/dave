@@ -1,8 +1,8 @@
 # Debugger Audio Visualization Extension
 ![logo](.pictures/dave_logo_long_v6.png  )
 
-DAVE is a GDB & LLDB extension which provide commands to visualize audio data
-directly from your buffers/classes. No need to recompile your code and/or instrument
+DAVE is a GDB & LLDB extension which provide commands to visualize audio related data
+directly from your process's memory. No need to recompile your code and/or instrument
 it with nasty macros or fancy libs, just start your debugger !
 
 <p align="center">
@@ -27,6 +27,11 @@ it with nasty macros or fancy libs, just start your debugger !
     <img src=".pictures/pretty_printers.png">
 </p> -->
 
+DAVE supports plotting for different types of audio "entities" that might live in
+your program's memory :
+- audio sample containers (amplitude or spectral)
+- IIR filters
+
 Currently supported audio containers (both in `float` and `double`) are :
 
 __1D (mono) containers__:
@@ -48,7 +53,10 @@ __2D (multichannel) containers__:
 - `choc::buffer::ChannelArrayView`
 - `choc::buffer::ChannelArrayBuffer`
 
-**You can also add supports for your custom containers**
+Currently supported IIR filter/coefficients are :
+- `juce::dsp::IIR:Coefficients`
+
+**You can also add supports for your own entity classes**
 
 ### Current support
 | Operating System  | Status       |
