@@ -53,9 +53,8 @@ class MagnitudeResponseView(IirView):
         max_y = np.max(magnitude)
 
         axes.plot(w, magnitude, color=color)
-        axes.set_ylim(0, max_y + 1.0e-12)
+        axes.set_ylim(0, max_y * 1.1 + 1.0e-12)
         axes.set_xscale(self.__x_scale.value)
-        axes.set_xlabel("Frequency")
         axes.set_ylabel("Magnitude")
         axes.grid(visible=True, which="both")
 
@@ -97,7 +96,6 @@ class PhaseResponseView(IirView):
         axes.plot(w, np.angle(h), color=color)
         axes.set_ylim(-np.pi, np.pi)
         axes.set_xscale(self.__x_scale.value)
-        axes.set_xlabel("Frequency")
         axes.set_ylabel("Phase")
         axes.grid(visible=True, which="both")
 

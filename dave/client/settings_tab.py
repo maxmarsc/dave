@@ -344,14 +344,15 @@ class ViewSettingsFrame(ctk.CTkFrame):
         assert len(self.__widgets) == 0
         self.__width = 0
         for setting in self.__model.view_settings:
-            if isinstance(setting, EntityView.StringSetting):
-                self.create_string_selector(setting)
-            elif isinstance(setting, EntityView.IntSetting):
-                self.create_int_selector(setting)
-            elif isinstance(setting, EntityView.FloatSetting):
-                self.create_float_selector(setting)
-            else:
-                raise NotImplementedError()
+            match type(setting):
+                case EntityView.StringSetting:
+                    self.create_string_selector(setting)
+                case EntityView.IntSetting:
+                    self.create_int_selector(setting)
+                case EntityView.FloatSetting:
+                    self.create_float_selector(setting)
+                case _:
+                    raise NotImplementedError()
         self.configure(width=self.__width)
 
     def create_string_selector(self, setting: EntityView.StringSetting):
@@ -387,6 +388,7 @@ class ViewSettingsFrame(ctk.CTkFrame):
             textvariable=var,
             width=60,
             placeholder_text=setting.name,
+            font=self.__font,
         )
         validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
             name, event
@@ -410,6 +412,7 @@ class ViewSettingsFrame(ctk.CTkFrame):
             textvariable=var,
             width=60,
             placeholder_text=setting.name,
+            font=self.__font,
         )
         validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
             name, event
