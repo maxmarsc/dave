@@ -86,6 +86,8 @@ def dave_printer(valobj: gdb.Value):
     gdb_value = GdbValue(valobj, "")
     try:
         container = EntityFactory().build(gdb_value, gdb_value.typename(), "")
-        return ContainerPrettyPrinter(valobj, container)
+        if container.formatter_compatible():
+            return ContainerPrettyPrinter(valobj, container)
+        return None
     except (EntityBuildError, TypeError):
         return None

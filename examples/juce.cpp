@@ -52,6 +52,13 @@ int main() {
   filter.prepare(spec);
 
   //============================================================================
+  auto old_svf_filter  = juce::dsp::StateVariableFilter::Filter<float>();
+  auto& old_svf_coeffs = *old_svf_filter.parameters;
+  old_svf_filter.parameters->setCutOffFrequency(kSampleRate, kCutoff);
+  old_svf_filter.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+
+  //============================================================================
   // Fill with values
   audio_block.fill(1.F);
   for (auto& arr : audio_buffer_data) {
@@ -78,8 +85,20 @@ int main() {
     phase += step;
   }
 
+  //============================================================================
+  // Update the SVF filters
+  old_svf_filter.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+
+  //============================================================================
   // Process with the filter
   juce::dsp::ProcessContextReplacing<float> context(audio_block);
 
+  //============================================================================
+  // Update the SVF filters
+  old_svf_filter.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+
+  //============================================================================
   return 0;
 }

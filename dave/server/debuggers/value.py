@@ -30,6 +30,10 @@ class AbstractValue(ABC):
         pass
 
     @abstractmethod
+    def __float__(self) -> float:
+        pass
+
+    @abstractmethod
     def __getitem__(self, key: int) -> AbstractValue:
         pass
 

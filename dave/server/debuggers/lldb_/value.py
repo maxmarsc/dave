@@ -5,8 +5,13 @@ import lldb
 import os
 import threading
 
+
 def xcode_detected() -> bool:
-    return os.environ.get("DYLD_FRAMEWORK_PATH", None) == '/Applications/Xcode.app/Contents/SharedFrameworks'
+    return (
+        os.environ.get("DYLD_FRAMEWORK_PATH", None)
+        == "/Applications/Xcode.app/Contents/SharedFrameworks"
+    )
+
 
 class LldbValue(AbstractValue):
     __debugger = None  # type: Union[None, lldb.SBDebugger]
@@ -84,6 +89,10 @@ class LldbValue(AbstractValue):
     def __int__(self) -> int:
         return self.__value.GetValueAsSigned()
 
+    def __float__(self) -> float:
+        assert self.typename() in ("float", "double")
+        return float(self.__value.GetValue())
+
     def in_scope(self) -> bool:
         # lldb.SBValue.is_in_scope is not affected by frame changes (like up,
         # down commands) so we need to recheck manually
@@ -113,7 +122,8 @@ class LldbValue(AbstractValue):
     ) -> lldb.SBValue:
         if frame is None:
             frame = (
-                 LldbValue.debugger().GetSelectedTarget()
+                LldbValue.debugger()
+                .GetSelectedTarget()
                 .GetProcess()
                 .GetSelectedThread()
                 .GetSelectedFrame()

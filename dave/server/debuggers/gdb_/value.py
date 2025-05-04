@@ -40,6 +40,10 @@ class GdbValue(AbstractValue):
     def __int__(self) -> int:
         return int(self.__value)
 
+    def __float__(self) -> float:
+        assert self.__value.type.code == gdb.TYPE_CODE_FLT
+        return float(self.__value)
+
     def __getitem__(self, key: int) -> GdbValue:
         """
         Access value by index. Only available for pointer types

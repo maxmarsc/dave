@@ -187,7 +187,40 @@ class JuceIIRFilter(IIR):
         return self.__inner_coeffs.read_from_debugger()
 
 
+class JuceSVFCoefficients(IIR):
+    __REGEX = rf"^(?:const\s+)?juce::dsp::StateVariableFilter::Parameters<{SampleType.regex()}>\s*$"
+
+    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
+        typename = dbg_value.typename()
+        re_match = self.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"Could not parse {typename} as a valid juce::dsp::StateVariableFilter::Parameters type"
+            )
+
+        self._value = dbg_value
+        datatype = SampleType.parse(re_match.group(1))
+        super().__init__(dbg_value, name, datatype)
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    def read_from_debugger(self) -> RawIir.SVFTPTCoeffs:
+        g = float(self._value.attr("g"))
+        r = float(self._value.attr("R2")) / 2
+        ftype_int = int(self._value.attr("type"))
+        if ftype_int == 0:
+            ftype = RawIir.SVFTPTCoeffs.FilterType.LP
+        elif ftype_int == 1:
+            ftype = RawIir.SVFTPTCoeffs.FilterType.BP
+        else:
+            ftype = RawIir.SVFTPTCoeffs.FilterType.HP
+        return RawIir.SVFTPTCoeffs(g, r, ftype)
+
+
 JuceAudioBuffer.register()
 JuceAudioBlock.register()
 JuceIIRCoefficients.register()
 JuceIIRFilter.register()
+JuceSVFCoefficients.register()

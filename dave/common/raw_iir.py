@@ -1,10 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Tuple, Union
+from typing import List, Tuple, TypeAlias, Union
 from enum import Enum
 
 from .raw_entity import RawEntity
 from .sample_type import SampleType
+
+
+# RawIirCoeffs: TypeAlias = Union[SOSCoeffs, ZPKCoeffs, SVFCoeffs]
 
 
 @dataclass
@@ -14,17 +17,6 @@ class RawIir(RawEntity):
 
     This should contains every piece of information needed by the GUI
     """
-
-    coeffs: Union[SOSCoeffs, ZPKCoeffs]
-
-    def channels(self) -> int:
-        # Only support mono filter so far - multichannel with same
-        # coefficients on each channel
-        return 1
-
-    @staticmethod
-    def supports_concat() -> bool:
-        return False
 
     @dataclass
     class SOSCoeffs:
@@ -38,13 +30,35 @@ class RawIir(RawEntity):
         gain: float
 
     @dataclass
+    class SVFTPTCoeffs:
+        class FilterType(Enum):
+            LP = "Low-Pass"
+            BP = "Band-Pass"
+            HP = "High-Pass"
+
+        g: float
+        r: float
+        ftype: FilterType
+
+    coeffs: Union[SOSCoeffs, ZPKCoeffs, SVFTPTCoeffs]
+
+    def channels(self) -> int:
+        # Only support mono filter so far - multichannel with same
+        # coefficients on each channel
+        return 1
+
+    @staticmethod
+    def supports_concat() -> bool:
+        return False
+
+    @dataclass
     class InScopeUpdate(RawEntity.InScopeUpdate):
         """
         Used to send a data update to the GUI
         """
 
         id: int
-        coeffs: Union[RawIir.SOSCoeffs, RawIir.ZPKCoeffs]
+        coeffs: RawIirCoeffs
 
     def update(self, update: InScopeUpdate):
         assert self.id == update.id
