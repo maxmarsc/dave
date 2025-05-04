@@ -23,6 +23,7 @@ class IirView(EntityView):
 class MagnitudeResponseView(IirView):
     def __init__(self) -> None:
         self.__x_scale = EntityView.StringSetting("X scale", ("linear", "log"))
+        self.__y_scale = EntityView.StringSetting("Y scale", ("linear", "log"))
         self.__resolution = EntityView.IntSetting("Resolution", 64, 4096, 512)
         self.__limit = EntityView.StringSetting("Limit", ("nyquist", "samplerate"))
 
@@ -34,6 +35,8 @@ class MagnitudeResponseView(IirView):
         match setting_name:
             case self.__x_scale.name:
                 self.__x_scale.value = setting_value
+            case self.__y_scale.name:
+                self.__y_scale.value = setting_value
             case self.__resolution.name:
                 self.__resolution.value = setting_value
             case self.__limit.name:
@@ -50,16 +53,15 @@ class MagnitudeResponseView(IirView):
         whole = self.__limit.value == "samplerate"
         w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
         magnitude = np.abs(h)
-        max_y = np.max(magnitude)
 
         axes.plot(w, magnitude, color=color)
-        axes.set_ylim(0, max_y * 1.1 + 1.0e-12)
         axes.set_xscale(self.__x_scale.value)
+        axes.set_yscale(self.__y_scale.value)
         axes.set_ylabel("Magnitude")
         axes.grid(visible=True, which="both")
 
     def get_settings(self) -> List[EntityView.Setting]:
-        return [self.__x_scale, self.__resolution, self.__limit]
+        return [self.__x_scale, self.__y_scale, self.__resolution, self.__limit]
 
 
 # ==============================================================================

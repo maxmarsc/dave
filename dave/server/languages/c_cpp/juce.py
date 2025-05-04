@@ -187,7 +187,7 @@ class JuceIIRFilter(IIR):
         return self.__inner_coeffs.read_from_debugger()
 
 
-class JuceSVFCoefficients(IIR):
+class JuceSVFCoefficientsOld(IIR):
     __REGEX = rf"^(?:const\s+)?juce::dsp::StateVariableFilter::Parameters<{SampleType.regex()}>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
@@ -223,4 +223,4 @@ JuceAudioBuffer.register()
 JuceAudioBlock.register()
 JuceIIRCoefficients.register()
 JuceIIRFilter.register()
-JuceSVFCoefficients.register()
+JuceSVFCoefficientsOld.register()
