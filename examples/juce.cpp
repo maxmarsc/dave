@@ -30,6 +30,12 @@ int main() {
                                                   kChannels, kBlockSize);
 
   //============================================================================
+  juce::dsp::ProcessSpec spec{};
+  spec.sampleRate       = kSampleRate;
+  spec.maximumBlockSize = kBlockSize;
+  spec.numChannels      = kChannels;
+  //============================================================================
+
   auto lp_so_coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(
       kSampleRate, kCutoff, kQ);
   auto& lp_so_coeffs_r = *lp_so_coeffs.get();
@@ -45,18 +51,23 @@ int main() {
   filter.coefficients = lp_so_coeffs;
 
   // Prepare the filter with processing specifications
-  juce::dsp::ProcessSpec spec{};
-  spec.sampleRate       = kSampleRate;
-  spec.maximumBlockSize = kBlockSize;
-  spec.numChannels      = kChannels;
   filter.prepare(spec);
 
   //============================================================================
-  auto old_svf_filter  = juce::dsp::StateVariableFilter::Filter<float>();
+  /* Old (deprecated) JUCE implementation*/
+  auto old_svf_filter = juce::dsp::StateVariableFilter::Filter<float>();
+  old_svf_filter.prepare(spec);
   auto& old_svf_coeffs = *old_svf_filter.parameters;
   old_svf_filter.parameters->setCutOffFrequency(kSampleRate, kCutoff);
   old_svf_filter.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+
+  //============================================================================
+  /* Modern JUCE implementation */
+  auto svf_filter = juce::dsp::StateVariableTPTFilter<float>();
+  svf_filter.prepare(spec);
+  svf_filter.setCutoffFrequency(kCutoff);
+  svf_filter.setType(juce::dsp::StateVariableTPTFilter<float>::Type::lowpass);
 
   //============================================================================
   // Fill with values
@@ -89,6 +100,7 @@ int main() {
   // Update the SVF filters
   old_svf_filter.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+  svf_filter.setType(juce::dsp::StateVariableTPTFilter<float>::Type::bandpass);
 
   //============================================================================
   // Process with the filter
@@ -98,6 +110,7 @@ int main() {
   // Update the SVF filters
   old_svf_filter.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+  svf_filter.setType(juce::dsp::StateVariableTPTFilter<float>::Type::highpass);
 
   //============================================================================
   return 0;

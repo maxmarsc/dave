@@ -7,9 +7,6 @@ from .raw_entity import RawEntity
 from .sample_type import SampleType
 
 
-# RawIirCoeffs: TypeAlias = Union[SOSCoeffs, ZPKCoeffs, SVFCoeffs]
-
-
 @dataclass
 class RawIir(RawEntity):
     """
@@ -31,6 +28,14 @@ class RawIir(RawEntity):
 
     @dataclass
     class SVFTPTCoeffs:
+        """
+        See :
+         - https://www.native-instruments.com/fileadmin/ni_media/downloads/pdf/VAFilterDesign_1.1.1.pdf
+         - https://www.dafx14.fau.de/papers/dafx14_aaron_wishnick_time_varying_filters_for_.pdf
+
+        For definitions of g and r
+        """
+
         class FilterType(Enum):
             LP = "Low-Pass"
             BP = "Band-Pass"

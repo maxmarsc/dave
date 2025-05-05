@@ -386,6 +386,9 @@ __2D (multichannel) containers__:
 Currently supported IIR filter/coefficients are :
 - `juce::dsp::IIR::Filter`
 - `juce::dsp::IIR:Coefficients`
+- `juce::dsp::StateVariableTPTFilter`
+- `juce::dsp::StateVariableFilter::Filter`
+- `juce::dsp::StateVariableFilter::Parameters`
 
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.

@@ -2,6 +2,7 @@
 ## Added
 - Containers are now a specific type of audio Entity, this brings the possibility
 to support other audio related structure in memory like filters
+- Support for JUCE's IIR filters
 ## Changed
 - Renamed `custom_containers` to `custom` to support any type of Entity
 ## Fixed

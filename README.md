@@ -56,6 +56,9 @@ __2D (multichannel) containers__:
 Currently supported IIR filter/coefficients are :
 - `juce::dsp::IIR::Filter`
 - `juce::dsp::IIR:Coefficients`
+- `juce::dsp::StateVariableTPTFilter`
+- `juce::dsp::StateVariableFilter::Filter`
+- `juce::dsp::StateVariableFilter::Parameters`
 
 **You can also add supports for your own entity classes**
 
