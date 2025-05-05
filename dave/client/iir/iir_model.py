@@ -70,7 +70,7 @@ class IirModel(EntityModel):
         self._raw.update(update)
         self._data = raw_to_npy(self._raw.coeffs)
         self._in_scope = True
-        self._update_pending = True
+        self._mark_for_update()
 
     # ==========================================================================
     def draw_view(self, axes: List[Axes], default_sr: int, **kwargs):

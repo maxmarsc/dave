@@ -69,28 +69,28 @@ class SettingsTab:
         This will never delete the model itself, at is is the responsibility
         of the main GUI handler
         """
-        # Warning : This will mark the container for deletion, this should
+        # Warning : This will mark the entity for deletion, this should
         # not be called when just being out of scope
         if id in self.__entity_settings:
             self.__entity_settings[id].destroy()
             del self.__entity_settings[id]
 
     def update_widgets(self):
-        for id, container in self.__entity_models.items():
-            if id not in self.__entity_settings and container.in_scope:
+        for id, entity in self.__entity_models.items():
+            if id not in self.__entity_settings and entity.in_scope:
                 # Back in scope, let's add it
-                self.add_model(container)
-            elif id in self.__entity_settings and not container.in_scope:
+                self.add_model(entity)
+            elif id in self.__entity_settings and not entity.in_scope:
                 # Left the scope, let's remove it
                 self.__entity_settings[id].destroy()
                 del self.__entity_settings[id]
-            elif id in self.__entity_settings and container.in_scope:
+            elif id in self.__entity_settings and entity.in_scope:
                 # Still in scope, let's update it
                 self.__entity_settings[id].update_widgets()
 
         if len(self.__entity_settings) == 0 and self.__empty_label is None:
             self.__empty_label = ctk.CTkLabel(
-                self.__master, text="No container in scope", font=self.__bold_font
+                self.__master, text="No entity in scope", font=self.__bold_font
             )
             self.__empty_label.pack(anchor=tk.CENTER, expand=True)
         elif len(self.__entity_settings) != 0 and self.__empty_label is not None:
@@ -130,7 +130,7 @@ class EntitySettings(ctk.CTkFrame):
         self.__model = model
         self.__bold_font = ctk.CTkFont(size=16, weight="bold")
         self.__font = ctk.CTkFont(size=15)
-        # container name
+        # entity name
         self.__name_label = ctk.CTkLabel(
             self.__scrollable_frame,
             text=f"{self.__model.variable_name} : ",

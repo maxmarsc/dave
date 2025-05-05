@@ -21,7 +21,7 @@ class EntityModel:
         self._sr = None
         self._channels = raw.channels()
         self._in_scope = True
-        self._update_pending = True
+        self.__update_pending = False
         self._deletion_pending = False
         self._view: EntityView = self.possible_views[0]()
 
@@ -83,7 +83,7 @@ class EntityModel:
             self._frozen_data = self._data
         else:
             self._frozen_data = None
-        self._update_pending = True
+        self._mark_for_update()
 
     @property
     @abstractmethod
@@ -137,7 +137,7 @@ class EntityModel:
         if value > 0:
             if value != self.samplerate:
                 self._sr = value
-                self._update_pending = True
+                self._mark_for_update()
             return True
         return False
 
@@ -145,12 +145,12 @@ class EntityModel:
         for view_type in self.possible_views:
             if view_type.name() == view_name:
                 self._view = view_type()
-                self._update_pending = True
+                self._mark_for_update()
                 break
 
     def update_view_settings(self, setting_name: str, setting_value: Any):
         self._view.update_setting(setting_name, setting_value)
-        self._update_pending = True
+        self._mark_for_update()
 
     # ==========================================================================
     @abstractmethod
@@ -177,11 +177,14 @@ class EntityModel:
     def check_for_deletion(self) -> bool:
         return self._deletion_pending
 
+    def _mark_for_update(self):
+        self.__update_pending = True
+
     def check_for_update(self) -> bool:
-        return self._update_pending
+        return self.__update_pending
 
     def reset_update_flag(self):
-        self._update_pending = False
+        self.__update_pending = False
 
     @abstractmethod
     def update_data(self, update: RawEntity.InScopeUpdate):

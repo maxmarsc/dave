@@ -8,6 +8,7 @@ to support other audio related structure in memory like filters
 ## Fixed
 - Fixed a bug in dev mode : `dave` could not be loaded when installed in editable mode
 - Fixed a bug where init lines would be duplicated in `~/.lldbinit` when reinstalling
+- Fixed several small GUI bugs : render called twice, flickering UI, non consistent padding
 
 # v0.9.3
 ## Fixed

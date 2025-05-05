@@ -96,7 +96,7 @@ class DaveGUI:
                     Logger().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawEntity):
-                    Logger().debug(f"Received new container : {msg.id}")
+                    Logger().debug(f"Received new entities : {msg.id}")
                     new_entity = ModelFactory().build(msg)
                     self.__models[msg.id] = new_entity
                     self.__settings_tab.add_model(new_entity)
@@ -127,7 +127,7 @@ class DaveGUI:
             update_needed = True
             self.__global_settings.update_needed = False
 
-        # We check every container model for update
+        # We check every entity model for update
         for model in self.__models.values():
             if model.check_for_deletion():
                 update_needed = True
@@ -142,9 +142,9 @@ class DaveGUI:
             self.__settings_tab.delete_model(id)
             self.__conn.send(DaveProcess.DeleteMessage(id))
 
-        # If no container left we close the gui
+        # If no entity left we close the gui
         if len(self.__models) == 0 and len(to_delete) != 0:
-            Logger().debug("No container left, closing the GUI")
+            Logger().debug("No entity left, closing the GUI")
             self.on_closing()
             return False
 
@@ -153,7 +153,7 @@ class DaveGUI:
     def tkinter_update_callback(self):
         self.__update_tk_id = ""
 
-        # Check for new containers or model update
+        # Check for new entities or model update
         if self.__poll_queue() or self.__check_model_for_updates():
             self.__audio_views_tab.update_widgets()
             self.__settings_tab.update_widgets()

@@ -16,7 +16,6 @@ from dave.common.singleton import SingletonMeta
 from dave.common.logger import Logger
 from dave.common.raw_entity import RawEntity
 
-# from dave.common.raw_container import RawContainer
 from dave.common.server_type import *
 
 try:
@@ -119,7 +118,7 @@ class DaveProcess(metaclass=SingletonMeta):
         # First check for delete messages
         self.__handle_incoming_messages()
 
-        # Then update all the containers that are in the current scope
+        # Then update all the entities that are in the current scope
         for entity in self.__entities.values():
             id = entity.id
             if not entity.in_scope:
@@ -150,8 +149,8 @@ class DaveProcess(metaclass=SingletonMeta):
         Parameters
         ----------
         id : str
-            Either the name or the int id of a container. When using the name, if
-            several container have the same name, the first created will be deleted
+            Either the name or the int id of an entity. When using the name, if
+            several entities have the same name, the first created will be deleted
         """
         # First check for delete messages
         self.__handle_incoming_messages()
@@ -173,8 +172,8 @@ class DaveProcess(metaclass=SingletonMeta):
         Parameters
         ----------
         id : str
-            Either the name or the int id of a container. When using the name, if
-            several container have the same name, the first created will be deleted
+            Either the name or the int id of a entity. When using the name, if
+            several entities have the same name, the first created will be deleted
         """
         # First check for delete messages
         self.__handle_incoming_messages()
@@ -193,16 +192,16 @@ class DaveProcess(metaclass=SingletonMeta):
 
     def delete(self, id: str) -> bool:
         """
-        Mark a container as to be deleted. Returns True on success.
+        Mark an entity as to be deleted. Returns True on success.
 
-        This method does not actually delete the container. It sends a message to
-        the gui that the container should be deleted.
+        This method does not actually delete the entity. It sends a message to
+        the gui that the entity should be deleted.
 
         Parameters
         ----------
         id : str
-            Either the name or the int id of a container. When using the name, if
-            several container have the same name, the first created will be deleted
+            Either the name or the int id of a entity. When using the name, if
+            several entities have the same name, the first created will be deleted
         """
         # First check for delete messages
         self.__handle_incoming_messages()
@@ -222,7 +221,7 @@ class DaveProcess(metaclass=SingletonMeta):
                 msg = self.__dbgr_con.recv()
                 if isinstance(msg, DaveProcess.DeleteMessage):
                     Logger().debug(
-                        "Debugger process received delete command for {msg.id}"
+                        f"Debugger process received delete command for {msg.id}"
                     )
                     del self.__entities[msg.id]
             except EOFError:

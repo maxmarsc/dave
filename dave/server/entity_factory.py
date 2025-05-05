@@ -14,7 +14,7 @@ class EntityFactory(metaclass=SingletonMeta):
         self.__simple_entity_classes: Set[type[Entity]] = set()
         self.__nested_entity_classes: Set[type[Entity]] = set()
 
-    def get_containers_cls_set(self) -> Set[type[Entity]]:
+    def get_entities_cls_set(self) -> Set[type[Entity]]:
         return self.__simple_entity_classes | self.__nested_entity_classes
 
     def register(self, cls):

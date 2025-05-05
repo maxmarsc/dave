@@ -94,7 +94,7 @@ class ContainerModel(EntityModel):
         if concat == self.concat:
             return
         self.__concat = concat
-        self._update_pending = True
+        self._mark_for_update()
 
     @property
     def samples(self) -> int:
@@ -112,7 +112,7 @@ class ContainerModel(EntityModel):
         assert not self.are_dimensions_fixed
         if self.interleaved != value:
             self.__interleaved = value
-            self._update_pending = True
+            self._mark_for_update()
 
     @property
     def mid_side(self) -> bool:
@@ -125,7 +125,7 @@ class ContainerModel(EntityModel):
         assert self.channels == 2
         if self.mid_side != value:
             self.__mid_side = value
-            self._update_pending = True
+            self._mark_for_update()
 
     @property
     def nan(self):
@@ -201,7 +201,7 @@ class ContainerModel(EntityModel):
         else:
             self._data = new_data
         self._in_scope = True
-        self._update_pending = True
+        self._mark_for_update()
 
     def update_layout(self, new_layout: Union[str, RawContainer.Layout]):
         if isinstance(new_layout, str):
@@ -215,7 +215,7 @@ class ContainerModel(EntityModel):
             )
         # Update the view since the layout dictates possible views
         self._view = self.possible_views[0]()
-        self._update_pending = True
+        self._mark_for_update()
 
     # ==========================================================================
     def __compute_render_array(self, data: np.ndarray) -> np.ndarray:
@@ -321,6 +321,6 @@ class ContainerModel(EntityModel):
         ):
             if value != self.channels:
                 self._channels = value
-                self._update_pending = True
+                self._mark_for_update()
             return True
         return False

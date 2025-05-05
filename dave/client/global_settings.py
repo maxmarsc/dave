@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class GlobalSettings:
     """
-    Global settings for both the GUI and containers
+    Global settings for both the GUI and entities
     """
 
     samplerate: int = 44100  # default samplerate

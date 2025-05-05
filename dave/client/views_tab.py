@@ -55,7 +55,7 @@ class AudioViewsTab:
         self.__prev_canvas_dimensions = (1, 1)
 
         # Containers Actions
-        self.__containers_actions_buttons_frame = SidePanels(
+        self.__side_panels_frame = SidePanels(
             self.__central_frame_scrollable, self.__entity_models
         )
 
@@ -71,7 +71,7 @@ class AudioViewsTab:
         # frame packing
         self.__central_frame_scrollable.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.__containers_actions_buttons_frame.pack(
+        self.__side_panels_frame.pack(
             side=tk.RIGHT,
             fill="y",
             pady=(0, self.__bottom_margin_px),
@@ -86,7 +86,7 @@ class AudioViewsTab:
                 continue
             if model.channels > 16:
                 Logger().warning(
-                    f"Too many channels, skipping container : {model.channels}"
+                    f"Too many channels, skipping entity : {model.channels}"
                 )
                 continue
             if model.frozen and not model.is_view_superposable:
@@ -113,9 +113,9 @@ class AudioViewsTab:
         # Determine the new height to apply
         new_height = max(min_height, current_height)
 
-        # Apply the new height to the figures frame and containers actions frame
+        # Apply the new height to the figures frame and entities actions frame
         self.__figures_frame.configure(height=new_height)
-        self.__containers_actions_buttons_frame.configure(height=new_height)
+        self.__side_panels_frame.configure(height=new_height)
         self.__canvas_widget.configure(
             height=new_height
         )  # Adjust canvas height accordingly
@@ -158,8 +158,10 @@ class AudioViewsTab:
         self.__canvas.draw_idle()
 
     def update_widgets(self):
+        # Update the side panel first, so that the figure does not have time
+        # to take all the width
+        self.__side_panels_frame.update_widgets()
         self.__update_figures()
-        self.__containers_actions_buttons_frame.update_widgets()
 
     def __update_figures(self):
         self.__fig.clear()
@@ -167,7 +169,7 @@ class AudioViewsTab:
         nrows = len(hratios)
         if nrows == 0:
             self.__fig.text(
-                0.5, 0.5, "No container in scope", fontsize=14, ha="center", va="center"
+                0.5, 0.5, "No entity in scope", fontsize=14, ha="center", va="center"
             )
             self.__canvas.draw_idle()
             return
@@ -203,7 +205,7 @@ class AudioViewsTab:
         self.on_resize(None)
 
 
-# =======================  ContainersActionsGridFrame  =========================
+# =================================  SidePanels  ===============================
 class SidePanels(ctk.CTkFrame):
     """
     Holds the side panel for each (in-scope) entity
@@ -232,16 +234,16 @@ class SidePanels(ctk.CTkFrame):
         for i, button_frame in enumerate(self.__side_panels.values()):
             # First reset its old row to weight 0
             self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
-            button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 5))
+            button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 2))
             button_frame.update_widgets()
 
-        # Then add new containers
-        for id, container in self.__entity_models.items():
-            if id not in self.__side_panels and container.in_scope:
+        # Then add new entities
+        for id, entity in self.__entity_models.items():
+            if id not in self.__side_panels and entity.in_scope:
                 idx = len(self.__side_panels)
-                self.__side_panels[id] = SidePanel(self, container)
+                self.__side_panels[id] = SidePanel(self, entity)
                 # Place the new button frame
-                self.__side_panels[id].grid(row=idx, column=0, sticky="ew", padx=(5, 0))
+                self.__side_panels[id].grid(row=idx, column=0, sticky="ew", padx=(5, 2))
 
         self.__update_row_weights()
 

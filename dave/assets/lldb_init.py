@@ -83,7 +83,7 @@ try:
         event_handler = LLDBEventHandler(debugger)
 
         # Register pretty printers
-        for cls in EntityFactory().get_containers_cls_set():
+        for cls in EntityFactory().get_entities_cls_set():
             if cls.formatter_compatible():
                 regex = cls.typename_matcher()
                 if isinstance(regex, re.Pattern):
