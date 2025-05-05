@@ -137,6 +137,12 @@ def install_lldb(backup=True):
         logging.debug(f"Missing {LLDB_INIT_SCRIPT}, creating")
         shutil.copy(LLDB_INIT_SCRIPT_SRC, LLDB_INIT_SCRIPT)
 
+    # If the user deleted ~/.dave but did not cleaned ~/.lldbinit we don't
+    # want to duplicate the script import
+    if LLDB_INIT.is_file() and find_line(LLDB_INIT, BEGIN_MARKER) != -1:
+        logging.debug("DAVE marker found in .lldbinit, skipping copy")
+        return
+
     with open(LLDB_INIT_SRC, "r") as lldb_init_src:
         lldb_init_lines = lldb_init_src.readlines()
 
@@ -257,7 +263,7 @@ def main():
                 print(1)
             else:
                 print(0)
-            
+
     else:
         raise NotImplementedError()
 

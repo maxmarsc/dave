@@ -7,6 +7,7 @@ to support other audio related structure in memory like filters
 - Renamed `custom_containers` to `custom` to support any type of Entity
 ## Fixed
 - Fixed a bug in dev mode : `dave` could not be loaded when installed in editable mode
+- Fixed a bug where init lines would be duplicated in `~/.lldbinit` when reinstalling
 
 # v0.9.3
 ## Fixed
