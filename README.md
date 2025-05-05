@@ -239,8 +239,10 @@ settings set target.load-cwd-lldbinit true
 ```
 
 ### LLDB python module linting
-for `venv`
+for `.venv`
 ```bash
-touch venv/lib64/python3.10/site-packages/lldb.pth
-echo "/usr/lib/llvm-${VERSION}/lib/python3.10/dist-packages/" > venv/lib64/python3.10/site-packages/lldb.pth
+PYTHON_VERSION="3.12"
+LLDB_VERSION="14"
+touch .venv/lib64/python${PYTHON_VERSION}/site-packages/lldb.pth
+echo "/usr/lib/llvm-${LLDB_VERSION}/lib/python${PYTHON_VERSION}/dist-packages/" > .venv/lib64/python${PYTHON_VERSION}/site-packages/lldb.pth
 ```
