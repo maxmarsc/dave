@@ -23,8 +23,17 @@ class IirSidePanelInfo(EntitySidePanelInfo):
             text=f"Zeros: {z} Poles: {p}",
             height=20,
         )
+        order = self.__model.order
+        self.__order_label = ctk.CTkLabel(
+            self,
+            text=f"Order: {order}",
+            height=20,
+        )
         self.__zp_labels.pack(side=tk.TOP, anchor="w")
+        self.__order_label.pack(side=tk.TOP, anchor="w")
 
     def update_widgets(self):
         z, p = self.__model.zeros_poles
+        order = self.__model.order
         self.__zp_labels.configure(text=f"Zeros: {z} Poles: {p}")
+        self.__order_label.configure(text=f"Order: {order}")

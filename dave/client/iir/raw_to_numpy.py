@@ -9,8 +9,16 @@ from scipy import signal
 class InternalNpy:
     sos: np.ndarray  # shape (sections, 6), a0 normalized
 
-    # @property
-    # def order(self):
+    @property
+    def order(self) -> int:
+        order = 0
+        for section in self.sos:
+            if abs(section[2]) > 1e-12 or abs(section[5]) > 1e-12:
+                order += 2
+            else:
+                order += 1
+        return order
+
     @property
     def zeros_poles(self) -> Tuple[int, int]:
         z, p, _ = signal.sos2zpk(self.sos)

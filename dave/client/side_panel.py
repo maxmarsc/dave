@@ -1,3 +1,4 @@
+from pathlib import Path
 from tkinter import filedialog, messagebox
 from warnings import catch_warnings
 
@@ -102,7 +103,7 @@ class SidePanel(ctk.CTkFrame):
             return
         else:
             with catch_warnings(record=True) as w:
-                self.__entity.serialize(filename)
+                self.__entity.serialize(Path(filename))
             if w:
                 messagebox.showwarning(
                     title="Saving to file",

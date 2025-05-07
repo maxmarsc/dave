@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 import warnings
 from matplotlib.axes import Axes
@@ -155,15 +156,16 @@ class ContainerModel(EntityModel):
             filetypes.append(("Wave - 16bit PCM", ".wav"))
         return filetypes
 
-    def serialize(self, filename: str):
-        if filename.endswith(".wav"):
-            self.__save_as_wave(filename)
-        elif filename.endswith(".npy"):
-            self.__save_as_npy(filename)
-        else:
-            raise RuntimeError(f"Unsupported extension : {filename}")
+    def serialize(self, filename: Path):
+        match (filename.suffix):
+            case ".wav":
+                self.__save_as_wave(filename)
+            case ".npy":
+                self.__save_as_npy(filename)
+            case _:
+                raise RuntimeError(f"Unsupported extension : {filename.suffix}")
 
-    def __save_as_wave(self, filename: str):
+    def __save_as_wave(self, filename: Path):
         # Should it be self.__data to be saved instead ?
         interleaved_data = self.__compute_render_array(self._raw.data).T
         if np.max(np.abs(interleaved_data)) > 1.0:
@@ -175,14 +177,14 @@ class ContainerModel(EntityModel):
             interleaved_data[np.where(interleaved_data > 1.0)] = 1.0
         pcm_data = np.int16(interleaved_data * (2**15 - 1))
 
-        with wave.open(filename, "w") as f:
+        with wave.open(str(filename), "w") as f:
             f.setnchannels(self.channels)
             # 2 bytes per sample.
             f.setsampwidth(2)
             f.setframerate(self.samplerate)
             f.writeframes(pcm_data.tobytes())
 
-    def __save_as_npy(self, filename: str):
+    def __save_as_npy(self, filename: Path):
         np.save(filename, self.__compute_render_array(self._data))
 
     # ==========================================================================

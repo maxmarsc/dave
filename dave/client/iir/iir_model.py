@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 import warnings
 from matplotlib.axes import Axes
@@ -12,7 +13,7 @@ from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 
 from .raw_to_numpy import InternalNpy, raw_to_npy
-from .iir_views import IirView, MagnitudeResponseView, PhaseResponseView
+from .iir_views import IirView, MagnitudeResponseView, PhaseResponseView, PolesZerosView
 
 
 class IirModel(EntityModel):
@@ -42,7 +43,7 @@ class IirModel(EntityModel):
     # ==========================================================================
     @property
     def possible_views(self) -> List[type[IirView]]:
-        return [MagnitudeResponseView, PhaseResponseView]
+        return [MagnitudeResponseView, PhaseResponseView, PolesZerosView]
 
     @property
     def concat(self) -> bool:
@@ -58,12 +59,25 @@ class IirModel(EntityModel):
     def zeros_poles(self) -> Tuple[int, int]:
         return self._data.zeros_poles
 
+    @property
+    def order(self) -> int:
+        return self._data.order
+
     # ==========================================================================
     def serialize_types(self) -> List[Tuple[str, str]]:
-        return [("JSON file (ZPK)", ".json"), ("Numpy file (SOS)", ".npy")]
+        return [
+            ("Numpy file (SOS)", ".npy"),
+        ]
 
-    def serialize(self, filename: str):
-        pass
+    def serialize(self, filename: Path):
+        match filename.suffix:
+            case ".npy":
+                self.__save_as_npy(filename)
+            case _:
+                raise RuntimeError(f"Unsupported extension : {filename.suffix}")
+
+    def __save_as_npy(self, filename: Path):
+        np.save(filename, self._data.sos)
 
     # ==========================================================================
     def update_data(self, update: RawIir.InScopeUpdate):

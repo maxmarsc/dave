@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, List, Tuple, Union
 
 from matplotlib.axes import Axes
@@ -167,7 +168,7 @@ class EntityModel:
         pass
 
     @abstractmethod
-    def serialize(self, filename: str):
+    def serialize(self, filename: Path):
         pass
 
     # ==========================================================================
