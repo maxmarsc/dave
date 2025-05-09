@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.10.0
+## Added
 - Containers are now a specific type of audio Entity, this brings the possibility
 to support other audio related structure in memory like filters
 - Support for JUCE's IIR filters
