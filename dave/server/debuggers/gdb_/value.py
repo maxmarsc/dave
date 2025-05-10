@@ -1,5 +1,6 @@
 from __future__ import annotations
-from ..value import AbstractValue
+from typing import List, Union
+from ..value import AbstractValue, DebuggerMemoryError
 import gdb  # type: ignore
 
 
@@ -10,6 +11,9 @@ class GdbValue(AbstractValue):
 
     def typename(self) -> str:
         return str(gdb.types.get_basic_type(self.__value.type).strip_typedefs())
+
+    def varname(self) -> str:
+        return self.__varname
 
     def byte_size(self) -> int:
         return self.__value.type.sizeof
@@ -38,11 +42,17 @@ class GdbValue(AbstractValue):
         return int(self.__value.address)
 
     def __int__(self) -> int:
-        return int(self.__value)
+        try:
+            return int(self.__value)
+        except TypeError as e:
+            raise DebuggerMemoryError(e.args)
 
     def __float__(self) -> float:
         assert self.__value.type.code == gdb.TYPE_CODE_FLT
-        return float(self.__value)
+        try:
+            return float(self.__value)
+        except TypeError as e:
+            raise DebuggerMemoryError(e.args)
 
     def __getitem__(self, key: int) -> GdbValue:
         """
@@ -64,4 +74,48 @@ class GdbValue(AbstractValue):
     @staticmethod
     def readmemory(addr: int, bytesize: int) -> bytearray:
         inferior = gdb.selected_inferior()
-        return bytearray(inferior.read_memory(addr, bytesize))
+        try:
+            return bytearray(inferior.read_memory(addr, bytesize))
+        except gdb.MemoryError:
+            raise DebuggerMemoryError(
+                f"Failed to read {bytesize} bytes from 0x{addr:X}"
+            )
+
+    @staticmethod
+    def find_variable(
+        varname: str, where: Union[gdb.Frame, None] = None
+    ) -> Union[GdbValue, None]:
+        if where is None:
+            try:
+                return GdbValue(gdb.parse_and_eval(varname), varname)
+            except gdb.GdbError:
+                return None
+
+        assert isinstance(where, gdb.Frame)
+        try:
+            return GdbValue(where.read_var(varname), varname)
+        except gdb.GdbError:
+            return None
+
+    @staticmethod
+    def find_all_variables(where: Union[gdb.Frame, None] = None) -> List[GdbValue]:
+        if where is None:
+            where = gdb.selected_frame()
+
+        found = []
+        block = where.block()
+
+        # Traverse all blocks until we leave the function
+        while block and not block.is_static:
+            for symbol in block:
+                if symbol.is_variable or symbol.is_argument:
+                    try:
+                        value = where.read_var(symbol.name)
+                        found.append(GdbValue(value, symbol.name))
+                    except gdb.GdbError:
+                        continue
+
+            # Go up a block
+            block = block.superblock
+
+        return found

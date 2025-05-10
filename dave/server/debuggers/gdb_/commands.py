@@ -1,3 +1,4 @@
+from typing import List
 import gdb  # type: ignore
 import gdb.types  # type: ignore
 
@@ -6,12 +7,27 @@ import time
 
 from dave.common.singleton import SingletonMeta
 from dave.server.process import DaveProcess
+from dave.server.debuggers.command_parsers import (
+    ParsingError,
+    ShowCommandParser,
+    DeleteCommandParser,
+    InspectCommandParser,
+    FreezeCommandParser,
+    ConcatCommandParser,
+    HelpCommandParser,
+)
 from dave.server.entity_factory import EntityFactory, EntityBuildError
 from dave.common.logger import Logger
 
 from .value import GdbValue
 
-# last_frame = None  # type: gdb.Frame
+# Needed for f-string formatting of GdbCommand class
+SHOW_PARSER = ShowCommandParser()
+DELETE_PARSER = DeleteCommandParser()
+INSPECT_PARSER = InspectCommandParser()
+FREEZE_PARSER = FreezeCommandParser()
+CONCAT_PARSER = ConcatCommandParser()
+HELP_PARSER = HelpCommandParser()
 
 
 def exit_handler(event):
@@ -75,19 +91,19 @@ class FrameCheckerThread(metaclass=SingletonMeta):
 
 class GdbCommand(gdb.Command):
     # fmt: off
-    """
+    __doc__ = f"""
 DAVE subcommands to communicate with the dave gui
 
 To have more information check the user guide : https://github.com/maxmarsc/dave/blob/main/USER_GUIDE.md
 
 The following subcommands are supported:
 
-    concat  -- Usage: dave delete VARIABLE|CONTAINER_ID
-    delete  -- Usage: dave delete VARIABLE|CONTAINER_ID
-    freeze  -- Usage: dave delete VARIABLE|CONTAINER_ID
-    help    -- Usage: dave help
-    inspect -- Usage: dave inspect VARIABLE
-    show    -- Usage: dave show VARIABLE [DIM1[,DIM2]]
+    concat  -- {CONCAT_PARSER.usage_property}
+    delete  -- {DELETE_PARSER.usage_property}
+    freeze  -- {FREEZE_PARSER.usage_property}
+    help    -- {HELP_PARSER.usage_property}
+    inspect -- {INSPECT_PARSER.usage_property}
+    show    -- {SHOW_PARSER.usage_property}
     """
     # fmt: on
 
@@ -105,88 +121,127 @@ The following subcommands are supported:
     def invoke(self, arg, from_tty):
         args = gdb.string_to_argv(arg)
         if len(args) < 1:
-            print("Usage: dave <subcommand> [args]")
-            return
+            raise gdb.GdbError(self.__doc__)
 
-        if not GdbCommand.__check_for_running_inferior():
-            Logger().error("no processus detected")
-            return
+        if not GdbCommand.__check_for_running_inferior() and args[0] != "help":
+            raise gdb.GdbError("No processus detected")
 
         subcommand = args[0]
-        if subcommand == "inspect":
-            self.inspect(args[1:])
-        elif subcommand == "show":
-            self.show(args[1:])
-        elif subcommand == "delete":
-            self.delete_container(args[1:])
-        elif subcommand == "freeze":
-            self.freeze_container(args[1:])
-        elif subcommand == "concat":
-            self.concat_container(args[1:])
-        elif subcommand == "help":
-            print(GdbCommand.__doc__)
-        else:
-            Logger().error(f"Unknown subcommand '{subcommand}'")
+        match subcommand:
+            case INSPECT_PARSER.subprog:
+                self.__inspect(args[1:])
+            case SHOW_PARSER.subprog:
+                self.__show(args[1:])
+            case DELETE_PARSER.subprog:
+                self.__delete(args[1:])
+            case FREEZE_PARSER.subprog:
+                self.__freeze(args[1:])
+            case CONCAT_PARSER.subprog:
+                self.__concat(args[1:])
+            case HELP_PARSER.subprog:
+                self.__help(args[1:])
+            case _:
+                raise gdb.GdbError(f"Unknown subcommand '{subcommand}'")
 
-    def show(self, args):
-        if len(args) < 1 or len(args) > 2:
-            raise gdb.GdbError("Usage: dave show VARIABLE [DIM1[,DIM2]]")
-
-        varname = args[0]
-        if len(args) > 1:
-            dims = [int(val) for val in args[1].split(",")]
-        else:
-            dims = list()
-        var = GdbValue(gdb.parse_and_eval(varname), varname)
-        typename = var.typename()
+    def __show(self, args):
         try:
-            container = EntityFactory().build(var, typename, varname, dims)
-            Logger().info(f"Added {varname} : {container.id}")
-        except (EntityBuildError, TypeError) as e:
-            raise gdb.GdbError(e.args[0])
-        if not DaveProcess().is_alive():
-            DaveProcess().start()
-            FrameCheckerThread().start()
-        DaveProcess().add_to_model(container)
+            parsed = SHOW_PARSER.parse_args(args)
+        except ParsingError as e:
+            message = f"{e}\n{SHOW_PARSER.usage_property}"
+            raise gdb.GdbError(message)
 
-    def delete_container(self, args):
-        if len(args) != 1:
-            raise gdb.GdbError("Usage: dave delete VARIABLE|CONTAINER_ID")
+        if len(parsed.dims) > 2:
+            raise gdb.GdbError("--dims supports up to two dimensions")
+
+        if parsed.VARIABLE:
+            # The user gave a variable name
+            vars: List[GdbValue] = [
+                GdbValue.find_variable(parsed.VARIABLE),
+            ]
+            if vars[0] is None:
+                raise gdb.GdbError(f"Variable '{parsed.VARIABLE}' not found.")
+        else:
+            # The user gave no name, we will try to add every compatible variable
+            vars: List[GdbValue] = GdbValue.find_all_variables()
+
+        skipped = []
+        new_entities = []
+        for var in vars:
+            try:
+                entity = EntityFactory().build(
+                    var, var.typename(), var.varname(), parsed.dims
+                )
+                Logger().info(f"Added {var.varname()} with ID {entity.id}")
+                new_entities.append(entity)
+            except (EntityBuildError, TypeError) as e:
+                if parsed.VARIABLE:
+                    raise gdb.GdbError(e.args[0])
+                else:
+                    Logger().debug(f"Failed to build {var.varname()} with {e}")
+                    skipped.append(var.varname())
+        if skipped:
+            skipped_str = str(skipped)[1:-1]
+            skipped_str = skipped_str.replace("'", "")
+            Logger().info(f"Skipped the following variables : {skipped_str}")
+
+        if new_entities:
+            if not DaveProcess().is_alive():
+                DaveProcess().start()
+                FrameCheckerThread().start()
+            DaveProcess().add_to_model(new_entities)
+
+    def __delete(self, args):
+        try:
+            parsed = DELETE_PARSER.parse_args(args)
+        except ParsingError as e:
+            message = f"{e}\n{DELETE_PARSER.usage_property}"
+            raise gdb.GdbError(message)
 
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().delete(args[0]):
-            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
+        if not DaveProcess().delete(parsed.VARIABLE_ID):
+            raise gdb.GdbError(f"{args[0]} is not a valid entity identifier")
 
-    def freeze_container(self, args):
-        if len(args) != 1:
-            raise gdb.GdbError("Usage: dave freeze VARIABLE|CONTAINER_ID")
-
-        if not DaveProcess().is_alive():
-            raise gdb.GdbError("Dave is not started")
-
-        if not DaveProcess().freeze(args[0]):
-            raise gdb.GdbError(f"{args[0]} is not a valid name or container id")
-
-    def concat_container(self, args):
-        if len(args) != 1:
-            raise gdb.GdbError("Usage: dave concat VARIABLE|CONTAINER_ID")
+    def __freeze(self, args):
+        try:
+            parsed = FREEZE_PARSER.parse_args(args)
+        except ParsingError as e:
+            message = f"{e}\n{FREEZE_PARSER.usage_property}"
+            raise gdb.GdbError(message)
 
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
 
-        if not DaveProcess().concat(args[0]):
+        if not DaveProcess().freeze(parsed.VARIABLE_ID):
             raise gdb.GdbError(
-                f"concat command failed. {args[0]} is not a valid"
+                f"{parsed.VARIABLE_ID} is not a valid name or container id"
+            )
+
+    def __concat(self, args):
+        try:
+            parsed = CONCAT_PARSER.parse_args(args)
+        except ParsingError as e:
+            message = f"{e}\n{CONCAT_PARSER.usage_property}"
+            raise gdb.GdbError(message)
+
+        if not DaveProcess().is_alive():
+            raise gdb.GdbError("Dave is not started")
+
+        if not DaveProcess().concat(parsed.VARIABLE_ID):
+            raise gdb.GdbError(
+                f"concat command failed. {parsed.VARIABLE_ID} is not a valid "
                 "or compatible entity identifier"
             )
 
-    def inspect(self, args):
-        if len(args) != 1:
-            raise gdb.GdbError("Usage: dave inspect VARIABLE")
+    def __inspect(self, args):
+        try:
+            parsed = INSPECT_PARSER.parse_args(args)
+        except ParsingError as e:
+            message = f"{e}\n{INSPECT_PARSER.usage_property}"
+            raise gdb.GdbError(message)
 
-        var_name = args[0]
+        var_name = parsed.VARIABLE_ID
         try:
             var = gdb.parse_and_eval(var_name)
             if var.is_optimized_out:
@@ -195,3 +250,26 @@ The following subcommands are supported:
                 print("Type: {}".format(gdb.types.get_basic_type(var.type).name))
         except (gdb.error, RuntimeError) as e:
             print(f"Error accessing variable '{var_name}': {str(e)}")
+
+    def __help(self, args):
+        try:
+            parsed = HELP_PARSER.parse_args(args)
+        except ParsingError as e:
+            message = f"{e}\n{INSPECT_PARSER.usage_property}"
+            raise gdb.GdbError(message)
+
+        match parsed.SUBCOMMAND:
+            case None:
+                print(GdbCommand.__doc__)
+            case "show":
+                print(ShowCommandParser().format_help()[:-1])
+            case "delete":
+                print(DeleteCommandParser().format_help()[:-1])
+            case "concat":
+                print(ConcatCommandParser().format_help()[:-1])
+            case "freeze":
+                print(FreezeCommandParser().format_help()[:-1])
+            case "inspect":
+                print(DeleteCommandParser().format_help()[:-1])
+            case _:
+                raise gdb.GdbError("Uh-Oh, something went wrong")

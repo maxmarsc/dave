@@ -81,6 +81,12 @@ Currently supported IIR filter/coefficients are :
 the stack using the IDE ui.
 
 ---
+**WARNING:** CustomTkinter has been identified as slow and quite unreliable graphic
+library. You might experience slowdown when using Dave. ***This is known and considered
+an issue.*** I'm working on a port to another graphical library but that might take
+some time, sorry.
+
+---
 
 To get started first follow the `Project Setup` guide below, then you can read 
 the [User Guide](USER_GUIDE.md) to get familiar with DAVE.

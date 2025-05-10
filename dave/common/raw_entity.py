@@ -17,6 +17,7 @@ class RawEntity(ABC):
 
     id: int
     name: str
+    in_scope: bool
 
     @abstractmethod
     def channels(self) -> int:
@@ -53,3 +54,8 @@ class RawEntity(ABC):
     @abstractmethod
     def as_update(self) -> InScopeUpdate:
         pass
+
+
+@dataclass
+class RawEntityList:
+    raw_entities: List[RawEntity]

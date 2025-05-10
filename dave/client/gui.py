@@ -8,7 +8,7 @@ import customtkinter as ctk
 from dave.client.entity.model_factory import ModelFactory
 from dave.common.logger import Logger
 
-from dave.common.raw_entity import RawEntity
+from dave.common.raw_entity import RawEntity, RawEntityList
 from dave.server.process import DaveProcess
 
 from dave.client.entity.entity_model import EntityModel
@@ -36,7 +36,7 @@ class DaveGUI:
         connection: Connection,
     ):
         # Refresh and quit settings
-        self.__refresh_time_ms = 20
+        self.__refresh_time_ms = 100
         self.__conn = connection
 
         # GUI settings
@@ -64,15 +64,21 @@ class DaveGUI:
         self.__update_tk_id = ""
 
     def on_closing(self):
+        Logger().debug("Tkinter on_closing called")
         if self.__update_tk_id:
             self.__window.after_cancel(self.__update_tk_id)
-        self.__window.destroy()
+
+        # Clear data first to prevent updates during destruction
         self.__models.clear()
+
+        # Completely quit the application
+        self.__window.quit()
 
     def run(self):
         self.__update_tk_id = self.__window.after(
             self.__refresh_time_ms, self.tkinter_update_callback
         )
+        # self.__update_tk_id = self.__window.after(10000, self.on_closing)
         self.__window.mainloop()
         Logger().debug("Tkinter mainloop exiting")
 
@@ -95,12 +101,15 @@ class DaveGUI:
                 elif isinstance(msg, DaveProcess.ConcatMessage):
                     Logger().debug(f"Received concat message : {msg.id}")
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
-                elif isinstance(msg, RawEntity):
-                    Logger().debug(f"Received new entities : {msg.id}")
-                    new_entity = ModelFactory().build(msg)
-                    self.__models[msg.id] = new_entity
-                    self.__settings_tab.add_model(new_entity)
-                    update_needed = True
+                elif isinstance(msg, RawEntityList):
+                    Logger().debug(f"Received new entities")
+                    tmp_update_needed = False
+                    for raw_entity in msg.raw_entities:
+                        tmp_update_needed = tmp_update_needed or raw_entity.in_scope
+                        new_entity = ModelFactory().build(raw_entity)
+                        self.__models[raw_entity.id] = new_entity
+                        self.__settings_tab.add_model(new_entity)
+                    update_needed = tmp_update_needed
                 elif isinstance(msg, RawEntity.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)

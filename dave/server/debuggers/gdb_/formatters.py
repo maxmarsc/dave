@@ -21,7 +21,7 @@ class ContainerPrettyPrinter:
             )
 
     def children(self):
-        if not self.__container.float_type.is_complex():
+        if not self.__container.sample_type.is_complex():
             # Add synthetic children
             sparklines = self.__container.compute_sparklines()
             for channel, sparkline in enumerate(sparklines):

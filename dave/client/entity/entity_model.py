@@ -21,7 +21,7 @@ class EntityModel:
         self._frozen_data = None
         self._sr = None
         self._channels = raw.channels()
-        self._in_scope = True
+        self._in_scope = raw.in_scope
         self.__update_pending = False
         self._deletion_pending = False
         self._view: EntityView = self.possible_views[0]()

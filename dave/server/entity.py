@@ -47,6 +47,16 @@ class Entity(ABC):
 
     @abstractmethod
     def as_raw(self) -> RawEntity:
+        """
+        Builds a pickable representation of the entity to be send to the GUI
+        """
+        pass
+
+    @abstractmethod
+    def as_empty_raw(self) -> RawEntity:
+        """
+        Builds an empty (meaning no samples and out of scope) pickable representation of the entity to be send to the GUI
+        """
         pass
 
     @classmethod

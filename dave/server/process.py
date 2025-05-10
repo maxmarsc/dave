@@ -11,10 +11,11 @@ from pathlib import Path
 
 from .entity import Entity
 from .future_gdb import blocked_signals
+from .debuggers.value import DebuggerMemoryError
 
 from dave.common.singleton import SingletonMeta
 from dave.common.logger import Logger
-from dave.common.raw_entity import RawEntity
+from dave.common.raw_entity import RawEntity, RawEntityList
 
 from dave.common.server_type import *
 
@@ -114,6 +115,9 @@ class DaveProcess(metaclass=SingletonMeta):
         - if a entity is in scope, this will read the samples from the debugger
         memory and sends and update
         - if a entity is not in scope, this will tell it to the gui
+
+        **Note:** If reading the memory of an entity fails (likely because it is
+        unitialized or deallocated), it will be considered out of scope
         """
         # First check for delete messages
         self.__handle_incoming_messages()
@@ -122,16 +126,40 @@ class DaveProcess(metaclass=SingletonMeta):
         for entity in self.__entities.values():
             id = entity.id
             if not entity.in_scope:
-                Logger().debug(f"{entity.name} is out of scope")
+                Logger().debug(f"{id}:{entity.name} is out of scope")
                 self.__dbgr_con.send(RawEntity.OutScopeUpdate(id))
             else:
-                Logger().debug(f"{entity.name} is in scope")
-                update = entity.as_raw().as_update()
-                self.__dbgr_con.send(update)
+                Logger().debug(f"{id}:{entity.name} is in scope")
+                try:
+                    update = entity.as_raw().as_update()
+                    self.__dbgr_con.send(update)
+                except DebuggerMemoryError as e:
+                    Logger().error(
+                        f"Failed to read entity {id}:{entity.name}. Might be deallocated or unitialized. It will be considered out of scope."
+                    )
+                    Logger().debug(f"Failed with {e.args[0]}")
+                    self.__dbgr_con.send(RawEntity.OutScopeUpdate(id))
 
-    def add_to_model(self, entity: Entity):
-        self.__entities[entity.id] = entity
-        self.__dbgr_con.send(entity.as_raw())
+    def add_to_model(self, entities: List[Entity]):
+        entity_list = list()
+        for entity in entities:
+            # Add the entity to the tracking list for future iterations
+            assert entity.id not in self.__entities
+            self.__entities[entity.id] = entity
+            try:
+                # Try to read the memory and create a RawEntity to send to the client
+                entity_list.append(entity.as_raw())
+            except DebuggerMemoryError as e:
+                Logger().error(
+                    f"Failed to read entity {entity.name}. Might be out of scope or unitialized."
+                )
+                Logger().debug(f"Failed with {e.args[0]}")
+                # Send a RawEntity with no samples instead, we will send the samples
+                # once the Entity is in scope and readable
+                entity_list.append(entity.as_empty_raw())
+
+        # Send the new entities to the client
+        self.__dbgr_con.send(RawEntityList(entity_list))
 
     def __identify_entity(self, id: str) -> int:
         try:

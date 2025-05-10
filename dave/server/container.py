@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import re
-from typing import Any, Callable, List, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple, Type, Union
 import struct
 import cmath
 
@@ -33,10 +33,10 @@ class Container(Entity):
         channels, samples = shape if not self.__interleaved else shape[::-1]
 
         samples_bytes = self.read_from_debugger()
-        byte_size = self.float_type.byte_size()
-        fmt = self.float_type.struct_name()
+        byte_size = self.sample_type.byte_size()
+        fmt = self.sample_type.struct_name()
 
-        if self.float_type.is_complex():
+        if self.sample_type.is_complex():
             return f"{channels} channels {samples} samples (complex data)"
         else:
             min_amp = struct.unpack(fmt, samples_bytes[:byte_size])[0]
@@ -49,12 +49,12 @@ class Container(Entity):
             return f"{channels} channels {samples} samples, min {min_amp:.4E}, max {max_amp:.4E}"
 
     def compute_sparklines(self) -> List[str]:
-        assert not self.float_type.is_complex()
+        assert not self.sample_type.is_complex()
         shape = self.shape()
         channels, num_samples = shape if not self.__interleaved else shape[::-1]
         samples_bytes = self.read_from_debugger()
-        byte_size = self.float_type.byte_size()
-        fmt = self.float_type.struct_name()
+        byte_size = self.sample_type.byte_size()
+        fmt = self.sample_type.struct_name()
 
         sparklines = []
 
@@ -137,23 +137,40 @@ class Container(Entity):
             # base
             self.id,
             self.name,
-            self.default_layout(),
-            self.available_data_layouts(),
+            in_scope=True,
             # container
-            self.read_from_debugger(),
-            self.shape(),
-            self.dimensions_fixed(),
-            self.__interleaved,
-            self.float_type,
+            default_layout=self.default_layout(),
+            possible_layout=self.available_data_layouts(),
+            data=self.read_from_debugger(),
+            original_shape=self.shape(),
+            dimensions_fixed=self.dimensions_fixed(),
+            interleaved=self.__interleaved,
+            sample_type=self.sample_type,
+        )
+
+    def as_empty_raw(self):
+        return RawContainer(
+            # base
+            self.id,
+            self.name,
+            in_scope=False,
+            # container
+            default_layout=self.default_layout(),
+            possible_layout=self.available_data_layouts(),
+            data=bytearray(),
+            original_shape=(0, 0),
+            dimensions_fixed=self.dimensions_fixed(),
+            interleaved=self.__interleaved,
+            sample_type=self.sample_type,
         )
 
     @property
-    def float_type(self) -> SampleType:
+    def sample_type(self) -> SampleType:
         return self.__type
 
     @property
     def byte_size(self) -> int:
-        return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
+        return self.sample_type.byte_size() * self.shape()[0] * self.shape()[1]
 
     @abstractmethod
     def shape(self) -> Tuple[int, int]:
@@ -203,7 +220,7 @@ class Container1D(Container):
         return (1, self.size)
 
     def default_layout(self) -> RawContainer.Layout:
-        if self.float_type.is_complex():
+        if self.sample_type.is_complex():
             return RawContainer.Layout.CPX_1D
         else:
             return RawContainer.Layout.REAL_1D
@@ -231,6 +248,11 @@ class Container1D(Container):
     def is_nested() -> bool:
         return False
 
+    @classmethod
+    @abstractmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, Optional[int]]:
+        pass
+
 
 class Container2D(Container):
     def __init__(
@@ -243,7 +265,7 @@ class Container2D(Container):
         super().__init__(dbg_value, name, data_type, interleaved)
 
     def default_layout(self) -> RawContainer.Layout:
-        if self.float_type.is_complex():
+        if self.sample_type.is_complex():
             return RawContainer.Layout.CPX_2D
         else:
             return RawContainer.Layout.REAL_2D
@@ -262,3 +284,10 @@ class Container2D(Container):
     @staticmethod
     def is_nested() -> bool:
         return False
+
+    @classmethod
+    @abstractmethod
+    def _parse_typename(
+        cls, typename: str, **kwargs
+    ) -> Tuple[SampleType, Optional[int], Optional[int]]:
+        pass

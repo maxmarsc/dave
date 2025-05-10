@@ -38,6 +38,8 @@ def raw_to_npy(
         case RawIir.SVFTPTCoeffs:
             return __raw_svf_tpt_to_internal(data)
         case _:
+            if data is None:
+                return np.zeros((0, 6))
             raise NotImplementedError("Unrecognised IIR coeffs")
 
 

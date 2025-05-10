@@ -3,10 +3,16 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Union
 
 from matplotlib.axes import Axes
+import matplotlib as mpl
 import numpy as np
 
 # from dave.client.view_setting import Setting
 import tkinter as tk
+
+
+def configure_matplotlib():
+    mpl.rcParams["path.simplify"] = True
+    mpl.rcParams["path.simplify_threshold"] = 0.3
 
 
 class EntityView(ABC):

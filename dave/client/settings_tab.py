@@ -55,7 +55,6 @@ class SettingsTab:
     def add_model(self, model: EntityModel):
         assert model.id not in self.__entity_settings
         assert model.id in self.__entity_models
-        assert model.in_scope
         self.__entity_settings[model.id] = EntitySettings(
             self.__settings_scrollable_frame,
             model,
@@ -281,7 +280,7 @@ class GlobalSettingsFrame(ctk.CTkFrame):
         self.__appearance_var.trace_add("write", self.appearance_var_callback)
         self.__appearance_menu = ctk.CTkOptionMenu(
             self,
-            values=("System", "Dark", "Light"),
+            values=("Dark", "Light"),
             variable=self.__appearance_var,
             font=self.__font,
             width=100,

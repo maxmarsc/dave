@@ -30,14 +30,8 @@ class DaveCustomContainerPtr(Container1D):
     # Required for 1D container
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"DaveCustomContainerPtr could not parse {typename} as a valid type"
-            )
-
-        data_type = SampleType.parse(re_match.group(1))
-        super().__init__(dbg_value, name, data_type)
+        sample_type, _ = self.parse_typename(typename)
+        super().__init__(dbg_value, name, sample_type)
 
         # Use the preexisting 1D pointer container type
         self.__inner = c_cpp.Pointer1D(
@@ -52,6 +46,17 @@ class DaveCustomContainerPtr(Container1D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    # Required for 1D container
+    @classmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"DaveCustomContainerPtr could not parse {typename} as a valid type"
+            )
+
+        return SampleType.parse(re_match.group(1), None)
 
     # Required for 1D container
     @property
@@ -93,14 +98,8 @@ class DaveCustomContainerPtrPtr(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"DaveCustomContainerPtrPtr could not parse {typename} as a valid type"
-            )
-
-        data_type = SampleType.parse("float")
-        super().__init__(dbg_value, name, data_type)
+        sample_type, *_ = self._parse_typename(typename)
+        super().__init__(dbg_value, name, sample_type)
 
         # Use the preexisting 2D pointer pointer container type
         self.__inner = c_cpp.Pointer2D(
@@ -111,6 +110,17 @@ class DaveCustomContainerPtrPtr(Container2D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    # Required for 2D containers
+    @classmethod
+    def _parse_typename(cls, typename: str, **_) -> Tuple[SampleType, None, None]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"DaveCustomContainerPtrPtr could not parse {typename} as a valid type"
+            )
+
+        return (SampleType.parse("float"), None, None)
 
     # Required for 2D containers
     def shape(self) -> Tuple[int, int]:
@@ -155,14 +165,8 @@ class DaveCustomInterleavedContainerVec(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"DaveCustomInterleavedContainerVec could not parse {typename} as a valid type"
-            )
-
-        data_type = SampleType.parse("float")
-        super().__init__(dbg_value, name, data_type, interleaved=True)
+        sample_type, *_ = self._parse_typename(typename)
+        super().__init__(dbg_value, name, sample_type, interleaved=True)
 
         # Use the preexisting 1D vector container type
         self.__inner = c_cpp.StdVector1D(dbg_value.attr("vec_"), name + ".vec_")
@@ -171,6 +175,17 @@ class DaveCustomInterleavedContainerVec(Container2D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    # Required for 2D containers
+    @classmethod
+    def _parse_typename(cls, typename: str, **_) -> Tuple[SampleType, None, None]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"DaveCustomInterleavedContainerVec could not parse {typename} as a valid type"
+            )
+
+        return (SampleType.parse("float"), None, None)
 
     # Required for 2D containers
     def shape(self) -> Tuple[int, int]:
@@ -214,14 +229,8 @@ class DaveCustomContainerVecRef(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"DaveCustomInterleavedContainerVec could not parse {typename} as a valid type"
-            )
-
-        data_type = SampleType.parse("float")
-        super().__init__(dbg_value, name, data_type)
+        sample_type, *_ = self._parse_typename(typename)
+        super().__init__(dbg_value, name, sample_type)
 
         # Use the preexisting 1D vector container type
         self.__inner = c_cpp.StdVector1D(
@@ -233,6 +242,16 @@ class DaveCustomContainerVecRef(Container2D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @classmethod
+    def _parse_typename(cls, typename: str, **_) -> Tuple[SampleType, None, None]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"DaveCustomInterleavedContainerVec could not parse {typename} as a valid type"
+            )
+
+        return (SampleType.parse("float"), None, None)
 
     # Required for 2D containers
     def shape(self) -> Tuple[int, int]:

@@ -1,8 +1,18 @@
+from typing import List
 import lldb
 import shlex
 
 from ...process import DaveProcess
 from ...entity_factory import EntityFactory, EntityBuildError
+from dave.server.debuggers.command_parsers import (
+    ParsingError,
+    ShowCommandParser,
+    DeleteCommandParser,
+    InspectCommandParser,
+    FreezeCommandParser,
+    ConcatCommandParser,
+    HelpCommandParser,
+)
 from dave.common.logger import Logger
 from .value import LldbValue
 import threading
@@ -108,7 +118,7 @@ class LLDBEventHandler:
 
 class ShowCommand:
     def __init__(self, debugger: lldb.SBDebugger, internal_dict):
-        pass
+        self.__parser = ShowCommandParser()
 
     def __call__(
         self,
@@ -118,13 +128,15 @@ class ShowCommand:
         result: lldb.SBCommandReturnObject,
     ):
         args = shlex.split(command)
-
-        if len(args) < 1 or len(args) > 2:
-            result.SetError("Usage: dave show VARIABLE [DIM1[,DIM2]]")
+        try:
+            parsed = self.__parser.parse_args(args)
+        except ParsingError as e:
+            result.SetError(self.__parser.usage_property)
             return
 
-        varname = args[0]
-        dims = [int(val) for val in args[1].split(",")] if len(args) > 1 else []
+        if len(parsed.dims) > 2:
+            result.SetError("--dims supports up to two dimensions")
+            return
 
         # Check for running process
         if not exe_ctx.GetProcess().IsValid():
@@ -137,26 +149,45 @@ class ShowCommand:
             result.SetError("No valid frame to evaluate variable.")
             return
 
-        var = LldbValue.find_variable_robust(varname, frame)
-        if not var.IsValid():
-            result.SetError(f"Variable '{varname}' not found.")
-            return
+        if parsed.VARIABLE:
+            vars: List[LldbValue] = [
+                LldbValue.find_variable(parsed.VARIABLE, frame),
+            ]
+            if vars[0] is None:
+                result.SetError(f"Variable '{parsed.VARIABLE}' not found.")
+                return
+        else:
+            vars: List[LldbValue] = LldbValue.find_all_variables()
 
-        lldb_value = LldbValue(var, varname)
-        typename = lldb_value.typename()
-        try:
-            entity = EntityFactory().build(lldb_value, typename, varname, dims)
-            Logger().info(f"Added {varname} : {entity.id}")
-        except (EntityBuildError, TypeError) as e:
-            result.SetError(e.args[0])
-            return
+        skipped = []
+        new_entities = []
+        for var in vars:
+            try:
+                entity = EntityFactory().build(
+                    var, var.typename(), var.varname(), parsed.dims
+                )
+                Logger().info(f"Added {var.varname()} with ID {entity.id}")
+                new_entities.append(entity)
+            except (EntityBuildError, TypeError) as e:
+                if parsed.VARIABLE:
+                    result.SetError(e.args[0])
+                    return
+                else:
+                    Logger().debug(f"Failed to build {var.varname()} with {e}")
+                    skipped.append(var.varname())
 
-        if not DaveProcess().is_alive():
-            DaveProcess().start()
-        DaveProcess().add_to_model(entity)
+        if skipped:
+            skipped_str = str(skipped)[1:-1]
+            skipped_str = skipped_str.replace("'", "")
+            Logger().info(f"Skipped the following variables : {skipped_str}")
+
+        if new_entities:
+            if not DaveProcess().is_alive():
+                DaveProcess().start()
+            DaveProcess().add_to_model(new_entities)
 
     def get_short_help(self):
-        return "Usage: dave show VARIABLE [DIM1[,DIM2]]"
+        return self.__parser.usage_property
         # this call should return the short help text for this command[1]
 
     def get_repeat_command(self, command):
@@ -165,7 +196,7 @@ class ShowCommand:
 
 class InspectCommand:
     def __init__(self, debugger: lldb.SBDebugger, internal_dict):
-        pass
+        self.__parser = InspectCommandParser()
 
     def __call__(
         self,
@@ -174,14 +205,11 @@ class InspectCommand:
         exe_ctx: lldb.SBExecutionContext,
         result: lldb.SBCommandReturnObject,
     ):
-        args = shlex.split(command)
-
-        if len(args) < 1 or len(args) > 2:
-            result.SetError("Usage: dave inspect VARIABLE")
+        try:
+            args = self.__parser.parse_args(shlex.split(command))
+        except ParsingError as e:
+            result.SetError(self.__parser.usage_property)
             return
-
-        varname = args[0]
-        dims = [int(val) for val in args[1].split(",")] if len(args) > 1 else []
 
         # Check for running process
         if not exe_ctx.GetProcess().IsValid():
@@ -194,22 +222,20 @@ class InspectCommand:
             result.SetError("No valid frame to evaluate variable.")
             return
 
-        var = LldbValue.find_variable_robust(varname, frame)
-        if not var.IsValid():
-            result.SetError(f"Variable '{varname}' not found.")
+        lldb_value = LldbValue.find_variable(args.VARIABLE_ID, frame)
+        if lldb_value is None:
+            result.SetError(f"Variable '{args.VARIABLE_ID}' not found.")
             return
 
-        lldb_value = LldbValue(var, varname)
-        print(lldb_value.typename())
+        Logger().info(lldb_value.typename())
 
     def get_short_help(self):
-        return "Usage: dave inspect VARIABLE"
-        # this call should return the short help text for this command[1]
+        return self.__parser.usage_property
 
 
 class HelpCommand:
     def __init__(self, debugger: lldb.SBDebugger, internal_dict):
-        pass
+        self.__parser = HelpCommandParser()
 
     def __call__(
         self,
@@ -218,30 +244,48 @@ class HelpCommand:
         exe_ctx: lldb.SBExecutionContext,
         result: lldb.SBCommandReturnObject,
     ):
+        try:
+            args = self.__parser.parse_args(shlex.split(command))
+        except ParsingError as e:
+            result.SetError(self.__parser.usage_property)
+            return
 
-        # Get the command interpreter
-        interpreter = debugger.GetCommandInterpreter()
+        match args.SUBCOMMAND:
+            case None:
+                # Get the command interpreter
+                interpreter = debugger.GetCommandInterpreter()
 
-        # Create an output object to capture the result
-        result = lldb.SBCommandReturnObject()
+                # Create an output object to capture the result
+                result = lldb.SBCommandReturnObject()
 
-        # Execute the command
-        interpreter.HandleCommand("help dave", result)
+                # Execute the command
+                interpreter.HandleCommand("help dave", result)
 
-        # Print the command output
-        if result.Succeeded():
-            print(result.GetOutput())
-        else:
-            print("Command failed:", result.GetError())
+                # Print the command output
+                if result.Succeeded():
+                    print(result.GetOutput())
+                else:
+                    print("Command failed:", result.GetError())
+            case "show":
+                print(ShowCommandParser().format_help()[:-1])
+            case "delete":
+                print(DeleteCommandParser().format_help()[:-1])
+            case "concat":
+                print(ConcatCommandParser().format_help()[:-1])
+            case "freeze":
+                print(FreezeCommandParser().format_help()[:-1])
+            case "inspect":
+                print(DeleteCommandParser().format_help()[:-1])
+            case _:
+                result.SetError("Uh-Oh, something went wrong")
 
     def get_short_help(self):
-        return "Usage: dave help"
-        # this call should return the short help text for this command[1]
+        return self.__parser.usage_property
 
 
 class DeleteCommand:
     def __init__(self, debugger: lldb.SBDebugger, internal_dict):
-        pass
+        self.__parser = DeleteCommandParser()
 
     def __call__(
         self,
@@ -250,10 +294,10 @@ class DeleteCommand:
         exe_ctx: lldb.SBExecutionContext,
         result: lldb.SBCommandReturnObject,
     ):
-        args = shlex.split(command)
-
-        if len(args) != 1:
-            result.SetError("Usage: dave delete VARIABLE|CONTAINER_ID")
+        try:
+            args = self.__parser.parse_args(shlex.split(command))
+        except ParsingError as e:
+            result.SetError(self.__parser.usage_property)
             return
 
         # Check for running process
@@ -266,11 +310,11 @@ class DeleteCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().delete(args[0]):
-            result.SetError(f"{args[0]} is not a valid name or container id")
+        if not DaveProcess().delete(args.VARIABLE_ID):
+            result.SetError(f"{args.VARIABLE_ID} is not a valid name or container id")
 
     def get_short_help(self):
-        return "Usage: dave delete VARIABLE|CONTAINER_ID"
+        return self.__parser.usage_property
 
     def get_repeat_command(self, command):
         return ""
@@ -278,7 +322,7 @@ class DeleteCommand:
 
 class FreezeCommand:
     def __init__(self, debugger: lldb.SBDebugger, internal_dict):
-        pass
+        self.__parser = FreezeCommandParser()
 
     def __call__(
         self,
@@ -287,10 +331,10 @@ class FreezeCommand:
         exe_ctx: lldb.SBExecutionContext,
         result: lldb.SBCommandReturnObject,
     ):
-        args = shlex.split(command)
-
-        if len(args) != 1:
-            result.SetError("Usage: dave freeze VARIABLE|CONTAINER_ID")
+        try:
+            args = self.__parser.parse_args(shlex.split(command))
+        except ParsingError as e:
+            result.SetError(self.__parser.usage_property)
             return
 
         # Check for running process
@@ -303,11 +347,11 @@ class FreezeCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().freeze(args[0]):
-            result.SetError(f"{args[0]} is not a valid name or container id")
+        if not DaveProcess().freeze(args.VARIABLE_ID):
+            result.SetError(f"{args.VARIABLE_ID} is not a valid name or container id")
 
     def get_short_help(self):
-        return "Usage: dave delete VARIABLE|CONTAINER_ID"
+        return self.__parser.usage_property
 
     def get_repeat_command(self, command):
         return ""
@@ -315,7 +359,7 @@ class FreezeCommand:
 
 class ConcatCommand:
     def __init__(self, debugger: lldb.SBDebugger, internal_dict):
-        pass
+        self.__parser = ConcatCommandParser()
 
     def __call__(
         self,
@@ -324,10 +368,10 @@ class ConcatCommand:
         exe_ctx: lldb.SBExecutionContext,
         result: lldb.SBCommandReturnObject,
     ):
-        args = shlex.split(command)
-
-        if len(args) != 1:
-            result.SetError("Usage: dave concat VARIABLE|CONTAINER_ID")
+        try:
+            args = self.__parser.parse_args(shlex.split(command))
+        except ParsingError as e:
+            result.SetError(self.__parser.usage_property)
             return
 
         # Check for running process
@@ -340,11 +384,11 @@ class ConcatCommand:
             result.SetError("Dave is not started")
             return
 
-        if not DaveProcess().concat(args[0]):
-            result.SetError(f"{args[0]} is not a valid name or container id")
+        if not DaveProcess().concat(args.VARIABLE_ID):
+            result.SetError(f"{args.VARIABLE_ID} is not a valid name or container id")
 
     def get_short_help(self):
-        return "Usage: dave delete VARIABLE|CONTAINER_ID"
+        return self.__parser.usage_property
 
     def get_repeat_command(self, command):
         return ""

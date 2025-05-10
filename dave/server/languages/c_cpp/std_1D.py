@@ -10,7 +10,7 @@ from dave.common.logger import Logger
 
 
 from ...container import SampleType, Container1D
-from ...debuggers.value import AbstractValue
+from ...debuggers.value import AbstractValue, DebuggerMemoryError
 from .std_base import StdVector, StdSpan
 
 
@@ -19,15 +19,8 @@ class CArray1D(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"CArray1D could not parse {typename} as a valid C array type"
-            )
-
-        data_type = SampleType.parse(re_match.group(1))
-        self.__size = int(re_match.group(2))
-        super().__init__(dbg_value, name, data_type)
+        sample_type, self.__size = self.parse_typename(typename)
+        super().__init__(dbg_value, name, sample_type)
 
     @property
     def size(self) -> int:
@@ -36,6 +29,16 @@ class CArray1D(Container1D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @classmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"CArray1D could not parse {typename} as a valid C array type"
+            )
+
+        return (SampleType.parse(re_match.group(1)), int(re_match.group(2)))
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
@@ -53,19 +56,23 @@ class Pointer1D(Container1D):
         if len(dims) != 1:
             raise TypeError("Pointer container requires exactly one dimension")
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
+        sample_type = self.parse_typename(typename)[0]
+        self.__size = dims[0]
+        super().__init__(dbg_value, name, sample_type)
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    @classmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, None]:
+        re_match = cls.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(
                 f"Pointer1D could not parse {typename} as a valid C array type"
             )
 
-        data_type = SampleType.parse(re_match.group(1))
-        self.__size = dims[0]
-        super().__init__(dbg_value, name, data_type)
-
-    @classmethod
-    def typename_matcher(cls) -> re.Pattern:
-        return re.compile(cls.__REGEX)
+        return (SampleType.parse(re_match.group(1)), None)
 
     @property
     def size(self) -> int:
@@ -85,15 +92,8 @@ class StdArray1D(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"StdArray1D could not parse {typename} as a valid std::array type"
-            )
-
-        data_type = SampleType.parse(re_match.group(1))
-        self.__size = int(re_match.group(2))
-        super().__init__(dbg_value, name, data_type)
+        sample_type, self.__size = self.parse_typename(typename)
+        super().__init__(dbg_value, name, sample_type)
 
     @property
     def size(self) -> int:
@@ -102,6 +102,16 @@ class StdArray1D(Container1D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @classmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"StdArray1D could not parse {typename} as a valid std::array type"
+            )
+
+        return (SampleType.parse(re_match.group(1)), int(re_match.group(2)))
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
@@ -116,20 +126,23 @@ class StdVector1D(Container1D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?vector<{SampleType.regex()},.*>\s*$"
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
-        typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"StdVector1D could not parse {typename} as a valid std::vector type"
-            )
-
-        datatype = SampleType.parse(re_match.group(1))
         self.__vec = StdVector(dbg_value)
-        super().__init__(dbg_value, name, datatype)
+        typename = dbg_value.typename()
+        sample_type = self.parse_typename(typename)[0]
+        super().__init__(dbg_value, name, sample_type)
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @classmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"StdVector1D could not parse {typename} as a valid std::vector type"
+            )
+        return (SampleType.parse(re_match.group(1)), None)
 
     @property
     def size(self) -> int:
@@ -140,6 +153,8 @@ class StdVector1D(Container1D):
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
+        if self.size <= 0:
+            raise DebuggerMemoryError("std::vector dimension is <= 0")
         return self._value.readmemory(int(self.__data_ptr_value()), self.byte_size)
 
     @staticmethod
@@ -152,19 +167,23 @@ class StdSpan1D(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
+        sample_type, size = self.parse_typename(typename)
+        self.__span = StdSpan(dbg_value, size)
+        super().__init__(dbg_value, name, sample_type)
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    @classmethod
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+        re_match = cls.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(
                 f"StdSpan1D could not parse {typename} as a valid std::span type"
             )
 
-        self.__span = StdSpan(dbg_value, int(re_match.group(2)))
-        datatype = SampleType.parse(re_match.group(1))
-        super().__init__(dbg_value, name, datatype)
-
-    @classmethod
-    def typename_matcher(cls) -> re.Pattern:
-        return re.compile(cls.__REGEX)
+        return (SampleType.parse(re_match.group(1)), int(re_match.group(2)))
 
     @property
     def size(self) -> int:
@@ -175,6 +194,8 @@ class StdSpan1D(Container1D):
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
+        if self.size <= 0:
+            raise DebuggerMemoryError("std::span dimension is <= 0")
         return self._value.readmemory(self.__data_ptr(), self.byte_size)
 
     @staticmethod

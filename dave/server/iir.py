@@ -38,8 +38,19 @@ class IIR(Entity):
             # base
             self.id,
             self.name,
+            True,
             # IIr
             self.read_from_debugger(),
+        )
+
+    def as_empty_raw(self):
+        return RawIir(
+            # base
+            self.id,
+            self.name,
+            in_scope=False,
+            # IIr
+            coeffs=None,
         )
 
     @property

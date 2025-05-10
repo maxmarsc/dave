@@ -9,7 +9,7 @@ from dave.common.logger import Logger
 from dave.common.raw_iir import RawIir
 from ...container import SampleType, Container2D
 from ...iir import IIR
-from ...debuggers.value import AbstractValue
+from ...debuggers.value import AbstractValue, DebuggerMemoryError
 
 
 class JuceAudioBuffer(Container2D):
@@ -17,19 +17,23 @@ class JuceAudioBuffer(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
+        sample_type, *_ = self._parse_typename(typename)
+        self._value = dbg_value
+        super().__init__(dbg_value, name, sample_type)
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    @classmethod
+    def _parse_typename(cls, typename: str, **_) -> Tuple[SampleType, None, None]:
+        re_match = cls.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(
                 f"Could not parse {typename} as a valid juce::AudioBuffer type"
             )
 
-        self._value = dbg_value
-        datatype = SampleType.parse(re_match.group(1))
-        super().__init__(dbg_value, name, datatype)
-
-    @classmethod
-    def typename_matcher(cls) -> re.Pattern:
-        return re.compile(cls.__REGEX)
+        return (SampleType.parse(re_match.group(1)), None, None)
 
     @property
     def num_channels(self) -> int:
@@ -47,11 +51,13 @@ class JuceAudioBuffer(Container2D):
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
+        if self.num_channels <= 0:
+            raise DebuggerMemoryError("numChannels is <= 0")
         return b"".join(
             [
                 self._value.readmemory(
                     self.__channel_data_ptr(channel),
-                    self.float_type.byte_size() * self.block_size,
+                    self.sample_type.byte_size() * self.block_size,
                 )
                 for channel in range(self.num_channels)
             ]
@@ -63,19 +69,23 @@ class JuceAudioBlock(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
+        sample_type, *_ = self._parse_typename(typename)
+        self._value = dbg_value
+        super().__init__(dbg_value, name, sample_type)
+
+    @classmethod
+    def typename_matcher(cls) -> re.Pattern:
+        return re.compile(cls.__REGEX)
+
+    @classmethod
+    def _parse_typename(cls, typename: str, **_) -> Tuple[SampleType, None, None]:
+        re_match = cls.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(
                 f"Could not parse {typename} as a valid juce::dsp::AudioBlock type"
             )
 
-        self._value = dbg_value
-        datatype = SampleType.parse(re_match.group(1))
-        super().__init__(dbg_value, name, datatype)
-
-    @classmethod
-    def typename_matcher(cls) -> re.Pattern:
-        return re.compile(cls.__REGEX)
+        return (SampleType.parse(re_match.group(1)), None, None)
 
     @property
     def num_channels(self) -> int:
@@ -94,11 +104,13 @@ class JuceAudioBlock(Container2D):
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
+        if self.num_channels <= 0:
+            raise DebuggerMemoryError("numChannels is <= 0")
         return b"".join(
             [
                 self._value.readmemory(
                     self.__channel_data_ptr(channel),
-                    self.float_type.byte_size() * self.block_size,
+                    self.sample_type.byte_size() * self.block_size,
                 )
                 for channel in range(self.num_channels)
             ]

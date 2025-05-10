@@ -85,12 +85,21 @@ are disabled for the the standard library (C, C++).
 DAVE adds a set of new commands to your debugger
 
 ### `dave show`
-`dave show` is the most basic command of DAVE
+```
+usage: usage: dave show [-h] [--dims DIM1 [DIM2]] [VARIABLE]
 
-The usage is :
+positional arguments:
+  VARIABLE              Name of the variable to show on the gui. If not provided dave will show every
+                        compatible variable in the current frame.
+
+options:
+  -h, --help            show this help message and exit
+  --dims DIMS [DIMS ...]
+                        Dimensions in format DIM1 [DIM2]. Required for pointer-like types. 2 dimensions is
+                        expected for pointers of pointers. Caution : If no variable name was provided these
+                        dimensions will apply to every pointer-like entity.
 ```
-dave show VARIABLE [DIM1[,DIM2]]
-```
+`dave show` is the most basic command of DAVE
 
 You'd use it as using `print` or `display` in gdb/lldb, by giving it a variable
 that it used in your program to hold/contains/points to audio data (mono or multichannel).
@@ -108,15 +117,25 @@ the current scope.
 DAVE on the other hand checks both the name **and the address** 
 of a variable.
 
+**WARNING:** When using `dave show` without variable name you might experience some
+slowdown. This is because of CustomTkinter. I'm working on a port to another library,
+please be patient :) 
+
 #### Optionnal arguments : `[DIM1[,DIM2]]`
 Some types does not provide dimensions of the audio content, like C pointers.
 In such case the caller must provide the dimensions of the audio content. Only `DIM1`
 for a simple pointer (eg: `float*`), both `DIM1,DIM2` for a nested pointer (eg: `float**`)
 
 ### `dave delete`
-The usage is :
 ```
-dave delete VARIABLE|CONTAINER_ID
+usage: dave delete [-h] VARIABLE_ID
+
+positional arguments:
+  VARIABLE_ID  Name/ID of the variable to delete from the gui. When providing a conflicting name, the first
+               entity with this name will be used
+
+options:
+  -h, --help   show this help message and exit
 ```
 
 This command tells dave to stop tracking an audio entity. If you delete the
@@ -127,9 +146,15 @@ name. In case of naming conflicts, this first entity added with this name will
 be deleted.
 
 ### `dave freeze`
-The usage is :
 ```
-dave freeze VARIABLE|CONTAINER_ID
+usage: dave freeze [-h] VARIABLE_ID
+
+positional arguments:
+  VARIABLE_ID  Name/ID of the variable to freeze. When providing a conflicting name, the first entity with
+               this name will be used
+
+options:
+  -h, --help   show this help message and exit
 ```
 
 This command enable/disable the *Freeze* setting for the given audio entity. See
@@ -140,9 +165,15 @@ name. In case of naming conflicts, this first entity added with this name will
 be deleted.
 
 ### `dave concat`
-The usage is :
 ```
-dave concat VARIABLE|CONTAINER_ID
+usage: dave concat [-h] VARIABLE_ID
+
+positional arguments:
+  VARIABLE_ID  Name/ID of the variable to concatenate. When providing a conflicting name, the first entity
+               with this name will be used
+
+options:
+  -h, --help   show this help message and exit
 ```
 
 This command enable/disable the *Concatenate* setting for the given audio entity.
@@ -154,9 +185,14 @@ be deleted.
 
 
 ### `dave inspect`
-The usage is :
 ```
-dave inspect VARIABLE
+usage: dave inspect [-h] VARIABLE
+
+positional arguments:
+  VARIABLE    Name of the variable to inspect
+
+options:
+  -h, --help  show this help message and exit
 ```
 
 This is useful when you want to add support for a new type of audio entity, it
@@ -165,11 +201,18 @@ will print out the type as deduced by your debugger.
 It should resolve automatically typedefs and alias. If not please raise an issue.
 
 ### `dave help`
-The usage is :
 ```
-dave help
+usage: dave help [-h] [{show,delete,concat,freeze,inspect}]
+
+positional arguments:
+  {show,delete,concat,freeze,inspect}
+
+options:
+  -h, --help            show this help message and exit
 ```
-Display a short help message which redirects to this page
+
+Show help for any subcommand. If no subcommand is provided it displays a short 
+help message which redirects to this page
 
 ## Data update settings
 This settings affect how an update of entity's data affect the rendering.

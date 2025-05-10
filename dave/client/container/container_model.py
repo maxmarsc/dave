@@ -196,7 +196,7 @@ class ContainerModel(EntityModel):
         self._raw.update(update)
 
         new_data = convert_container_data_to_layout(
-            raw_container_to_numpy(self._raw), self.__data_layout, None
+            raw_container_to_numpy(self._raw), self.__data_layout
         )
         if self.concat:
             self._data = np.concatenate((self._data, new_data), -1)

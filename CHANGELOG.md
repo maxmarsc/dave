@@ -1,7 +1,12 @@
 # `main`
 ## Added
+- All subcommands now supports flags. `dave show` with no variable will try and
+display all possible variables in scope
 ## Changed
+- Slightly improved drawing performances
 ## Fixed
+- Fixed an internal crash when using `continue`/`next`
+- Fixed possible hangout when closing the GUI
 
 # v0.10.0
 ## Added

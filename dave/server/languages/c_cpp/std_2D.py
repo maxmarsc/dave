@@ -3,7 +3,7 @@ from __future__ import annotations
 # from abc import ABC, abstractmethod
 # from enum import Enum
 import re
-from typing import Callable, List, Tuple
+from typing import Callable, List, Optional, Tuple
 from pathlib import Path
 
 from dave.common.logger import Logger
@@ -11,9 +11,9 @@ from dave.common.logger import Logger
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
 
-from ...container import SampleType, Container2D
+from ...container import Container, Container1D, SampleType, Container2D
 from ...entity_factory import EntityFactory
-from ...debuggers.value import AbstractValue
+from ...debuggers.value import AbstractValue, DebuggerMemoryError
 
 from .std_base import StdVector, StdSpan
 from .template_parser import parse_template
@@ -29,20 +29,8 @@ class CArrayAny2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"CArrayAny2D could not parse {typename} as a valid C array type"
-            )
+        sample_type, self.__size, _ = self._parse_typename(typename)
 
-        # Check if contains a nested valid 1D container
-        nested = re_match.group(1)
-        if not EntityFactory().check_valid_simple(nested):
-            raise TypeError(
-                f"CArrayAny2D could not parse nested type {nested} as a valid container type"
-            )
-
-        self.__size = int(re_match.group(2))
         self.__nested_containers = [
             EntityFactory().build_simple(
                 dbg_value[i],
@@ -52,7 +40,7 @@ class CArrayAny2D(Container2D):
             )
             for i in range(self.__size)
         ]
-        super().__init__(dbg_value, name, self.__nested_containers[0].float_type)
+        super().__init__(dbg_value, name, sample_type)
 
     def shape(self) -> Tuple[int, int]:
         return (self.__size, self.__nested_containers[0].size)
@@ -60,6 +48,28 @@ class CArrayAny2D(Container2D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @classmethod
+    def _parse_typename(
+        cls, typename: str, **_
+    ) -> Tuple[SampleType, int, Optional[int]]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"CArrayAny2D could not parse {typename} as a valid C array type"
+            )
+
+        # Check if contains a nested valid 1D container
+        nested_typename = re_match.group(1)
+        nested = EntityFactory().check_valid_simple(nested_typename)
+        if nested is None or not issubclass(nested, Container1D):
+            raise TypeError(
+                f"CArrayAny2D could not parse nested type {nested_typename} as a valid Container1D type"
+            )
+
+        sample_type, nested_size = nested.parse_typename(nested_typename)
+
+        return (sample_type, int(re_match.group(2)), nested_size)
 
     def read_from_debugger(self) -> bytearray:
         return b"".join(
@@ -84,16 +94,9 @@ class CarrayCarray2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"CarrayCarray2D could not parse {typename} as a valid 2D C array type"
-            )
-
-        # Check if contains a nested valid 1D container
-        data_type = SampleType.parse(re_match.group(1))
-        self.__shape = (int(re_match.group(2)), int(re_match.group(3)))
-        super().__init__(dbg_value, name, data_type)
+        sample_type, dim_0, dim_1 = self._parse_typename(typename)
+        self.__shape = (dim_0, dim_1)
+        super().__init__(dbg_value, name, sample_type)
 
     def shape(self) -> Tuple[int, int]:
         return self.__shape
@@ -102,9 +105,23 @@ class CarrayCarray2D(Container2D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
+    @classmethod
+    def _parse_typename(cls, typename: str, **_) -> Tuple[SampleType, int, int]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"CarrayCarray2D could not parse {typename} as a valid 2D C array type"
+            )
+
+        return (
+            SampleType.parse(re_match.group(1)),
+            int(re_match.group(2)),
+            int(re_match.group(3)),
+        )
+
     @property
     def byte_size(self) -> int:
-        return self.float_type.byte_size() * self.shape()[0] * self.shape()[1]
+        return self.sample_type.byte_size() * self.shape()[0] * self.shape()[1]
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
@@ -124,31 +141,12 @@ class Pointer2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, dims: List[int]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"Pointer2D could not parse {typename} as a valid ptr ptr type"
-            )
+        sample_type, self.__size, _ = self._parse_typename(typename, dims=dims)
 
-        # Check if contains a nested valid 1D container
-        nested = re_match.group(1)
-        if not EntityFactory().check_valid_simple(nested):
-            raise TypeError(
-                f"Pointer2D could not parse nested type {nested} as a valid container type"
-            )
-
-        if "*" in nested and len(dims) != 2:
-            raise TypeError(
-                "Pointer of pointer container requires exactly two dimensions"
-            )
-        elif not "*" in nested and len(dims) != 1:
-            raise TypeError("Pointer container requires exactly one dimension")
-
-        self.__size = dims[0]
         self._value = dbg_value
         self.__dims = dims
         self.__update_nested()
-        super().__init__(dbg_value, name, self.__nested_containers[0].float_type)
+        super().__init__(dbg_value, name, sample_type)
 
     def shape(self) -> Tuple[int, int]:
         self.__update_nested()
@@ -163,7 +161,7 @@ class Pointer2D(Container2D):
                 self.__dims[1:],
             )
             for i in range(self.__dims[0])
-        ]
+        ]  # type: List[Container1D]
         if self.__dims[0] > 0:
             nested_size = self.__nested_containers[0].size
             if any(
@@ -178,7 +176,39 @@ class Pointer2D(Container2D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
+    @classmethod
+    def _parse_typename(
+        cls, typename: str, **kwargs
+    ) -> Tuple[SampleType, Optional[int], Optional[int]]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"Pointer2D could not parse {typename} as a valid ptr to container type"
+            )
+
+        # Check if contains a nested valid 1D container
+        nested_typename = re_match.group(1)
+        nested = EntityFactory().check_valid_simple(nested_typename)
+        if nested is None or not issubclass(nested, Container1D):
+            raise TypeError(
+                f"Pointer2D could not parse nested type {nested_typename} as a valid container type"
+            )
+
+        # Check for provided dimensions
+        dims = kwargs["dims"]
+        if "*" in nested_typename and len(dims) != 2:
+            raise TypeError(
+                "Pointer of pointer container requires exactly two dimensions"
+            )
+        elif not "*" in nested_typename and len(dims) != 1:
+            raise TypeError("Pointer container requires exactly one dimension")
+
+        sample_type, nested_size = nested.parse_typename(nested_typename)
+        return (sample_type, dims[0], nested_size)
+
     def read_from_debugger(self) -> bytearray:
+        if self.__size <= 0 or self.__nested_containers[0].size <= 0:
+            raise DebuggerMemoryError("A dimension is <= 0")
         self.__update_nested()
         return b"".join(
             [container.read_from_debugger() for container in self.__nested_containers]
@@ -198,20 +228,7 @@ class StdArray2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"StdArray2D could not parse {typename} as a valid std::array type"
-            )
-
-        # Check if contains a nested valid 1D container
-        nested = re_match.group(1)
-        if not EntityFactory().check_valid_simple(nested):
-            raise TypeError(
-                f"StdArray2D could not parse nested type {nested} as a valid container type"
-            )
-
-        self.__size = int(re_match.group(2))
+        sample_type, self.__size, _ = self._parse_typename(typename)
         self._value = dbg_value
         self.__nested_containers = [
             EntityFactory().build_simple(
@@ -221,8 +238,8 @@ class StdArray2D(Container2D):
                 _,
             )
             for i in range(self.__size)
-        ]
-        super().__init__(dbg_value, name, self.__nested_containers[0].float_type)
+        ]  # type: List[Container1D]
+        super().__init__(dbg_value, name, sample_type)
 
     def shape(self) -> Tuple[int, int]:
         return (self.__size, self.__nested_containers[0].size)
@@ -230,6 +247,27 @@ class StdArray2D(Container2D):
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
+
+    @classmethod
+    def _parse_typename(
+        cls, typename: str, **_
+    ) -> Tuple[SampleType, int, Optional[int]]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"StdArray2D could not parse {typename} as a valid std::array type"
+            )
+
+        # Check if contains a nested valid 1D container
+        nested_typename = re_match.group(1)
+        nested = EntityFactory().check_valid_simple(nested_typename)
+        if nested is None or not issubclass(nested, Container1D):
+            raise TypeError(
+                f"StdArray2D could not parse nested type {nested_typename} as a valid container type"
+            )
+
+        sample_type, nested_size = nested.parse_typename(nested_typename)
+        return (sample_type, int(re_match.group(2)), nested_size)
 
     def __data_ptr_value(self) -> AbstractValue:
         assert isinstance(self._value, AbstractValue)
@@ -268,24 +306,12 @@ class StdArray2D(Container2D):
 class StdVector2D(Container2D):
     def __init__(self, dbg_value: AbstractValue, name: str, dims=[]):
         typename = dbg_value.typename()
-        parsed_types = parse_template(typename)
-        if not StdVector2D.name_parser(typename):
-            raise TypeError(
-                f"StdVector2D could not parse {typename} as a valid std::vector type"
-            )
-
-        # Check if contains a nested valid 1D container
-        nested = parsed_types[1]
-        if not EntityFactory().check_valid_simple(nested):
-            raise TypeError(
-                f"StdVector2D could not parse nested type {nested} as a valid container type"
-            )
-
+        sample_type, *_ = self._parse_typename(typename)
         self._value = dbg_value
         self.__vec = StdVector(dbg_value)
         self.__dims = dims
         self.__update_nested()
-        super().__init__(dbg_value, name, self.__nested_containers[0].float_type)
+        super().__init__(dbg_value, name, sample_type)
 
     @property
     def size(self) -> int:
@@ -300,7 +326,7 @@ class StdVector2D(Container2D):
                 self.__dims,
             )
             for i in range(self.size)
-        ]
+        ]  # type: List[Container1D]
         if self.size > 0:
             nested_size = self.__nested_containers[0].size
             if any(
@@ -322,6 +348,27 @@ class StdVector2D(Container2D):
     def typename_matcher(cls) -> Callable[[str], bool]:
         return StdVector2D.name_parser
 
+    @classmethod
+    def _parse_typename(
+        cls, typename: str, **_
+    ) -> Tuple[SampleType, Optional[int], Optional[int]]:
+        parsed_types = parse_template(typename)
+        if not StdVector2D.name_parser(typename):
+            raise TypeError(
+                f"StdVector2D could not parse {typename} as a valid std::vector type"
+            )
+
+        # Check if contains a nested valid 1D container
+        nested_typename = parsed_types[1]
+        nested = EntityFactory().check_valid_simple(nested_typename)
+        if nested is None or not issubclass(nested, Container1D):
+            raise TypeError(
+                f"StdVector2D could not parse nested type {nested_typename} as a valid container type"
+            )
+
+        sample_type, nested_size = nested.parse_typename(nested_typename)
+        return (sample_type, None, nested_size)
+
     @staticmethod
     def name_parser(typename: str) -> bool:
         types = parse_template(typename)
@@ -331,6 +378,8 @@ class StdVector2D(Container2D):
 
     def read_from_debugger(self) -> bytearray:
         self.__update_nested()
+        if self.size <= 0:
+            raise DebuggerMemoryError("std::vector size is <= 0")
         return b"".join(
             [container.read_from_debugger() for container in self.__nested_containers]
         )
@@ -349,24 +398,12 @@ class StdSpan2D(Container2D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        re_match = self.typename_matcher().match(typename)
-        if re_match is None:
-            raise TypeError(
-                f"StdSpan2D could not parse {typename} as a valid std::array type"
-            )
-
-        # Check if contains a nested valid 1D container
-        nested = re_match.group(1)
-        if not EntityFactory().check_valid_simple(nested):
-            raise TypeError(
-                f"StdSpan2D could not parse nested type {nested} as a valid container type"
-            )
-
-        self.__span = StdSpan(dbg_value, int(re_match.group(2)))
+        sample_type, size, _ = self._parse_typename(typename)
+        self.__span = StdSpan(dbg_value, size)
         self._value = dbg_value
         self.__dims = _
         self.__update_nested()
-        super().__init__(dbg_value, name, self.__nested_containers[0].float_type)
+        super().__init__(dbg_value, name, sample_type)
 
     @property
     def size(self) -> int:
@@ -381,7 +418,7 @@ class StdSpan2D(Container2D):
                 self.__dims,
             )
             for i in range(self.size)
-        ]
+        ]  # type: List[Container1D]
         if self.size > 0:
             nested_size = self.__nested_containers[0].size
             if any(
@@ -403,8 +440,31 @@ class StdSpan2D(Container2D):
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
+    @classmethod
+    def _parse_typename(
+        cls, typename: str, **_
+    ) -> Tuple[SampleType, int, Optional[int]]:
+        re_match = cls.typename_matcher().match(typename)
+        if re_match is None:
+            raise TypeError(
+                f"StdSpan2D could not parse {typename} as a valid span type"
+            )
+
+        # Check if contains a nested valid 1D container
+        nested_typename = re_match.group(1)
+        nested = EntityFactory().check_valid_simple(nested_typename)
+        if nested is None or not issubclass(nested, Container1D):
+            raise TypeError(
+                f"StdSpan2D could not parse nested type {nested_typename} as a valid Container1D type"
+            )
+
+        sample_type, nested_size = nested.parse_typename(nested_typename)
+        return (sample_type, int(re_match.group(2)), nested_size)
+
     def read_from_debugger(self) -> bytearray:
         self.__update_nested()
+        if self.size <= 0:
+            raise DebuggerMemoryError("std::span size is <= 0")
         return b"".join(
             [container.read_from_debugger() for container in self.__nested_containers]
         )

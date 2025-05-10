@@ -15,6 +15,7 @@ from dave.common.logger import Logger
 from .entity.entity_model import EntityModel
 from .global_settings import GlobalSettings
 from .side_panel import SidePanel
+from .entity.entity_view import configure_matplotlib
 
 
 # ===========================  AudioViewsTab  ==================================
@@ -63,6 +64,7 @@ class AudioViewsTab:
         self.__toolbar_frame = ctk.CTkFrame(
             self.__master, corner_radius=0, fg_color="transparent", height=45
         )
+        configure_matplotlib()
         self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__toolbar_frame)
         self.__toolbar.update()
         self.__toolbar.pack()
@@ -241,6 +243,9 @@ class SidePanels(ctk.CTkFrame):
         for id, entity in self.__entity_models.items():
             if id not in self.__side_panels and entity.in_scope:
                 idx = len(self.__side_panels)
+                Logger().debug(
+                    f"Adding side panel for entity {entity.id}:{entity.variable_name}"
+                )
                 self.__side_panels[id] = SidePanel(self, entity)
                 # Place the new button frame
                 self.__side_panels[id].grid(row=idx, column=0, sticky="ew", padx=(5, 2))

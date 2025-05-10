@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import darkdetect
 
 
 @dataclass
@@ -8,7 +9,7 @@ class GlobalSettings:
     """
 
     samplerate: int = 44100  # default samplerate
-    appearance: str = "System"
+    appearance: str = darkdetect.theme()
     update_needed = False
 
     def validate_samplerate(self, value) -> bool:

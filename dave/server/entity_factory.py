@@ -37,18 +37,18 @@ class EntityFactory(metaclass=SingletonMeta):
                 f"Error : {cls} was already registered in the container factory"
             )
 
-    def check_valid_simple(self, typename: str) -> bool:
+    def check_valid_simple(self, typename: str) -> Union[type[Entity], None]:
         """
-        Returns true if the given typename matches a registered simple container class
+        Returns true if the given typename matches a registered simple entity class
         """
         for simple_entity_cls in self.__simple_entity_classes:
             pattern = simple_entity_cls.typename_matcher()
             if (
                 isinstance(pattern, re.Pattern) and pattern.match(typename) is not None
             ) or (callable(pattern) and pattern(typename)):
-                return True
+                return simple_entity_cls
 
-        return False
+        return None
 
     def build_simple(
         self,
@@ -117,8 +117,8 @@ class EntityFactory(metaclass=SingletonMeta):
 
         Returns
         -------
-        Container
-            A valid Container, either 1D or 2D subclass instance pointing to the debugger memory
+        Entity
+            A valid Entity, pointing to the debugger memory
 
         Raises
         ------
