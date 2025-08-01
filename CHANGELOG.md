@@ -1,4 +1,6 @@
 # `main`
+
+# v0.11.0
 ## Added
 - All subcommands now supports flags. `dave show` with no variable will try and
 display all possible variables in scope
