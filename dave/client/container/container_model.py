@@ -62,7 +62,7 @@ class ContainerModel(EntityModel):
 
     @staticmethod
     def settings_frame_class() -> type[EntitySettingsFrame]:
-        from .container_settings_frames import ContainerSettingsFrame
+        from .container_settings_frames_new import ContainerSettingsFrame
 
         return ContainerSettingsFrame
 

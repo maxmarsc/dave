@@ -30,7 +30,7 @@ class IirModel(EntityModel):
 
     @staticmethod
     def settings_frame_class() -> type[EntitySettingsFrame]:
-        from .iir_settings_frame import IirSettingsFrame
+        from .iir_settings_frame_new import IirSettingsFrame
 
         return IirSettingsFrame
 

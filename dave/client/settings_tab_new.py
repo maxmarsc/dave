@@ -1,0 +1,782 @@
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QScrollArea,
+    QFrame,
+    QGridLayout,
+    QLabel,
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QPushButton,
+    QLineEdit,
+)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from typing import Dict, List, Tuple, Union
+
+from dave.common.logger import Logger
+
+from dave.client.entity.entity_model import EntityModel
+from dave.client.global_settings import GlobalSettings
+
+from .entity.entity_view import EntityView
+
+# from dave.client.entity.entity_settings import EntitySettings
+# from dave.client.global_settings_frame import GlobalSettingsFrame
+
+
+# ==============================   SettingsTab  =================================
+class SettingsTab:
+    """
+    The settings tab contains a frame for the general settings, then a frame of
+    settings for each entity
+    """
+
+    def __init__(
+        self,
+        parent: QWidget,
+        entity_models: Dict[int, EntityModel],
+        global_settings: GlobalSettings,
+    ):
+        self.__parent = parent
+        self.__entity_models = entity_models
+        self.__global_settings = global_settings
+        self.__entity_settings: Dict[int, EntitySettings] = dict()
+        self.__empty_label = None
+
+        # Create font (replaces CTkFont)
+        self.__bold_font = QFont()
+        # self.__bold_font.setPointSize(18)
+        # self.__bold_font.setBold(True)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup the main layout and widgets"""
+        # Create main layout for the parent widget
+        main_layout = QVBoxLayout()
+        self.__parent.setLayout(main_layout)
+
+        # Create global settings frame
+        self.__global_settings_frame = GlobalSettingsFrame(
+            self.__parent, self.__global_settings
+        )
+        main_layout.addWidget(self.__global_settings_frame)
+
+        # Create separator (replaces CTkFrame separator)
+        self.__separator = QFrame()
+        self.__separator.setFrameShape(QFrame.Shape.HLine)
+        self.__separator.setFrameShadow(QFrame.Shadow.Sunken)
+        self.__separator.setFixedHeight(6)
+
+        # You can style this further with setStyleSheet if needed
+        main_layout.addWidget(self.__separator)
+
+        # Create scrollable area (replaces CTkScrollableFrame)
+        self.__scroll_area = QScrollArea()
+        self.__scroll_area.setWidgetResizable(True)
+        self.__scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.__scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+
+        # Create content widget for the scroll area
+        self.__scroll_content = QWidget()
+        self.__scroll_layout = QVBoxLayout()
+        self.__scroll_layout.setDirection(QVBoxLayout.Direction.TopToBottom)
+        self.__scroll_content.setLayout(self.__scroll_layout)
+        self.__scroll_area.setStyleSheet(
+            """
+            QScrollArea {
+                background-color: transparent;
+                border: none;
+            }
+            """
+        )
+
+        self.__scroll_content.setStyleSheet(
+            """
+            QWidget#scroll_content {
+                background-color: transparent;
+            }
+            """
+        )
+
+        # Force top alignment:
+        self.__scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # And set an object name for the scroll content:
+        self.__scroll_content.setObjectName("scroll_content")
+
+        # Set the content widget in the scroll area
+        self.__scroll_area.setWidget(self.__scroll_content)
+
+        # Add scroll area to main layout with stretch
+        main_layout.addWidget(self.__scroll_area, 1)  # stretch factor 1
+
+        # Initial update
+        self.update_widgets()
+
+    def add_model(self, model: EntityModel):
+        """Add a new entity model to the settings"""
+        assert model.id not in self.__entity_settings
+        assert model.id in self.__entity_models
+
+        # Create entity settings widget
+        entity_settings = EntitySettings(
+            self.__scroll_content,  # Parent is the scroll content
+            model,
+            self.__global_settings,
+        )
+
+        # Add to layout and store reference
+        self.__scroll_layout.addWidget(entity_settings)
+        self.__entity_settings[model.id] = entity_settings
+
+    def delete_model(self, id: int):
+        """
+        Remove the SettingsFrame from the given entity.
+
+        This will never delete the model itself, as that is the responsibility
+        of the main GUI handler
+        """
+        if id in self.__entity_settings:
+            entity_settings = self.__entity_settings[id]
+
+            # Remove from layout
+            self.__scroll_layout.removeWidget(entity_settings)
+
+            # Delete the widget (Qt equivalent of destroy())
+            entity_settings.deleteLater()
+
+            # Remove from our tracking dict
+            del self.__entity_settings[id]
+
+    def update_widgets(self):
+        """Update all widgets based on current entity states"""
+        models_to_add = []
+        models_to_delete = []
+        for id, entity in self.__entity_models.items():
+            if entity.in_scope and id not in self.__entity_settings:
+                # Back in scope, let's add it
+                models_to_add.append(entity)
+            elif not entity.in_scope and id in self.__entity_settings:
+                # Left the scope, let's remove it
+                models_to_delete.append(entity)
+            elif entity.in_scope and id in self.__entity_settings:
+                # Still in scope, let's update it
+                self.__entity_settings[id].update_widgets()
+
+        if models_to_add and self.__empty_label is None:
+            # Delete the old stretch
+            self.__scroll_layout.removeItem(
+                self.__scroll_layout.itemAt(self.__scroll_layout.count() - 1)
+            )
+
+        # Actually performs addition/deletion
+        for model_to_add in models_to_add:
+            self.add_model(model_to_add)
+        for model_to_delete in models_to_delete:
+            self.delete_model(model_to_delete)
+
+        # Use stretching to anchor everything at the top
+        if models_to_add:
+            self.__scroll_layout.addStretch(1)
+
+        # Handle empty state label
+        if len(self.__entity_settings) == 0 and self.__empty_label is None:
+            # Delete old stretch if any
+            if self.__scroll_layout.count() != 0:
+                assert self.__scroll_layout.count() == 1
+                self.__scroll_layout.removeItem(self.__scroll_layout.itemAt(0))
+            self.__empty_label = QLabel("No entity in scope")
+            self.__empty_label.setFont(self.__bold_font)
+            self.__empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            # Add to scroll layout
+            self.__scroll_layout.addWidget(self.__empty_label)
+
+        elif len(self.__entity_settings) != 0 and self.__empty_label is not None:
+            # Remove empty label
+            self.__scroll_layout.removeWidget(self.__empty_label)
+            self.__empty_label.deleteLater()
+            self.__empty_label = None
+
+
+# ============================  EntitySettings  =================================
+class EntitySettings(QFrame):
+    """
+    Holds all the settings of an entity
+
+    This will always contains, left-to-right :
+    - Entity-specific settings
+    - View type selector
+    - View type settings
+    - general settings (samplerate, delete button...)
+    """
+
+    def __init__(
+        self, parent: QWidget, model: EntityModel, global_settings: GlobalSettings
+    ) -> None:
+        super().__init__(parent)
+
+        # Store references
+        self.__model = model
+        self.__global_settings = global_settings
+
+        # Create fonts
+        self.__bold_font = QFont()
+        # self.__bold_font.setPointSize(16)
+        # self.__bold_font.setBold(True)
+
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        # Set fixed height (replaces CTkFrame height=70)
+        self.setFixedHeight(70)
+        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup the scrollable layout and widgets"""
+        # Create main layout for this frame
+        main_layout = QGridLayout()
+        self.setLayout(main_layout)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create horizontal scroll area (replaces CTkScrollableFrame)
+        self.__scroll_area = QScrollArea()
+        self.__scroll_area.setWidgetResizable(True)
+        self.__scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.__scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        # self.__scroll_area.setFixedHeight(70)
+
+        # Create content widget for scroll area
+        self.__scroll_content = QWidget()
+        self.__scroll_layout = QGridLayout()
+        self.__scroll_content.setLayout(self.__scroll_layout)
+
+        # Set content in scroll area
+        self.__scroll_area.setWidget(self.__scroll_content)
+        main_layout.addWidget(self.__scroll_area)
+
+        self._create_widgets()
+        self._setup_grid_layout()
+
+    def _create_widgets(self):
+        """Create all child widgets"""
+        # Entity name label
+        self.__name_label = QLabel(f"{self.__model.variable_name} : ")
+        self.__name_label.setFont(self.__font)
+        self.__name_label.setFixedWidth(200)
+        self.__name_label.setFixedHeight(20)
+        self.__name_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
+
+        # Entity-specific settings frame
+        settings_frame_class = self.__model.settings_frame_class()
+        self.__entity_settings_frame = settings_frame_class(
+            self.__scroll_content, self.__model
+        )
+
+        # View selection dropdown (replaces CTkOptionMenu)
+        self.__view_menu = QComboBox()
+        self.__view_menu.setFont(self.__font)
+        self.__view_menu.setFixedWidth(125)
+        self.__view_menu.addItems(self.__model.possible_views_names)
+        self.__view_menu.setCurrentText(self.__model.selected_view)
+
+        # Connect signal (replaces tk.StringVar trace)
+        self.__view_menu.currentTextChanged.connect(self._view_changed)
+
+        # Add tooltip (you may need to adapt Tooltip for Qt)
+        # Tooltip.add_tooltip(self.__view_menu, "Select which view to render")
+        self.__view_menu.setToolTip("Select which view to render")
+
+        # View settings frame
+        self.__view_settings_frame = ViewSettingsFrame(
+            self.__scroll_content, self.__model
+        )
+
+        # General settings frame
+        self.__general_settings_frame = GeneralSettingsFrame(
+            self.__scroll_content, self.__model, self.__global_settings
+        )
+
+    def _setup_grid_layout(self):
+        """Setup the grid layout (replaces tkinter grid configuration)"""
+        # Add widgets to grid layout
+        # Row 0: Entity name (spans 5 columns)
+        self.__scroll_layout.addWidget(self.__name_label, 0, 0, 1, 5)
+
+        # Row 1: All settings components
+        self.__scroll_layout.addWidget(self.__entity_settings_frame, 1, 0)
+        self.__scroll_layout.addWidget(self.__view_menu, 1, 1)
+        self.__scroll_layout.addWidget(self.__view_settings_frame, 1, 2)
+        self.__scroll_layout.addWidget(self.__general_settings_frame, 1, 3)
+
+        # Configure row/column stretching (replaces grid_rowconfigure/grid_columnconfigure)
+        self.__scroll_layout.setRowStretch(0, 1)  # weight=1
+        self.__scroll_layout.setRowStretch(1, 4)  # weight=4
+
+        self.__scroll_layout.setColumnStretch(0, 0)  # weight=0 (fixed size)
+        self.__scroll_layout.setColumnStretch(1, 0)  # weight=0 (fixed size)
+        self.__scroll_layout.setColumnStretch(2, 1)  # weight=1 (expandable)
+        self.__scroll_layout.setColumnStretch(3, 0)  # weight=0 (fixed size)
+
+        # Set margins and spacing
+        self.__scroll_layout.setContentsMargins(5, 5, 5, 5)
+        self.__scroll_layout.setHorizontalSpacing(5)
+        self.__scroll_layout.setVerticalSpacing(5)
+
+    def _view_changed(self, new_view: str):
+        """Handle view selection change (replaces view_var_callback)"""
+        # Update the model
+        self.__model.update_view_type(new_view)
+
+        # Trigger a redraw
+        self.update_widgets()
+
+    def update_widgets(self):
+        """Update all widgets based on current model state"""
+        # Update the entity settings frame
+        self.__entity_settings_frame.update_widgets()
+
+        # Update the view selection dropdown
+        current_views = self.__model.possible_views_names
+        current_selection = self.__view_menu.currentText()
+
+        if current_selection not in current_views:
+            # Temporarily disconnect signal to avoid recursion
+            self.__view_menu.currentTextChanged.disconnect()
+
+            # Update dropdown items
+            self.__view_menu.clear()
+            self.__view_menu.addItems(current_views)
+            self.__view_menu.setCurrentText(self.__model.selected_view)
+
+            # Reconnect signal
+            self.__view_menu.currentTextChanged.connect(self._view_changed)
+
+        # Update the view settings frame
+        self.__view_settings_frame.update_widgets()
+
+    def destroy(self):
+        """Qt equivalent of tkinter destroy() - called when removing widget"""
+        # Clean up any resources if needed
+        self.deleteLater()
+
+
+# ===========================  GeneralSettingsFrame  ===========================
+class GeneralSettingsFrame(QFrame):
+    """
+    Frame containing general settings like sample rate and delete button
+    """
+
+    def __init__(self, parent, model: EntityModel, global_settings: GlobalSettings):
+        super().__init__(parent)
+
+        # Store references
+        self.__model = model
+        self.__global_settings = global_settings
+
+        # Create font
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup horizontal layout and widgets"""
+        # Create horizontal layout (replaces pack with side=LEFT/RIGHT)
+        layout = QHBoxLayout()
+        self.setLayout(layout)
+
+        # Set margins to match tkinter padding
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(3)
+
+        # Create samplerate label
+        self.__samplerate_label = QLabel("samplerate:")
+        self.__samplerate_label.setFont(self.__font)
+
+        # Create samplerate entry field
+        self.__samplerate_entry = QLineEdit()
+        self.__samplerate_entry.setFont(self.__font)
+        self.__samplerate_entry.setFixedWidth(80)
+
+        # Set initial value and placeholder
+        initial_value = (
+            str(self.__model.samplerate)
+            if self.__model.samplerate is not None
+            else str(self.__global_settings.samplerate)
+        )
+        self.__samplerate_entry.setText(initial_value)
+        self.__samplerate_entry.setPlaceholderText(
+            str(self.__global_settings.samplerate)
+        )
+
+        # Connect Return key to callback (replaces bind("<Return>"))
+        self.__samplerate_entry.returnPressed.connect(self._samplerate_changed)
+
+        # Create delete button
+        self.__delete_button = QPushButton("X")
+        self.__delete_button.setFixedWidth(28)
+
+        # Connect button click (replaces command parameter)
+        self.__delete_button.clicked.connect(self._delete_button_clicked)
+
+        # Add widgets to layout (left to right)
+        layout.addWidget(self.__samplerate_label)  # side=LEFT
+        layout.addWidget(self.__samplerate_entry)  # side=LEFT
+        layout.addStretch()  # Push delete button to the right
+        layout.addWidget(self.__delete_button)  # side=RIGHT
+
+    def _delete_button_clicked(self):
+        """Handle delete button click (replaces delete_button_callback)"""
+        self.__model.mark_for_deletion()
+        parent = self.parent()
+        if parent:
+            parent.deleteLater()
+
+    def _samplerate_changed(self):
+        """Handle samplerate entry Return key (replaces samplerate_var_callback)"""
+        new_val = self.__samplerate_entry.text().strip()
+
+        if new_val == "":
+            # Field is empty, use the global setting
+            self.__model.samplerate = None
+            self.__samplerate_entry.setText(str(self.__global_settings.samplerate))
+        elif not self.__model.validate_and_update_samplerate(new_val):
+            # Value is not valid, rollback
+            Logger().warning(f"{new_val} is not a valid samplerate")
+            rollback_value = (
+                str(self.__model.samplerate)
+                if self.__model.samplerate is not None
+                else str(self.__global_settings.samplerate)
+            )
+            self.__samplerate_entry.setText(rollback_value)
+        # Else the samplerate has been updated in the model
+
+
+# ===========================  GlobalSettingsFrame  ===========================
+class GlobalSettingsFrame(QFrame):
+    """
+    Frame containing global application settings like appearance and default samplerate
+    """
+
+    def __init__(self, parent: QWidget, global_settings: GlobalSettings):
+        super().__init__(parent)
+
+        # Store reference
+        self.__settings = global_settings
+
+        # Create font
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup horizontal layout with samplerate controls"""
+        # Create horizontal layout
+        layout = QHBoxLayout()
+        self.setLayout(layout)
+
+        # Set margins and spacing to match tkinter padding
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
+
+        # Add stretch to push samplerate controls to the right
+        layout.addStretch()
+
+        # Samplerate controls
+        self._create_samplerate_controls(layout)
+
+    def _create_samplerate_controls(self, layout: QHBoxLayout):
+        """Create samplerate label and entry"""
+        # Samplerate label
+        self.__samplerate_label = QLabel("samplerate :")
+        self.__samplerate_label.setFont(self.__font)
+
+        # Samplerate entry
+        self.__samplerate_entry = QLineEdit()
+        self.__samplerate_entry.setFont(self.__font)
+        self.__samplerate_entry.setFixedWidth(80)
+        self.__samplerate_entry.setText(str(self.__settings.samplerate))
+        self.__samplerate_entry.setPlaceholderText("samplerate")
+
+        # Connect Return key (replaces bind("<Return>"))
+        self.__samplerate_entry.returnPressed.connect(self._samplerate_changed)
+
+        # Add to layout
+        layout.addWidget(self.__samplerate_label)
+        layout.addWidget(self.__samplerate_entry)
+
+    def _samplerate_changed(self):
+        """Handle samplerate entry Return key (replaces samplerate_var_callback)"""
+        new_val = self.__samplerate_entry.text().strip()
+
+        if not self.__settings.validate_samplerate(new_val):
+            Logger().warning(f"{new_val} is not a valid samplerate")
+            # Rollback to previous value
+            self.__samplerate_entry.setText(str(self.__settings.samplerate))
+        else:
+            # Update the setting
+            self.__settings.samplerate = int(new_val)
+            self.__settings.update_needed = True
+
+    def update_widgets(self):
+        """Update widgets if global settings changed externally"""
+        # Update samplerate entry if needed
+        current_samplerate = self.__samplerate_entry.text()
+        expected_samplerate = str(self.__settings.samplerate)
+        if current_samplerate != expected_samplerate:
+            self.__samplerate_entry.setText(expected_samplerate)
+
+
+# ===========================  ViewSettingsFrame  ===========================
+class ViewSettingsFrame(QFrame):
+    """
+    A frame containing the selector for every view setting of a model.
+
+    Each type of view has its set of settings. This will create a frame in which
+    the user can define the value for each of the settings of the currently
+    selected view type
+    """
+
+    def __init__(self, parent: QWidget, model: "EntityModel") -> None:
+        super().__init__(parent)
+
+        self.__model = model
+        self.__entity_suffix = "_" + str(model.id)
+
+        # Store widget references and their associated settings
+        self.__setting_widgets: Dict[
+            str, Tuple[Union[QComboBox, QLineEdit], EntityView.Setting]
+        ] = dict()
+        self.__widgets: List[QWidget] = list()
+
+        # Create font
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        # Track current view type for updates
+        self.__current_view_type = self.__model.selected_view
+
+        # Set fixed height - let Qt handle background
+        self.setFixedHeight(28)
+
+        # Create layout
+        self.__layout = QHBoxLayout()
+        self.setLayout(self.__layout)
+        self.__layout.setContentsMargins(0, 0, 0, 0)
+        self.__layout.setSpacing(5)
+
+        self._create_selectors()
+
+    def _create_selectors(self) -> None:
+        """Create selector widgets for current view settings"""
+        assert len(self.__widgets) == 0
+
+        total_width = 0
+        for setting in self.__model.view_settings:
+            match type(setting):
+                case EntityView.StringSetting:
+                    total_width += self._create_string_selector(setting)
+                case EntityView.IntSetting:
+                    total_width += self._create_int_selector(setting)
+                case EntityView.FloatSetting:
+                    total_width += self._create_float_selector(setting)
+                case _:
+                    raise NotImplementedError(f"Unknown setting type: {type(setting)}")
+
+        # Set minimum width based on content
+        self.setMinimumWidth(total_width)
+
+    def _create_string_selector(self, setting: "EntityView.StringSetting") -> int:
+        """Create label and dropdown for string setting"""
+        var_name = setting.name + self.__entity_suffix
+
+        # Create label
+        label = QLabel(setting.name)
+        label.setFont(self.__font)
+
+        # Create dropdown
+        menu = QComboBox()
+        menu.setFont(self.__font)
+        menu.setFixedWidth(125)
+        menu.addItems(setting.possible_values())
+        menu.setCurrentText(str(setting.value))
+
+        # Connect signal (replaces StringVar trace)
+        menu.currentTextChanged.connect(
+            lambda value, name=var_name: self._update_setting(name, value)
+        )
+
+        # Store references
+        self.__setting_widgets[var_name] = (menu, setting)
+        self.__widgets.extend([label, menu])
+
+        # Add to layout
+        self.__layout.addWidget(label)
+        self.__layout.addWidget(menu)
+
+        return 130  # Width used
+
+    def _create_float_selector(self, setting: "EntityView.FloatSetting") -> int:
+        """Create label and entry for float setting"""
+        var_name = setting.name + self.__entity_suffix
+
+        # Create label
+        label = QLabel(setting.name)
+        label.setFont(self.__font)
+
+        # Create entry
+        entry = QLineEdit()
+        entry.setFont(self.__font)
+        entry.setFixedWidth(60)
+        entry.setText(str(setting.value))
+        entry.setPlaceholderText(setting.name)
+
+        # Connect return key for validation (replaces bind("<Return>"))
+        entry.returnPressed.connect(
+            lambda name=var_name: self._entry_validation_callback(name)
+        )
+
+        # Store references
+        self.__setting_widgets[var_name] = (entry, setting)
+        self.__widgets.extend([label, entry])
+
+        # Add to layout
+        self.__layout.addWidget(label)
+        self.__layout.addWidget(entry)
+
+        return 65  # Width used
+
+    def _create_int_selector(self, setting: "EntityView.IntSetting") -> int:
+        """Create label and entry for int setting"""
+        var_name = setting.name + self.__entity_suffix
+
+        # Create label
+        label = QLabel(setting.name)
+        label.setFont(self.__font)
+
+        # Create entry
+        entry = QLineEdit()
+        entry.setFont(self.__font)
+        entry.setFixedWidth(60)
+        entry.setText(str(setting.value))
+        entry.setPlaceholderText(setting.name)
+
+        # Connect return key for validation (replaces bind("<Return>"))
+        entry.returnPressed.connect(
+            lambda name=var_name: self._entry_validation_callback(name)
+        )
+
+        # Store references
+        self.__setting_widgets[var_name] = (entry, setting)
+        self.__widgets.extend([label, entry])
+
+        # Add to layout
+        self.__layout.addWidget(label)
+        self.__layout.addWidget(entry)
+
+        return 65  # Width used
+
+    def _entry_validation_callback(self, var_name: str) -> None:
+        """Handle entry validation for int/float settings (replaces entry_var_callback)"""
+        if var_name not in self.__setting_widgets:
+            return
+
+        widget, setting = self.__setting_widgets[var_name]
+        assert isinstance(widget, QLineEdit)
+        assert isinstance(setting, (EntityView.FloatSetting, EntityView.IntSetting))
+
+        current_text = widget.text().strip()
+
+        try:
+            # Parse the value (equivalent to setting.parse_tkvar(var))
+            if isinstance(setting, EntityView.IntSetting):
+                parsed_value = int(current_text) if current_text else None
+            elif isinstance(setting, EntityView.FloatSetting):
+                parsed_value = float(current_text) if current_text else None
+            else:
+                parsed_value = current_text
+
+            if parsed_value is not None and setting.validate(parsed_value):
+                # New input was validated
+                self._update_setting(var_name, current_text)
+            else:
+                # Bad input, rollback
+                widget.setText(str(setting.value))
+        except ValueError:
+            # Bad input (equivalent to TclError + ValueError), rollback
+            widget.setText(str(setting.value))
+
+    def _update_setting(self, var_name: str, value: str) -> None:
+        """
+        Update model setting when widget value changes
+        (replaces update_setting)
+        """
+        if var_name not in self.__setting_widgets:
+            return
+
+        setting_name = var_name[: -len(self.__entity_suffix)]
+        widget, setting = self.__setting_widgets[var_name]
+
+        try:
+            if isinstance(widget, QComboBox):
+                # String setting - value is already the string
+                self.__model.update_view_settings(setting_name, value)
+            elif isinstance(widget, QLineEdit):
+                # Int/Float setting - parse like parse_tkvar() did
+                if isinstance(setting, EntityView.IntSetting):
+                    parsed_value = int(value) if value.strip() else None
+                elif isinstance(setting, EntityView.FloatSetting):
+                    parsed_value = float(value) if value.strip() else None
+                else:
+                    parsed_value = value
+
+                if parsed_value is not None:
+                    self.__model.update_view_settings(setting_name, parsed_value)
+        except ValueError:
+            # Parse error - equivalent to tk.TclError, ignore
+            pass
+
+    def update_widgets(self) -> None:
+        """Update widgets when view type changes"""
+        if self.__current_view_type != self.__model.selected_view:
+            # Clear old widgets and connections
+            self._clear_widgets()
+
+            # Recreate widgets for new view type
+            self.__current_view_type = self.__model.selected_view
+            self._create_selectors()
+
+    def _clear_widgets(self) -> None:
+        """Clear all widgets and disconnect signals"""
+        # Disconnect all signals to prevent callbacks during destruction
+        for var_name, (widget, setting) in self.__setting_widgets.items():
+            if isinstance(widget, QComboBox):
+                widget.currentTextChanged.disconnect()
+            elif isinstance(widget, QLineEdit):
+                widget.returnPressed.disconnect()
+
+        # Remove widgets from layout and schedule deletion
+        for widget in self.__widgets:
+            self.__layout.removeWidget(widget)
+            widget.deleteLater()
+
+        # Clear tracking dictionaries
+        self.__widgets.clear()
+        self.__setting_widgets.clear()

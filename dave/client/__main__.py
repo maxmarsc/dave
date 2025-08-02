@@ -38,5 +38,6 @@ except ImportError as e:
     raise e
 
 # gui_con = Connection(int(sys.argv[1]))
-gui = DaveGUI(gui_con)
-gui.run()
+# gui = DaveGUI(gui_con)
+# gui.run()
+DaveGUI.start(gui_con)
