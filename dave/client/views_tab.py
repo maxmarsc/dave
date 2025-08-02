@@ -1,258 +1,275 @@
-from tkinter import filedialog, messagebox
-from typing import Callable, Dict, List, Tuple
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QScrollArea,
+    QFrame,
+    QLabel,
+)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from typing import Dict, List, Union
+import pyqtgraph as pg
 
-import numpy as np
-from multiprocessing.connection import Connection
-import tkinter as tk
-import customtkinter as ctk
-import wave
-from matplotlib.axes import Axes
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from dave.client.entity.entity_model import EntityModel
+from dave.client.global_settings import GlobalSettings
 
+from dave.client.side_panel import SidePanel
+from dave.client.in_scope_dict import InScopeSet
 from dave.common.logger import Logger
 
-from .entity.entity_model import EntityModel
-from .global_settings import GlobalSettings
-from .side_panel import SidePanel
-from .entity.entity_view import configure_matplotlib
+
+class EntityPlots(QFrame):
+    """
+    An vertical box contains all the plots of an entity.
+
+    At least one per channel, or two per channel (live + frozen) if the view is
+    frozen and the view type is not superposable
+    """
+
+    MINIMUM_PLOT_HEIGHT = 220
+
+    def __init__(
+        self, parent: QWidget, model: EntityModel, global_settings: GlobalSettings
+    ):
+        super().__init__(parent)
+        self.__model = model
+        self.__plots: List[pg.PlotWidget] = []
+        self.__global_settings = global_settings
+
+        # Setup the widgets and layout
+        self.__setup_layout()
+        self.__update_widgets()
+
+        # Connect to model signals
+        self.__model.update_signal.connect(self.__on_model_signal)
+
+    def __setup_layout(self):
+        # Create the frame
+        self.__layout = QVBoxLayout()
+        self.setLayout(self.__layout)
+        self.__layout.setContentsMargins(0, 0, 0, 0)
+        self.__layout.setSpacing(2)
+
+    # def compute_num_plots(self) -> int:
+    #     if self.__model.frozen and not self.__model.is_view_superposable:
+    #         # Need space for both live and frozen plots per channel
+    #         return 2 * self.__model.channels
+    #     else:
+    #         # Either not frozen, or frozen but superposable (overlaid)
+    #         return self.__model.channels
+
+    def __on_model_signal(self, source: str):
+        Logger().debug(
+            f"View redraw requested from {source} for model {self.__model.id}"
+        )
+        self.__update_widgets()
+
+    def __update_widgets(self):
+        # Delete the previous plots
+        for old_plot in self.__plots:
+            self.__layout.removeWidget(old_plot)
+            old_plot.deleteLater()
+        self.__plots = []
+
+        if self.__model.frozen and not self.__model.is_view_superposable:
+            # Create 2 plots per channel: live + frozen (non-superposable)
+            for channel in range(self.__model.channels):
+                title = self.__model.channel_name(channel)
+
+                # live plot
+                live_plot = pg.PlotWidget(self)
+                live_plot.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT)
+
+                self.__plots.append(live_plot)
+                self.__layout.addWidget(live_plot)
+
+                # frozen plot
+                frozen_plot = pg.PlotWidget(self)
+                frozen_plot.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT)
+                self.__plots.append(frozen_plot)
+                self.__layout.addWidget(frozen_plot)
+
+                self.__model.draw_view(
+                    [live_plot, frozen_plot],
+                    self.__global_settings.samplerate,
+                    channel=channel,
+                    base_name=title,
+                )
+        else:
+            # Create 1 plot per channel: live + frozen
+            for channel in range(self.__model.channels):
+                title = self.__model.channel_name(channel)
+
+                # live plot
+                live_plot = pg.PlotWidget(self)
+                live_plot.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT)
+                self.__plots.append(live_plot)
+                self.__layout.addWidget(live_plot)
+                self.__model.draw_view(
+                    [
+                        live_plot,
+                    ],
+                    self.__global_settings.samplerate,
+                    channel=channel,
+                    base_name=title,
+                )
+
+        self.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT * len(self.__plots))
 
 
-# ===========================  AudioViewsTab  ==================================
+class EntityRow(QFrame):
+    """
+    A horizontal row containing plots for all channels of one entity and its corresponding side panel
+
+    Each ViewRow handles one complete entity with all its channels
+    """
+
+    def __init__(
+        self, parent: QWidget, model: EntityModel, global_settings: GlobalSettings
+    ) -> None:
+        super().__init__(parent)
+
+        self.__model = model
+        self.__setup_layout(global_settings)
+
+    def __setup_layout(self, global_settings: GlobalSettings):
+        """Setup the main layout and widgets"""
+        # Create horizontal layout for [Plot Area | SidePanel]
+        self.__layout = QHBoxLayout()
+        self.setLayout(self.__layout)
+        self.__layout.setContentsMargins(0, 0, 0, 0)
+        self.__layout.setSpacing(5)
+
+        # Create plot frame
+        self.__plot_frame = EntityPlots(self, self.__model, global_settings)
+
+        # Create side panel (right side)
+        self.__side_panel = SidePanel(self, self.__model)
+
+        # Add to main layout: [Plot Area (expandable) | SidePanel (fixed width)]
+        self.__layout.addWidget(self.__plot_frame, 1)  # stretch factor 1
+        self.__layout.addWidget(self.__side_panel, 0)  # fixed size
+
+
 class AudioViewsTab:
     """
     The Views tab of the dave GUI
 
-    This will contain audio views for each entity, concat/freeze switches,
-    the matplotlib toolbar...
+    Structure:
+    - One EntityRow per entity
+    - Each ViewRow contains all channels for that entity
     """
 
     def __init__(
         self,
-        master: tk.Misc,
+        parent: QWidget,
         entity_models: Dict[int, EntityModel],
+        in_scope_models: InScopeSet,
         global_settings: GlobalSettings,
-    ):
+    ) -> None:
+        self.__parent = parent
         self.__entity_models = entity_models
         self.__global_settings = global_settings
-        self.__master = master
+        self.__empty_label: Union[None, QLabel] = None
 
-        # Audio view rendering
-        self.__central_frame_scrollable = ctk.CTkScrollableFrame(
-            self.__master,
-            corner_radius=0,
-            orientation="vertical",
+        # Store entity rows (one per model)
+        self.__entity_rows: Dict[int, EntityRow] = dict()
+
+        # Connect to scope updates
+        in_scope_models.scope_signal.connect(self._on_scope_signal)
+
+        self._setup_layout()
+
+    def _setup_layout(self) -> None:
+        """Setup the main layout with scrollable area"""
+        # Create main layout for parent
+        main_layout = QVBoxLayout()
+        self.__parent.setLayout(main_layout)
+
+        # Create scrollable area for view rows
+        self.__scroll_area = QScrollArea()
+        self.__scroll_area.setWidgetResizable(True)
+        self.__scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.__scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
 
-        self.__figures_frame = ctk.CTkFrame(self.__central_frame_scrollable)
-        self.__fig = Figure()
-        self.__canvas = FigureCanvasTkAgg(self.__fig, master=self.__figures_frame)
-        self.__canvas_widget = self.__canvas.get_tk_widget()
-        self.__canvas_widget.pack(fill=tk.BOTH, expand=True)
-        self.__left_margin_px = 65
-        self.__right_margin_px = 40
-        self.__top_margin_px = 40
-        self.__bottom_margin_px = 40
-        self.__prev_canvas_dimensions = (1, 1)
+        # Create content widget for scroll area
+        self.__scroll_content = QWidget()
+        self.__scroll_layout = QVBoxLayout()
+        self.__scroll_layout.setDirection(QVBoxLayout.Direction.TopToBottom)
+        self.__scroll_content.setLayout(self.__scroll_layout)
 
-        # Containers Actions
-        self.__side_panels_frame = SidePanels(
-            self.__central_frame_scrollable, self.__entity_models
+        # Make transparent
+        self.__scroll_area.setStyleSheet(
+            """
+            QScrollArea {
+                background-color: transparent;
+                border: none;
+            }
+            """
         )
 
-        # Matplotlib toolbar at the bottom
-        self.__toolbar_frame = ctk.CTkFrame(
-            self.__master, corner_radius=0, fg_color="transparent", height=45
+        self.__scroll_content.setStyleSheet(
+            """
+            QWidget#views_scroll_content {
+                background-color: transparent;
+            }
+            """
         )
-        configure_matplotlib()
-        self.__toolbar = NavigationToolbar2Tk(self.__canvas, self.__toolbar_frame)
-        self.__toolbar.update()
-        self.__toolbar.pack()
-        self.__toolbar_frame.pack(side=tk.BOTTOM, fill=tk.X)
+        self.__scroll_content.setObjectName("views_scroll_content")
 
-        # frame packing
-        self.__central_frame_scrollable.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        # Set scroll content
+        self.__scroll_area.setWidget(self.__scroll_content)
 
-        self.__side_panels_frame.pack(
-            side=tk.RIGHT,
-            fill="y",
-            pady=(0, self.__bottom_margin_px),
-        )
-        self.__figures_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.__master.bind("<Configure>", self.on_resize)
+        # Add scroll area to main layout
+        main_layout.addWidget(self.__scroll_area, 1)  # stretch factor 1
 
-    def __subplots_hratios(self) -> List[int]:
-        hratios = []
-        for model in self.__entity_models.values():
-            if not model.in_scope:
-                continue
-            if model.channels > 16:
-                Logger().warning(
-                    f"Too many channels, skipping entity : {model.channels}"
-                )
-                continue
-            if model.frozen and not model.is_view_superposable:
-                # If the view is not superposable, we need a subplot for both
-                # frozen and live signal - we make them thinner
-                hratios.extend([1 for _ in range(model.channels * 2)])
-            else:
-                # If the view is superposable, just a subplot per channel
-                hratios.extend([2 for _ in range(model.channels)])
+    def _on_scope_signal(self, ids: List[int], in_scope: bool):
+        if in_scope:
+            self.__add_models(ids)
+        else:
+            self.__remove_models(ids)
 
-        return hratios
+    def __add_models(self, ids: List[int]):
+        assert len(ids) > 0
 
-    def on_resize(self, event):
-        # Compute the minimum required height for subplots
-        min_height_per_channel = 200  # height in pixels
-        total_channels = sum(
-            model.channels for model in self.__entity_models.values() if model.in_scope
-        )
-        min_height = total_channels * min_height_per_channel
+        if self.__empty_label is not None:
+            self.__scroll_layout.removeWidget(self.__empty_label)
+            self.__empty_label.deleteLater()
+            self.__empty_label = None
 
-        # Get the current height of the scrollable frame
-        current_height = self.__master.winfo_height() - 45
+        for id in ids:
+            # Get the model
+            new_model = self.__entity_models[id]
+            assert new_model.in_scope
 
-        # Determine the new height to apply
-        new_height = max(min_height, current_height)
-
-        # Apply the new height to the figures frame and entities actions frame
-        self.__figures_frame.configure(height=new_height)
-        self.__side_panels_frame.configure(height=new_height)
-        self.__canvas_widget.configure(
-            height=new_height
-        )  # Adjust canvas height accordingly
-        self.__canvas.draw_idle()  # Redraw the canvas with the new configuration
-
-        # Update layout adjustments
-        self.__master.update_idletasks()  # Force layout update
-
-        # Force the frame to update its size
-        self.update_canva_adjustement()
-
-    def update_canva_adjustement(self):
-        # Get the canvas width and height in pixels
-        dimensions = (
-            self.__canvas_widget.winfo_width(),
-            self.__canvas_widget.winfo_height(),
-        )
-        if dimensions == self.__prev_canvas_dimensions:
-            return
-
-        # Convert the margin sizes from pixels to inches
-        dpi = self.__fig.get_dpi()
-        left_margin_in = self.__left_margin_px / dpi
-        right_margin_in = self.__right_margin_px / dpi
-        top_margin_in = self.__top_margin_px / dpi
-        bottom_margin_in = self.__bottom_margin_px / dpi
-
-        # Compute the figure width and height in inches
-        figure_width_in = dimensions[0] / dpi
-        figure_height_in = dimensions[1] / dpi
-
-        # Calculate subplot adjustments based on fixed margins
-        left = left_margin_in / figure_width_in
-        right = 1 - (right_margin_in / figure_width_in)
-        top = 1 - (top_margin_in / figure_height_in)
-        bottom = bottom_margin_in / figure_height_in
-
-        self.__fig.subplots_adjust(left=left, right=right, top=top, bottom=bottom)
-        self.__prev_canvas_dimensions = dimensions
-        self.__canvas.draw_idle()
-
-    def update_widgets(self):
-        # Update the side panel first, so that the figure does not have time
-        # to take all the width
-        self.__side_panels_frame.update_widgets()
-        self.__update_figures()
-
-    def __update_figures(self):
-        self.__fig.clear()
-        hratios = self.__subplots_hratios()
-        nrows = len(hratios)
-        if nrows == 0:
-            self.__fig.text(
-                0.5, 0.5, "No entity in scope", fontsize=14, ha="center", va="center"
+            # Create entity row
+            entity_row = EntityRow(
+                self.__scroll_content, new_model, self.__global_settings
             )
-            self.__canvas.draw_idle()
-            return
-        subplots_axes = self.__fig.subplots(
-            nrows=nrows, ncols=1, gridspec_kw={"height_ratios": hratios}
-        )  # type: List[Axes]
-        if isinstance(subplots_axes, Axes):
-            subplots_axes = np.array([subplots_axes])
-        i = 0
-        for model in self.__entity_models.values():
-            if not model.in_scope or model.channels > 16:
-                continue
-            for channel in range(model.channels):
-                title = model.channel_name(channel)
+            self.__entity_rows[id] = entity_row
 
-                if model.frozen and not model.is_view_superposable:
-                    axes = subplots_axes[i : i + 2]
-                    axes[1].yaxis.set_label_position("right")
-                    axes[1].set_ylabel(
-                        title + " (f)", rotation=270, labelpad=10, va="bottom"
-                    )
-                    i += 2
-                else:
-                    axes = subplots_axes[i : i + 1]
-                    i += 1
+            # Add to layout
+            self.__scroll_layout.addWidget(entity_row)
 
-                axes[0].yaxis.set_label_position("right")
-                axes[0].set_ylabel(title, rotation=270, labelpad=10, va="bottom")
-                model.draw_view(
-                    axes, self.__global_settings.samplerate, channel=channel
-                )
-        self.__canvas.draw_idle()
-        self.on_resize(None)
+    def __remove_models(self, ids: List[int]):
+        assert len(ids) > 0
+        assert self.__empty_label is None
 
+        for id in ids:
+            assert id in self.__entity_rows
+            # Get the EntitySettings
+            row = self.__entity_rows[id]
 
-# =================================  SidePanels  ===============================
-class SidePanels(ctk.CTkFrame):
-    """
-    Holds the side panel for each (in-scope) entity
-    """
+            # Remove from layout
+            self.__scroll_layout.removeWidget(row)
 
-    def __init__(self, master: tk.Misc, entity_models: Dict[int, EntityModel]):
-        super().__init__(master, width=60, corner_radius=0, fg_color="transparent")
-        self.__entity_models = entity_models
-        self.__side_panels: Dict[int, SidePanel] = dict()
-        self.grid_columnconfigure(0, weight=1)
+            # Delete the widget
+            row.deleteLater()
 
-    def update_widgets(self):
-        # First delete old occurences
-        to_delete = []
-        for id, button_frame in self.__side_panels.items():
-            if id not in self.__entity_models or not self.__entity_models[id].in_scope:
-                # Reset the weight of its grid
-                self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
-                button_frame.destroy()
-                to_delete.append(id)
-
-        for id in to_delete:
-            del self.__side_panels[id]
-
-        # Then update the position of the left occurences
-        for i, button_frame in enumerate(self.__side_panels.values()):
-            # First reset its old row to weight 0
-            self.grid_rowconfigure(index=button_frame.grid_info()["row"], weight=0)
-            button_frame.grid(row=i, column=0, sticky="ew", padx=(5, 2))
-            button_frame.update_widgets()
-
-        # Then add new entities
-        for id, entity in self.__entity_models.items():
-            if id not in self.__side_panels and entity.in_scope:
-                idx = len(self.__side_panels)
-                Logger().debug(
-                    f"Adding side panel for entity {entity.id}:{entity.variable_name}"
-                )
-                self.__side_panels[id] = SidePanel(self, entity)
-                # Place the new button frame
-                self.__side_panels[id].grid(row=idx, column=0, sticky="ew", padx=(5, 2))
-
-        self.__update_row_weights()
-
-    def __update_row_weights(self):
-        for i, id in enumerate(self.__side_panels):
-            weight = self.__entity_models[id].channels
-            self.grid_rowconfigure(index=i, weight=weight)
+            # Remove from our tracking dict
+            del self.__entity_rows[id]

@@ -162,6 +162,12 @@ class ShowCommand:
         skipped = []
         new_entities = []
         for var in vars:
+            # Check for uninitialized references
+            if var.address() == 0:
+                Logger().info(f"Skipping {var.varname()} because its address is 0x0")
+                skipped.append(var.varname())
+                continue
+
             try:
                 entity = EntityFactory().build(
                     var, var.typename(), var.varname(), parsed.dims

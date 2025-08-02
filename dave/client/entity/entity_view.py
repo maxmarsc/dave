@@ -1,21 +1,26 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any, List, Union
+from typing import Any, List, Tuple, Union
 
-from matplotlib.axes import Axes
-import matplotlib as mpl
-import numpy as np
+from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QPalette, QColor
 
-# from dave.client.view_setting import Setting
-import tkinter as tk
+import pyqtgraph as pg
 
 
-def configure_matplotlib():
-    mpl.rcParams["path.simplify"] = True
-    mpl.rcParams["path.simplify_threshold"] = 0.3
+def hex_to_rgb_tuple(hex_color: str) -> Tuple[int, int, int]:
+    """Convert matplotlib hex color to RGB tuple (0-255)"""
+    assert len(hex_color) == 7 and hex_color[0] == "#"
+    return (
+        int(hex_color[1:3], 16),
+        int(hex_color[3:5], 16),
+        int(hex_color[5:7], 16),
+    )
 
 
 class EntityView(ABC):
+    DEFAULT_COLOR = hex_to_rgb_tuple("#1f76b4")
+
     @staticmethod
     @abstractmethod
     def name() -> str:
@@ -26,8 +31,39 @@ class EntityView(ABC):
         return True
 
     @abstractmethod
-    def render_view(self, axes: Axes, data: Any, samplerate: int, color=None):
+    def _render_view(
+        self,
+        plot_widget: pg.PlotWidget,
+        data: Any,
+        samplerate: int,
+        color: Union[None, str] = None,
+    ):
         pass
+
+    def render_view(
+        self,
+        plot_widget: pg.PlotWidget,
+        data: Any,
+        samplerate: int,
+        name: str,
+        color: Union[None, str] = None,
+    ):
+        # Plot the graph
+        self._render_view(plot_widget, data, samplerate, color)
+
+        # Get default colors
+        bg_color, mid_color, fg_color = self.palette_colors(plot_widget)
+
+        # Setup axis colors
+        plot_widget.plotItem.getAxis("left").setPen(mid_color)
+        plot_widget.plotItem.getAxis("right").setPen(mid_color)
+        plot_widget.plotItem.getAxis("bottom").setPen(mid_color)
+
+        # Set background color
+        plot_widget.setBackground(bg_color)
+
+        # Setup graph name
+        plot_widget.plotItem.setLabel("right", name, pen=fg_color)
 
     @abstractmethod
     def get_settings(self) -> List[EntityView.Setting]:
@@ -36,6 +72,17 @@ class EntityView(ABC):
     @abstractmethod
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
+
+    @staticmethod
+    def palette_colors(
+        widget: QWidget,
+    ) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
+        palette = widget.palette()
+        bg_color = hex_to_rgb_tuple(palette.color(QPalette.ColorRole.Window).name())
+        mid_color = hex_to_rgb_tuple(palette.color(QPalette.ColorRole.Mid).name())
+        fg_color = hex_to_rgb_tuple(palette.color(QPalette.ColorRole.WindowText).name())
+
+        return (bg_color, mid_color, fg_color)
 
     # ==========================================================================
     class Setting(ABC):
@@ -49,11 +96,6 @@ class EntityView(ABC):
         @property
         @abstractmethod
         def value(self):
-            pass
-
-        @staticmethod
-        @abstractmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, Any]:
             pass
 
     class BoolSetting(Setting):
@@ -75,13 +117,6 @@ class EntityView(ABC):
         @staticmethod
         def possible_values() -> List[bool]:
             return (True, False)
-
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, bool]:
-            try:
-                return bool(var.get())
-            except tk.TclError:
-                return None
 
     class IntSetting(Setting):
         def __init__(
@@ -120,13 +155,6 @@ class EntityView(ABC):
             else:
                 self.__value = new_value
 
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, int]:
-            try:
-                return int(var.get())
-            except tk.TclError:
-                return None
-
     class FloatSetting(Setting):
         def __init__(
             self, name: str, min: float, max: float, default: float, value: float = None
@@ -164,13 +192,6 @@ class EntityView(ABC):
             else:
                 self.__value = new_value
 
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, float]:
-            try:
-                return float(var.get())
-            except tk.TclError:
-                return None
-
     class StringSetting(Setting):
         def __init__(self, name: str, values: List[str], value: str = None) -> None:
             super().__init__(name)
@@ -191,10 +212,3 @@ class EntityView(ABC):
 
         def possible_values(self) -> List[str]:
             return self.__possible_values
-
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, str]:
-            try:
-                return str(var.get())
-            except tk.TclError:
-                return None

@@ -1,8 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Union, override
 import warnings
-from matplotlib.axes import Axes
+
+# from matplotlib.axes import Axes
+import pyqtgraph as pg
 import numpy as np
 
 from dave.client.entity.model_factory import ModelFactory
@@ -13,7 +15,12 @@ from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 
 from .raw_to_numpy import InternalNpy, raw_to_npy
-from .iir_views import IirView, MagnitudeResponseView, PhaseResponseView, PolesZerosView
+from .iir_views import (
+    IirView,
+    MagnitudeResponseView,
+    PhaseResponseView,
+    PolesZerosView,
+)
 
 
 class IirModel(EntityModel):
@@ -64,6 +71,21 @@ class IirModel(EntityModel):
         return self._data.order
 
     # ==========================================================================
+    @override
+    def _live_render_data(self) -> np.ndarray:
+        """
+        Returns the live data as it should be drawn
+        """
+        # Create a fake channel dimension
+        return np.expand_dims(self._data.sos, 0)
+
+    @override
+    def _frozen_render_data(self) -> np.ndarray:
+        assert self._frozen_data is not None
+        # Create a fake channel dimension
+        return np.expand_dims(self._frozen_data.sos, 0)
+
+    # ==========================================================================
     def serialize_types(self) -> List[Tuple[str, str]]:
         return [
             ("Numpy file (SOS)", ".npy"),
@@ -83,39 +105,6 @@ class IirModel(EntityModel):
     def update_data(self, update: RawIir.InScopeUpdate):
         self._raw.update(update)
         self._data = raw_to_npy(self._raw.coeffs)
+        self._channels = self._raw.channels()
         self._in_scope = True
-        self._mark_for_update()
-
-    # ==========================================================================
-    def draw_view(self, axes: List[Axes], default_sr: int, **kwargs):
-        """
-        Draw the filter view
-
-        If the filter is frozen, both frozen and live data will be drawn
-        If the filter is frozen and the current selected view type does not support
-        superposable data (eg: spectrogram), then the caller must provide two Axes to draw
-
-        Parameters
-        ----------
-        axes : List[Axes]
-            Either a single Axes in a list, or two if the filter is frozen
-            with a non-superposable view type
-        default_sr: int
-            The default samplerate to use if not set in this specific model
-        """
-        assert isinstance(self._view, IirView)
-        samplerate = self._sr if self._sr is not None else default_sr
-
-        if self.frozen and not self.is_view_superposable:
-            # Render frozen and live data on different subplots
-            assert len(axes) == 2
-            self._view.render_view(axes[0], self._data, samplerate)
-            self._view.render_view(axes[0], self._frozen_data, samplerate)
-        else:
-            # Render live data
-            assert len(axes) == 1
-            if self.frozen:
-                self._view.render_view(
-                    axes[0], self._frozen_data, samplerate, "#ff7f0e"
-                )
-            self._view.render_view(axes[0], self._data, samplerate)
+        self.data_signal.emit()

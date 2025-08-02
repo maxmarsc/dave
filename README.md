@@ -81,12 +81,6 @@ Currently supported IIR filter/coefficients are :
 the stack using the IDE ui.
 
 ---
-**WARNING:** CustomTkinter has been identified as slow and quite unreliable graphic
-library. You might experience slowdown when using Dave. ***This is known and considered
-an issue.*** I'm working on a port to another graphical library but that might take
-some time, sorry.
-
----
 
 To get started first follow the `Project Setup` guide below, then you can read 
 the [User Guide](USER_GUIDE.md) to get familiar with DAVE.
@@ -95,7 +89,7 @@ If you want to develop/experiment with dave, follow the [Development Guide](DEV_
 
 ## Project setup
 ### Requirements
-DAVE requires a python >= 3.10 installation with working `venv` and `tkinter` modules
+DAVE requires a python >= 3.10 installation with a working `venv` module
 
 ### Installation
 The simplest way to install dave and its bindings is to use the install script :
@@ -111,7 +105,6 @@ bash -c "$(wget https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/
 It will install the python dave modules, the debuggers bindings, and the `dave`
 cli tool to help manage your dave installation.
 
-*MacOS* : On MacOS distribution you might need to install tkinter using homebrew/macports.
 *Python* : Python support is limited and requires a different installation method, see the section below
 
 ---
@@ -180,39 +173,6 @@ proprietary project out of DAVE's code.
 If you have any question or request about licensing, don't hesitate to ask !
 
 **Wikipedia:** *Software under the GPL may be run for all purposes, including commercial purposes and even as a tool for creating proprietary software, such as when using GPL-licensed compilers.*
-
-## Milestones
-- [x] Freeze
-- [x] Concatenate 
-- [x] Save to disc
-- [x] Add tooltip hover for action buttons
-- [x] out-of-scope detection
-- [x] react to step over/up/down
-- [x] Mid/Side
-- [x] Interleaved 
-- [x] Easy installation
-- [x] improve logging system
-- [x] document commands
-- [x] add license
-- [x] llvm libc/libstd (need to be tested)
-- [x] JUCE 
-- [x] GSL
-- [x] Add samplerate support
-- [x] Add a way for the user to add custom container support
-- [x] Add command to help diagnostic type for custom container support
-- [ ] Add argument parsing to `show` (view, layout, settings...)
-- [ ] find testing strategy
-- [ ] Add versionning selection to dave_install
-- [ ] command aliases
-- [ ] minimize call to render functions
-- [ ] Eigen
-- [ ] Add FISH shell support
-- [x] CHOC
-- [x] Document the code
-- [x] Restart dave process 
-- [x] Improve GUI proportions
-- [x] container deletion (GUI + delete command)
-- [x] LLDB
 
 
 

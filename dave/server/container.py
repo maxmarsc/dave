@@ -286,3 +286,31 @@ class Container2D(Container):
         cls, typename: str, **kwargs
     ) -> Tuple[SampleType, Optional[int], Optional[int]]:
         pass
+
+    @classmethod
+    def _nested_containers(cls, subscriptor, size: int, dims: List[int]):
+        from .entity_factory import EntityFactory
+
+        assert cls.is_nested()
+
+        nested_containers: List[Container1D] = [
+            EntityFactory().build_simple(
+                subscriptor[i],
+                subscriptor[i].typename(),
+                "",
+                dims,
+            )
+            for i in range(size)
+        ]
+
+        if size != 0:
+            nested_size = nested_containers[0].size
+            if any(
+                nested_container.size != nested_size
+                for nested_container in nested_containers
+            ):
+                raise TypeError(
+                    "Container2D only supported nested container of the same size"
+                )
+
+        return nested_containers

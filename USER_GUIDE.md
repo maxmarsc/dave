@@ -7,8 +7,18 @@ When adding DAVE to your system it's important to understand it's composed of
 two parts : the `dave` python module itself, and the bindings for the debuggers.
 
 The bindings for gdb and lldb uses the `~/.gdbinit` and `~/.lldbinit` files
-to automatically load the dave module at runtime. If the module is not accessible
-then you will be inform.
+to automatically load the dave module at runtime. 
+When starting the debugger you should see the following message indicating DAVE is loaded:
+```
+INFO : [dave] Successfully loaded
+```
+If the module is not accessible then you will be informed by the following message:
+```
+INFO : [dave] module not found. Commands will not be available
+```
+
+If you do not see any of these messages, dave is not binded to your 
+debugger. See the following section for how to bind dave to your debugger.
 
 ### The `dave` command line tool
 After installation (and reloading your .bashrc/.zshrc file), you should have access to
@@ -247,16 +257,16 @@ Some settings will require you to enter manually the value you'd like for the se
 ### The `Views` tab
 ![Views](.pictures/views.png)
 
-On `1.` are the audio views of your audio data. One plot for each channel, for
+In the red section are the audio views of your audio data. One plot for each channel, for
 each entity currently in scope.
 
-On `2.` are the actions switches/buttons :
- - `Freeze` enable/disable the *Freeze* setting of the entity
- - `Concat` enable/disable the *Concatenate* setting of the entity
- - `Save` : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
-
-On `3.` are the matplotlib controls. These allow you to navigate and zoom within
-the plots. The save button saves the figures, and not the data.
+On the green section are side panels with quick infos and action about the views:  
+ - On the top you have the name of the entity.  
+ - Below are some information abuot the entity
+ - Then comes the switchs/buttons:
+    - `Freeze` enable/disable the *Freeze* setting of the entity
+    - `Concat` enable/disable the *Concatenate* setting of the entity
+    - `Save to disc` : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
 
 ### The `Settings` tab
 ![Settings](.pictures/settings.png)
@@ -269,10 +279,8 @@ drop-down list. When editing through a text entry, your input will only be valid
 and used after pressing the `<Enter>` key.
 
 #### Global settings
-![Global settings](.pictures/settings_global.png)
 
 From left-to-right :
-- Appearance settings : select from dark, light or system
 - Default samplerate : the default samplerate to use for each container
 
 #### Entity settings
@@ -282,7 +290,7 @@ For each entity in scope you can see a frame with settings for this entity.
 
 From left-to-right :
 
-##### `Container` Data layout selection
+##### Data layout selection [*Only for Containers*]
 The type of layout are :
 - real 1D : monophonic pcm samples
 - real 2D : multichannel pcm samples
@@ -303,7 +311,7 @@ available views might changes as well.
 First the number of channels of the entity. Editable if the container is 1D
 but you forced a 2D layout.
 
-###### `Container` channel section 
+###### Channel section [*Only for Containers*]
 Then the interleaved switch. Editable if the container is 1D
 but you forced a 2D layout. Some containers might be interleaved by nature, this
 will reflect it.
@@ -365,12 +373,16 @@ Available on **real** (1D/2D) data layout.
 ![Spectrogram](.pictures/spectrogram.png)
 
 The Spectrogram view computes and plot the spectrogram of the signal. It uses
-[matplotlib's specgram implementation](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.specgram.html)
+[scipy's signal.spectrogram implementation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html)
 
 Available settings :
 - nfft : `[16: 4096]` default to `256`
 - overlap : `[0.01: 0.99]` default to `0.5`
-- window type : `hanning`, `blackman` or `none`
+- window type : `hann`, `boxcar`, `blackman` or `hamming`
+- colormap : `magma` or `viridis`
+
+On the right of the figure you can edit the dB scale by moving the top/bottom sliders 
+of the scale.
 
 **Note :** If for some reason the computation of the spectrogram is not possible
 (ex: divide by zero), the concerned channel will be left blanked like in the pictures.

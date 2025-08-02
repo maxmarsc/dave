@@ -1,11 +1,13 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Set, Tuple, Union
 
 from matplotlib.axes import Axes
 import numpy as np
+import pyqtgraph as pg
 
+from PySide6.QtCore import QObject, Signal
 
 from dave.common.raw_entity import RawEntity
 
@@ -14,17 +16,46 @@ from .entity_settings_frame import EntitySettingsFrame
 from .entity_side_panel_info import EntitySidePanelInfo
 
 
-class EntityModel:
+class EntityModel(QObject):
+    # Settings signals to send when a specific part has been updated
+    data_signal = Signal()
+    possible_views_signal = Signal()
+    view_signal = Signal(str)
+    view_settings_signal = Signal()
+    frozen_signal = Signal(bool)
+    concat_signal = Signal(bool)
+    channels_signal = Signal(int)
+    samplerate_signal = Signal(int)
+    # Signal to send when the model is to be deleted
+    deletion_signal = Signal(int)
+    # Signal when the model has been updated and the view should be updated
+    update_signal = Signal(str)
+
     def __init__(self, raw: RawEntity):
+        super().__init__()
         self._raw = raw
         self._data: Any = None
         self._frozen_data = None
         self._sr = None
         self._channels = raw.channels()
         self._in_scope = raw.in_scope
-        self.__update_pending = False
-        self._deletion_pending = False
         self._view: EntityView = self.possible_views[0]()
+
+        # Connect all settings signal to the update signal
+        self.data_signal.connect(lambda: self._emit_update("data"))
+        self.view_signal.connect(lambda: self._emit_update("view"))
+        self.view_settings_signal.connect(lambda: self._emit_update("view_settings"))
+        self.frozen_signal.connect(lambda: self._emit_update("frozen"))
+        self.concat_signal.connect(lambda: self._emit_update("concat"))
+        self.channels_signal.connect(lambda: self._emit_update("channel"))
+        self.samplerate_signal.connect(lambda: self._emit_update("samplerate"))
+
+    # ==========================================================================
+    def _emit_update(self, source: str):
+        """
+        This method will emit an update signal for the corresponding view to update
+        """
+        self.update_signal.emit(source)
 
     # ==========================================================================
     @staticmethod
@@ -84,7 +115,7 @@ class EntityModel:
             self._frozen_data = self._data
         else:
             self._frozen_data = None
-        self._mark_for_update()
+        self.frozen_signal.emit(self.frozen)
 
     @property
     @abstractmethod
@@ -110,10 +141,10 @@ class EntityModel:
         """
         Channels property, not editable
 
-        A specific concept might require to have channels editable (like containers)
+        A specific entity might require to have channels editable (like containers)
         in which case you should implement a validate_and_update_channel method
 
-        Returns the number of channels for this concept
+        Returns the number of channels for this entity
         """
         return self._channels
 
@@ -124,7 +155,7 @@ class EntityModel:
 
         To validate and update a new samplerate use the validate_and_update_samplerate method
 
-        Returns None if no specific samplerate has been forced on this concept
+        Returns None if no specific samplerate has been forced on this entity
         (ie: use the default), the specified samplerate otherwise
         """
         return self._sr
@@ -138,7 +169,7 @@ class EntityModel:
         if value > 0:
             if value != self.samplerate:
                 self._sr = value
-                self._mark_for_update()
+                self.samplerate_signal(self.samplerate)
             return True
         return False
 
@@ -146,12 +177,23 @@ class EntityModel:
         for view_type in self.possible_views:
             if view_type.name() == view_name:
                 self._view = view_type()
-                self._mark_for_update()
+                self.view_signal.emit(view_name)
                 break
 
     def update_view_settings(self, setting_name: str, setting_value: Any):
         self._view.update_setting(setting_name, setting_value)
-        self._mark_for_update()
+        self.view_settings_signal.emit()
+
+    # ==========================================================================
+    def _live_render_data(self) -> np.ndarray:
+        """
+        Returns the live data as it should be drawn
+        """
+        return self._data
+
+    def _frozen_render_data(self) -> np.ndarray:
+        assert self._frozen_data is not None
+        return self._frozen_data
 
     # ==========================================================================
     @abstractmethod
@@ -172,25 +214,15 @@ class EntityModel:
         pass
 
     # ==========================================================================
-    def mark_for_deletion(self):
-        self._deletion_pending = True
-
-    def check_for_deletion(self) -> bool:
-        return self._deletion_pending
-
-    def _mark_for_update(self):
-        self.__update_pending = True
-
-    def check_for_update(self) -> bool:
-        return self.__update_pending
-
-    def reset_update_flag(self):
-        self.__update_pending = False
+    def signal_deletion(self):
+        self.deletion_signal.emit(self.id)
 
     @abstractmethod
     def update_data(self, update: RawEntity.InScopeUpdate):
         """
         Updates the model by reading the incoming raw update
+
+        THIS MUST SIGNAL ON data_signal
         """
         pass
 
@@ -198,8 +230,10 @@ class EntityModel:
         self._in_scope = False
 
     # ==========================================================================
-    @abstractmethod
-    def draw_view(self, axes: List[Axes], default_sr: int, **kwargs):
+    # @abstractmethod
+    def draw_view(
+        self, plots: List[pg.PlotWidget], default_sr: int, channel: int, base_name: str
+    ):
         """
         Draw the view of the audio entity.
 
@@ -209,14 +243,48 @@ class EntityModel:
 
         Parameters
         ----------
-        axes : List[Axes]
-            Either a single Axes in a list, or two if the container is frozen
+        plots : List[pg.PlotWidget]
+            Either a single pg.PlotWidget in a list, or two if the entity is frozen
             with a non-superposable view type
         default_sr : int
             The default samplerate to use RawEntityif not set in this specific model
+        channel : int
+            The channel to draw
         kwargs: additional parameters for the concrete class's method
         """
-        pass
+        # pass
+        samplerate = self._sr if self._sr is not None else default_sr
+
+        if self.frozen and not self.is_view_superposable:
+            # Render frozen and live data on different subplots
+            assert len(plots) == 2
+            self._view.render_view(
+                plots[0],
+                self._live_render_data()[channel],
+                samplerate,
+                base_name + " (Live)",
+            )
+            self._view.render_view(
+                plots[1],
+                self._frozen_render_data()[channel],
+                samplerate,
+                base_name + " (Frozen)",
+            )
+        else:
+            # Render live data
+            assert len(plots) == 1
+            if self.frozen:
+                # Render frozen data on same subplot
+                self._view.render_view(
+                    plots[0],
+                    self._frozen_render_data()[channel],
+                    samplerate,
+                    base_name,
+                    color="#ff7f0e",
+                )
+            self._view.render_view(
+                plots[0], self._live_render_data()[channel], samplerate, base_name
+            )
 
     def channel_name(_, channel: int) -> str:
         return f"channel {channel}"
