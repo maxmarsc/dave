@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLineEdit,
     QScrollBar,
+    QSizePolicy,
 )
 from PySide6.QtCore import Qt, QObject, QEvent
 from PySide6.QtGui import QFont
@@ -255,12 +256,16 @@ class EntitySettings(QFrame):
         self.__scroll_area.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
+        self.__scroll_area.horizontalScrollBar().installEventFilter(self)
 
         # Create content widget for scroll area
         self.__scroll_content = QWidget()
         self.__scroll_layout = QGridLayout()
         self.__scroll_content.setLayout(self.__scroll_layout)
-        self.__scroll_area.horizontalScrollBar().installEventFilter(self)
+        self.__scroll_content.setSizePolicy(
+            QSizePolicy.Policy.Expanding,  # Allow horizontal expansion
+            QSizePolicy.Policy.Fixed,  # Keep vertical size fixed
+        )
 
         # Set content in scroll area
         self.__scroll_area.setWidget(self.__scroll_content)
@@ -566,6 +571,7 @@ class ViewSettingsFrame(QFrame):
         self.setLayout(self.__layout)
         self.__layout.setContentsMargins(0, 0, 0, 0)
         self.__layout.setSpacing(5)
+        self.__layout.setSizeConstraint(QHBoxLayout.SizeConstraint.SetMinimumSize)
 
         self._create_selectors()
         self.__model.view_signal.connect(self._on_view_signal)
