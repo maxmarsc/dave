@@ -362,13 +362,15 @@ class EntitySettings(QFrame):
         # Update the model
         self.__model.update_view_type(new_view)
 
-    def _on_possible_views_signal(self, possibles_view: List[str]):
+    def _on_possible_views_signal(self):
         # Temporarily disconnect signal to avoid recursion
         self.__view_menu.currentTextChanged.disconnect()
 
+        possibles_views = self.__model.possible_views_names
+
         # Update dropdown items
         self.__view_menu.clear()
-        self.__view_menu.addItems(possibles_view)
+        self.__view_menu.addItems(possibles_views)
         self.__view_menu.setCurrentText(self.__model.selected_view)
 
         # Reconnect signal

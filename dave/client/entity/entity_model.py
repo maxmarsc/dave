@@ -17,7 +17,7 @@ from .entity_side_panel_info import EntitySidePanelInfo
 
 class EntityModel(QObject):
     data_signal = Signal()
-    possible_views_signal = Signal(List[str])
+    possible_views_signal = Signal()
     view_signal = Signal(str)
     view_settings_signal = Signal()
     frozen_signal = Signal(bool)

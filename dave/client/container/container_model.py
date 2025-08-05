@@ -221,7 +221,7 @@ class ContainerModel(EntityModel):
                 )
             # Update the view since the layout dictates possible views
             self._view = self.possible_views[0]()
-            # self.layout_signal.emit(new_layout)
+            self.possible_views_signal.emit()
             self.view_signal.emit(self._view.name())
 
     # ==========================================================================
