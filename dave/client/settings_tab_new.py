@@ -10,10 +10,11 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QLineEdit,
+    QScrollBar,
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QObject, QEvent
 from PySide6.QtGui import QFont
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, override
 
 from dave.common.logger import Logger
 
@@ -254,12 +255,12 @@ class EntitySettings(QFrame):
         self.__scroll_area.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
-        # self.__scroll_area.setFixedHeight(70)
 
         # Create content widget for scroll area
         self.__scroll_content = QWidget()
         self.__scroll_layout = QGridLayout()
         self.__scroll_content.setLayout(self.__scroll_layout)
+        self.__scroll_area.horizontalScrollBar().installEventFilter(self)
 
         # Set content in scroll area
         self.__scroll_area.setWidget(self.__scroll_content)
@@ -285,19 +286,18 @@ class EntitySettings(QFrame):
             self.__scroll_content, self.__model
         )
 
-        # View selection dropdown (replaces CTkOptionMenu)
+        # View selection dropdown
         self.__view_menu = QComboBox()
         self.__view_menu.setFont(self.__font)
         self.__view_menu.setFixedWidth(125)
         self.__view_menu.addItems(self.__model.possible_views_names)
         self.__view_menu.setCurrentText(self.__model.selected_view)
 
-        # Connect signal (replaces tk.StringVar trace)
+        # Connect signal
         self.__view_menu.currentTextChanged.connect(self._on_view_change)
         self.__model.possible_views_signal.connect(self._on_possible_views_signal)
 
-        # Add tooltip (you may need to adapt Tooltip for Qt)
-        # Tooltip.add_tooltip(self.__view_menu, "Select which view to render")
+        # Add tooltip
         self.__view_menu.setToolTip("Select which view to render")
 
         # View settings frame
@@ -336,13 +336,26 @@ class EntitySettings(QFrame):
         self.__scroll_layout.setHorizontalSpacing(5)
         self.__scroll_layout.setVerticalSpacing(5)
 
+    @override
+    def eventFilter(self, object: QObject, event: QEvent):
+        """Monitor horizontal scrollbar show/hide events"""
+        if object == self.__scroll_area.horizontalScrollBar():
+            if event.type() == QEvent.Type.Show:
+                # Scrollbar appeared
+                scrollbar_height = self.__scroll_area.horizontalScrollBar().height()
+                self.setFixedHeight(70 + scrollbar_height)
+                return False
+            elif event.type() == QEvent.Type.Hide:
+                # Scrollbar disappeared
+                self.setFixedHeight(70)
+                return False
+
+        return super().eventFilter(object, event)
+
     def _on_view_change(self, new_view: str):
         """Handle view selection change (replaces view_var_callback)"""
         # Update the model
         self.__model.update_view_type(new_view)
-
-        # # Trigger a redraw
-        # self.update_widgets()
 
     def _on_possible_views_signal(self, possibles_view: List[str]):
         # Temporarily disconnect signal to avoid recursion
