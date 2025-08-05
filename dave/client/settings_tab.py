@@ -242,7 +242,7 @@ class GeneralSettingsFrame(ctk.CTkFrame):
         self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=3)
 
     def delete_button_callback(self):
-        self.__model.mark_for_deletion()
+        self.__model.signal_deletion()
         self.master.destroy()
 
     def samplerate_var_callback(self, *_):

@@ -49,7 +49,3 @@ class IirSettingsFrame(QFrame):
         # Add widgets to layout
         layout.addWidget(self.__channel_label)
         layout.addWidget(self.__channel_entry)
-
-    def update_widgets(self) -> None:
-        """Update widgets when model state changes (currently no updates needed)"""
-        pass

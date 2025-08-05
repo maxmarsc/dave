@@ -21,9 +21,7 @@ from dave.client.entity.entity_model import EntityModel
 from dave.client.global_settings import GlobalSettings
 
 from .entity.entity_view import EntityView
-
-# from dave.client.entity.entity_settings import EntitySettings
-# from dave.client.global_settings_frame import GlobalSettingsFrame
+from .in_scope_dict import InScopeSet
 
 
 # ==============================   SettingsTab  =================================
@@ -37,10 +35,12 @@ class SettingsTab:
         self,
         parent: QWidget,
         entity_models: Dict[int, EntityModel],
+        in_scope_models: InScopeSet,
         global_settings: GlobalSettings,
     ):
         self.__parent = parent
         self.__entity_models = entity_models
+        # self.__in_scope_models = in_scope_models
         self.__global_settings = global_settings
         self.__entity_settings: Dict[int, EntitySettings] = dict()
         self.__empty_label = None
@@ -49,6 +49,8 @@ class SettingsTab:
         self.__bold_font = QFont()
         # self.__bold_font.setPointSize(18)
         # self.__bold_font.setBold(True)
+
+        in_scope_models.scope_signal.connect(self._on_scope_signal)
 
         self._setup_layout()
 
@@ -117,93 +119,88 @@ class SettingsTab:
         # Add scroll area to main layout with stretch
         main_layout.addWidget(self.__scroll_area, 1)  # stretch factor 1
 
-        # Initial update
-        self.update_widgets()
+    def _on_scope_signal(self, id: int, in_scope: bool):
+        if in_scope:
+            self.__add_models(
+                [
+                    id,
+                ]
+            )
+        else:
+            self.__remove_models(
+                [
+                    id,
+                ]
+            )
 
-    def add_model(self, model: EntityModel):
-        """Add a new entity model to the settings"""
-        assert model.id not in self.__entity_settings
-        assert model.id in self.__entity_models
+    def __add_models(self, ids: List[int]):
+        assert len(ids) > 0
 
-        # Create entity settings widget
-        entity_settings = EntitySettings(
-            self.__scroll_content,  # Parent is the scroll content
-            model,
-            self.__global_settings,
+        if self.__empty_label is None:
+            if self.__scroll_layout.count() != 0:
+                # Delete the old stretch
+                self.__scroll_layout.removeItem(
+                    self.__scroll_layout.itemAt(self.__scroll_layout.count() - 1)
+                )
+        else:
+            # Delete the label if any
+            self.__scroll_layout.removeWidget(self.__empty_label)
+            self.__empty_label.deleteLater()
+            self.__empty_label = None
+
+        for id in ids:
+            # Get the model
+            new_model = self.__entity_models[id]
+            assert new_model.in_scope
+
+            # Create entity settings widget
+            entity_settings = EntitySettings(
+                self.__scroll_content,  # Parent is the scroll content
+                new_model,
+                self.__global_settings,
+            )
+            self.__entity_settings[id] = entity_settings
+
+            # Add to layout
+            self.__scroll_layout.addWidget(entity_settings)
+
+        # Use stretching to anchor everything at the top
+        self.__scroll_layout.addStretch(1)
+
+    def __remove_models(self, ids: List[int]):
+        assert len(ids) > 0
+        assert self.__empty_label is None
+
+        # Delete the old stretch
+        self.__scroll_layout.removeItem(
+            self.__scroll_layout.itemAt(self.__scroll_layout.count() - 1)
         )
 
-        # Add to layout and store reference
-        self.__scroll_layout.addWidget(entity_settings)
-        self.__entity_settings[model.id] = entity_settings
-
-    def delete_model(self, id: int):
-        """
-        Remove the SettingsFrame from the given entity.
-
-        This will never delete the model itself, as that is the responsibility
-        of the main GUI handler
-        """
-        if id in self.__entity_settings:
-            entity_settings = self.__entity_settings[id]
+        for id in ids:
+            assert id in self.__entity_settings
+            # Get the EntitySettings
+            settings = self.__entity_settings[id]
 
             # Remove from layout
-            self.__scroll_layout.removeWidget(entity_settings)
+            self.__scroll_layout.removeWidget(settings)
 
             # Delete the widget (Qt equivalent of destroy())
-            entity_settings.deleteLater()
+            settings.deleteLater()
 
             # Remove from our tracking dict
             del self.__entity_settings[id]
 
-    def update_widgets(self):
-        """Update all widgets based on current entity states"""
-        models_to_add = []
-        models_to_delete = []
-        for id, entity in self.__entity_models.items():
-            if entity.in_scope and id not in self.__entity_settings:
-                # Back in scope, let's add it
-                models_to_add.append(entity)
-            elif not entity.in_scope and id in self.__entity_settings:
-                # Left the scope, let's remove it
-                models_to_delete.append(entity)
-            elif entity.in_scope and id in self.__entity_settings:
-                # Still in scope, let's update it
-                self.__entity_settings[id].update_widgets()
-
-        if models_to_add and self.__empty_label is None:
-            # Delete the old stretch
-            self.__scroll_layout.removeItem(
-                self.__scroll_layout.itemAt(self.__scroll_layout.count() - 1)
-            )
-
-        # Actually performs addition/deletion
-        for model_to_add in models_to_add:
-            self.add_model(model_to_add)
-        for model_to_delete in models_to_delete:
-            self.delete_model(model_to_delete)
-
-        # Use stretching to anchor everything at the top
-        if models_to_add:
-            self.__scroll_layout.addStretch(1)
-
         # Handle empty state label
-        if len(self.__entity_settings) == 0 and self.__empty_label is None:
-            # Delete old stretch if any
-            if self.__scroll_layout.count() != 0:
-                assert self.__scroll_layout.count() == 1
-                self.__scroll_layout.removeItem(self.__scroll_layout.itemAt(0))
+        if len(self.__entity_settings) == 0:
             self.__empty_label = QLabel("No entity in scope")
             self.__empty_label.setFont(self.__bold_font)
             self.__empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             # Add to scroll layout
             self.__scroll_layout.addWidget(self.__empty_label)
-
-        elif len(self.__entity_settings) != 0 and self.__empty_label is not None:
-            # Remove empty label
-            self.__scroll_layout.removeWidget(self.__empty_label)
-            self.__empty_label.deleteLater()
-            self.__empty_label = None
+        else:
+            # Add stretching back
+            self.__scroll_layout.addStretch(1)
 
 
 # ============================  EntitySettings  =================================
@@ -296,7 +293,8 @@ class EntitySettings(QFrame):
         self.__view_menu.setCurrentText(self.__model.selected_view)
 
         # Connect signal (replaces tk.StringVar trace)
-        self.__view_menu.currentTextChanged.connect(self._view_changed)
+        self.__view_menu.currentTextChanged.connect(self._on_view_change)
+        self.__model.possible_views_signal.connect(self._on_possible_views_signal)
 
         # Add tooltip (you may need to adapt Tooltip for Qt)
         # Tooltip.add_tooltip(self.__view_menu, "Select which view to render")
@@ -338,42 +336,25 @@ class EntitySettings(QFrame):
         self.__scroll_layout.setHorizontalSpacing(5)
         self.__scroll_layout.setVerticalSpacing(5)
 
-    def _view_changed(self, new_view: str):
+    def _on_view_change(self, new_view: str):
         """Handle view selection change (replaces view_var_callback)"""
         # Update the model
         self.__model.update_view_type(new_view)
 
-        # Trigger a redraw
-        self.update_widgets()
+        # # Trigger a redraw
+        # self.update_widgets()
 
-    def update_widgets(self):
-        """Update all widgets based on current model state"""
-        # Update the entity settings frame
-        self.__entity_settings_frame.update_widgets()
+    def _on_possible_views_signal(self, possibles_view: List[str]):
+        # Temporarily disconnect signal to avoid recursion
+        self.__view_menu.currentTextChanged.disconnect()
 
-        # Update the view selection dropdown
-        current_views = self.__model.possible_views_names
-        current_selection = self.__view_menu.currentText()
+        # Update dropdown items
+        self.__view_menu.clear()
+        self.__view_menu.addItems(possibles_view)
+        self.__view_menu.setCurrentText(self.__model.selected_view)
 
-        if current_selection not in current_views:
-            # Temporarily disconnect signal to avoid recursion
-            self.__view_menu.currentTextChanged.disconnect()
-
-            # Update dropdown items
-            self.__view_menu.clear()
-            self.__view_menu.addItems(current_views)
-            self.__view_menu.setCurrentText(self.__model.selected_view)
-
-            # Reconnect signal
-            self.__view_menu.currentTextChanged.connect(self._view_changed)
-
-        # Update the view settings frame
-        self.__view_settings_frame.update_widgets()
-
-    def destroy(self):
-        """Qt equivalent of tkinter destroy() - called when removing widget"""
-        # Clean up any resources if needed
-        self.deleteLater()
+        # Reconnect signal
+        self.__view_menu.currentTextChanged.connect(self._on_view_change)
 
 
 # ===========================  GeneralSettingsFrame  ===========================
@@ -443,10 +424,10 @@ class GeneralSettingsFrame(QFrame):
 
     def _delete_button_clicked(self):
         """Handle delete button click (replaces delete_button_callback)"""
-        self.__model.mark_for_deletion()
-        parent = self.parent()
-        if parent:
-            parent.deleteLater()
+        self.__model.signal_deletion()
+        # parent = self.parent()
+        # if parent:
+        #     parent.deleteLater()
 
     def _samplerate_changed(self):
         """Handle samplerate entry Return key (replaces samplerate_var_callback)"""
@@ -533,15 +514,6 @@ class GlobalSettingsFrame(QFrame):
         else:
             # Update the setting
             self.__settings.samplerate = int(new_val)
-            self.__settings.update_needed = True
-
-    def update_widgets(self):
-        """Update widgets if global settings changed externally"""
-        # Update samplerate entry if needed
-        current_samplerate = self.__samplerate_entry.text()
-        expected_samplerate = str(self.__settings.samplerate)
-        if current_samplerate != expected_samplerate:
-            self.__samplerate_entry.setText(expected_samplerate)
 
 
 # ===========================  ViewSettingsFrame  ===========================
@@ -583,6 +555,7 @@ class ViewSettingsFrame(QFrame):
         self.__layout.setSpacing(5)
 
         self._create_selectors()
+        self.__model.view_signal.connect(self._on_view_signal)
 
     def _create_selectors(self) -> None:
         """Create selector widgets for current view settings"""
@@ -753,14 +726,13 @@ class ViewSettingsFrame(QFrame):
             # Parse error - equivalent to tk.TclError, ignore
             pass
 
-    def update_widgets(self) -> None:
-        """Update widgets when view type changes"""
-        if self.__current_view_type != self.__model.selected_view:
+    def _on_view_signal(self, view_name: str):
+        if self.__current_view_type != view_name:
             # Clear old widgets and connections
             self._clear_widgets()
 
             # Recreate widgets for new view type
-            self.__current_view_type = self.__model.selected_view
+            self.__current_view_type = view_name
             self._create_selectors()
 
     def _clear_widgets(self) -> None:

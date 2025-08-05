@@ -4,6 +4,8 @@ from typing import Any, List, Tuple, Union
 import warnings
 from matplotlib.axes import Axes
 
+from PySide6.QtCore import Signal
+
 # from dave.common.data_layout import RawContainer.Layout
 from dave.common.raw_container import RawContainer
 
@@ -34,10 +36,11 @@ import numpy as np
 import tkinter as tk
 import wave
 
-# import uuid
-
 
 class ContainerModel(EntityModel):
+    interleaved_signal = Signal(bool)
+    mid_side_signal = Signal(bool)
+
     def __init__(self, raw: RawContainer):
         assert isinstance(raw, RawContainer)
         self.__data_layout: RawContainer.Layout = raw.default_layout
@@ -95,7 +98,7 @@ class ContainerModel(EntityModel):
         if concat == self.concat:
             return
         self.__concat = concat
-        self._mark_for_update()
+        self.concat_signal.emit(concat)
 
     @property
     def samples(self) -> int:
@@ -113,7 +116,7 @@ class ContainerModel(EntityModel):
         assert not self.are_dimensions_fixed
         if self.interleaved != value:
             self.__interleaved = value
-            self._mark_for_update()
+            self.interleaved_signal.emit(value)
 
     @property
     def mid_side(self) -> bool:
@@ -126,7 +129,7 @@ class ContainerModel(EntityModel):
         assert self.channels == 2
         if self.mid_side != value:
             self.__mid_side = value
-            self._mark_for_update()
+            self.mid_side_signal.emit(value)
 
     @property
     def nan(self):
@@ -203,21 +206,23 @@ class ContainerModel(EntityModel):
         else:
             self._data = new_data
         self._in_scope = True
-        self._mark_for_update()
+        self.data_signal.emit()
 
     def update_layout(self, new_layout: Union[str, RawContainer.Layout]):
         if isinstance(new_layout, str):
             new_layout = self._raw.Layout(new_layout)
         assert new_layout in self.possible_layouts
-        self.__data_layout = new_layout
-        self._data = convert_container_data_to_layout(self._data, new_layout)
-        if self.frozen:
-            self._frozen_data = convert_container_data_to_layout(
-                self._frozen_data, new_layout
-            )
-        # Update the view since the layout dictates possible views
-        self._view = self.possible_views[0]()
-        self._mark_for_update()
+        if new_layout != self.__data_layout:
+            self.__data_layout = new_layout
+            self._data = convert_container_data_to_layout(self._data, new_layout)
+            if self.frozen:
+                self._frozen_data = convert_container_data_to_layout(
+                    self._frozen_data, new_layout
+                )
+            # Update the view since the layout dictates possible views
+            self._view = self.possible_views[0]()
+            # self.layout_signal.emit(new_layout)
+            self.view_signal.emit(self._view.name())
 
     # ==========================================================================
     def __compute_render_array(self, data: np.ndarray) -> np.ndarray:
@@ -323,6 +328,6 @@ class ContainerModel(EntityModel):
         ):
             if value != self.channels:
                 self._channels = value
-                self._mark_for_update()
+                self.channels_signal.emit(value)
             return True
         return False

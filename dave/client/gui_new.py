@@ -21,6 +21,7 @@ from dave.client.entity.entity_model import EntityModel
 
 # from dave.client.views_tab import AudioViewsTab
 from dave.client.settings_tab_new import SettingsTab
+from .in_scope_dict import InScopeSet
 
 
 class DaveGUI(QMainWindow):
@@ -39,6 +40,7 @@ class DaveGUI(QMainWindow):
         # GUI settings
         self.__models: Dict[int, EntityModel] = dict()
         self.__global_settings = GlobalSettings()
+        self.__in_scope_models = InScopeSet()
 
         # Setup the main window
         self._setup_window()
@@ -80,7 +82,7 @@ class DaveGUI(QMainWindow):
         #     views_tab, self.__models, self.__global_settings
         # )
         self.__settings_tab = SettingsTab(
-            settings_tab, self.__models, self.__global_settings
+            settings_tab, self.__models, self.__in_scope_models, self.__global_settings
         )
 
     @override
@@ -121,20 +123,27 @@ class DaveGUI(QMainWindow):
         app.exec()  # This replaces tkinter's mainloop()
 
     def _update_callback(self):
-        """Timer callback for updates (replaces tkinter_update_callback)"""
+        """Timer callback for updates"""
         # The timer automatically repeats, no need to reschedule
-
         # Check for new entities or model update
-        if self._poll_queue() or self._check_model_for_updates():
-            # pass
-            # self.__audio_views_tab.update_widgets()
-            self.__settings_tab.update_widgets()
+        self._poll_queue()
 
-        # Timer will automatically trigger again after refresh_time_ms
+        # Check if we should close the window
+        self.__check_for_close_condition()
 
-    def _poll_queue(self) -> bool:
-        """Poll the connection for new messages (unchanged logic)"""
-        update_needed = False
+    def _on_deletion_signal(self, model_id: int):
+        # Remove from in_scope models first
+        if self.__in_scope_models.has(model_id):
+            self.__in_scope_models.remove(self.__models[model_id])
+
+        # Disconnect
+        self.__models[model_id].deletion_signal.disconnect(self._on_deletion_signal)
+
+        # Then delete the model object
+        del self.__models[model_id]
+
+    def _poll_queue(self):
+        """Poll the connection for new messages"""
 
         while self.__conn.poll():
             try:
@@ -145,7 +154,7 @@ class DaveGUI(QMainWindow):
                     return False
                 elif isinstance(msg, DaveProcess.DeleteMessage):
                     Logger().debug(f"Received delete message : {msg.id}")
-                    self.__models[msg.id].mark_for_deletion()
+                    self.__models[msg.id].signal_deletion()
                 elif isinstance(msg, DaveProcess.FreezeMessage):
                     Logger().debug(f"Received freeze message : {msg.id}")
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
@@ -154,59 +163,29 @@ class DaveGUI(QMainWindow):
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawEntityList):
                     Logger().debug(f"Received new entities")
-                    tmp_update_needed = False
                     for raw_entity in msg.raw_entities:
-                        tmp_update_needed = tmp_update_needed or raw_entity.in_scope
                         new_entity = ModelFactory().build(raw_entity)
                         self.__models[raw_entity.id] = new_entity
-                        # self.__settings_tab.add_model(new_entity)
-                    update_needed = tmp_update_needed
+                        new_entity.deletion_signal.connect(self._on_deletion_signal)
+                        if new_entity.in_scope:
+                            self.__in_scope_models.add(new_entity)
                 elif isinstance(msg, RawEntity.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)
-                    update_needed = True
+                    if not self.__in_scope_models.has(msg.id):
+                        self.__in_scope_models.add(msg.id)
                 elif isinstance(msg, RawEntity.OutScopeUpdate):
                     Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
-                    update_needed = True
+                    if self.__in_scope_models.has(msg.id):
+                        self.__in_scope_models.remove(msg.id)
                 else:
                     Logger().warning(f"Received unknown data {type(msg)}:{msg}")
             except EOFError:
                 Logger().debug("Received EOF from debugger process, will shutdown")
                 self.close()
-                return False
 
-        return update_needed
-
-    def _check_model_for_updates(self) -> bool:
-        """Check models for updates (unchanged logic)"""
-        update_needed = False
-        to_delete = []
-
-        # Check global settings
-        if self.__global_settings.update_needed:
-            update_needed = True
-            self.__global_settings.update_needed = False
-
-        # We check every entity model for update
-        for model in self.__models.values():
-            if model.check_for_deletion():
-                update_needed = True
-                to_delete.append(model.id)
-            elif model.check_for_update():
-                update_needed = True
-                model.reset_update_flag()
-
-        # Delete the ones marked for delete
-        for id in to_delete:
-            del self.__models[id]
-            self.__settings_tab.delete_model(id)
-            self.__conn.send(DaveProcess.DeleteMessage(id))
-
-        # If no entity left we close the gui
-        if len(self.__models) == 0 and len(to_delete) != 0:
+    def __check_for_close_condition(self):
+        if len(self.__models) == 0:
             Logger().debug("No entity left, closing the GUI")
             self.close()
-            return False
-
-        return update_needed

@@ -6,6 +6,7 @@ from typing import Any, List, Tuple, Union
 from matplotlib.axes import Axes
 import numpy as np
 
+from PySide6.QtCore import QObject, Signal
 
 from dave.common.raw_entity import RawEntity
 
@@ -14,16 +15,25 @@ from .entity_settings_frame import EntitySettingsFrame
 from .entity_side_panel_info import EntitySidePanelInfo
 
 
-class EntityModel:
+class EntityModel(QObject):
+    data_signal = Signal()
+    possible_views_signal = Signal(List[str])
+    view_signal = Signal(str)
+    view_settings_signal = Signal()
+    frozen_signal = Signal(bool)
+    concat_signal = Signal(bool)
+    channels_signal = Signal(int)
+    samplerate_signal = Signal(int)
+    deletion_signal = Signal(int)
+
     def __init__(self, raw: RawEntity):
+        super().__init__()
         self._raw = raw
         self._data: Any = None
         self._frozen_data = None
         self._sr = None
         self._channels = raw.channels()
         self._in_scope = raw.in_scope
-        self.__update_pending = False
-        self._deletion_pending = False
         self._view: EntityView = self.possible_views[0]()
 
     # ==========================================================================
@@ -84,7 +94,7 @@ class EntityModel:
             self._frozen_data = self._data
         else:
             self._frozen_data = None
-        self._mark_for_update()
+        self.frozen_signal.emit(self.frozen)
 
     @property
     @abstractmethod
@@ -110,10 +120,10 @@ class EntityModel:
         """
         Channels property, not editable
 
-        A specific concept might require to have channels editable (like containers)
+        A specific entity might require to have channels editable (like containers)
         in which case you should implement a validate_and_update_channel method
 
-        Returns the number of channels for this concept
+        Returns the number of channels for this entity
         """
         return self._channels
 
@@ -124,7 +134,7 @@ class EntityModel:
 
         To validate and update a new samplerate use the validate_and_update_samplerate method
 
-        Returns None if no specific samplerate has been forced on this concept
+        Returns None if no specific samplerate has been forced on this entity
         (ie: use the default), the specified samplerate otherwise
         """
         return self._sr
@@ -138,7 +148,7 @@ class EntityModel:
         if value > 0:
             if value != self.samplerate:
                 self._sr = value
-                self._mark_for_update()
+                self.samplerate_signal(self.samplerate)
             return True
         return False
 
@@ -146,12 +156,12 @@ class EntityModel:
         for view_type in self.possible_views:
             if view_type.name() == view_name:
                 self._view = view_type()
-                self._mark_for_update()
+                self.view_signal.emit(view_name)
                 break
 
     def update_view_settings(self, setting_name: str, setting_value: Any):
         self._view.update_setting(setting_name, setting_value)
-        self._mark_for_update()
+        self.view_settings_signal.emit()
 
     # ==========================================================================
     @abstractmethod
@@ -172,25 +182,15 @@ class EntityModel:
         pass
 
     # ==========================================================================
-    def mark_for_deletion(self):
-        self._deletion_pending = True
-
-    def check_for_deletion(self) -> bool:
-        return self._deletion_pending
-
-    def _mark_for_update(self):
-        self.__update_pending = True
-
-    def check_for_update(self) -> bool:
-        return self.__update_pending
-
-    def reset_update_flag(self):
-        self.__update_pending = False
+    def signal_deletion(self):
+        self.deletion_signal.emit(self.id)
 
     @abstractmethod
     def update_data(self, update: RawEntity.InScopeUpdate):
         """
         Updates the model by reading the incoming raw update
+
+        THIS MUST SIGNAL ON data_signal
         """
         pass
 

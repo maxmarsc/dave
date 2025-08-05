@@ -77,6 +77,7 @@ class ContainerSettingsFrame(QFrame):
 
         # Connect Return key (replaces bind("<Return>"))
         self.__channel_entry.returnPressed.connect(self._channel_changed)
+        self.__model.channels_signal.connect(self._on_channels_signal)
 
         layout.addWidget(self.__channel_label)
         layout.addWidget(self.__channel_entry)
@@ -111,7 +112,7 @@ class ContainerSettingsFrame(QFrame):
         self.__model.update_layout(new_layout)
 
         # Trigger a redraw
-        self.update_widgets()
+        self.__update_widgets()
 
     def _interleaved_changed(self, state: int) -> None:
         """Handle interleaved checkbox change (replaces interleaved_var_callback)"""
@@ -130,9 +131,11 @@ class ContainerSettingsFrame(QFrame):
         return not self.__model.are_dimensions_fixed
 
     def _channel_changed(self) -> None:
-        """Handle channel entry Return key (replaces channel_var_callback)"""
+        """Handle channel entry Return key"""
         new_val = self.__channel_entry.text().strip()
 
+        # Temporarily disconnect signal to avoid recursion
+        self.__model.channels_signal.disconnect(self._on_channels_signal)
         if not self.__model.validate_and_update_channel(new_val):
             Logger().warning(
                 f"{new_val} is not a valid channel number for this container"
@@ -140,23 +143,19 @@ class ContainerSettingsFrame(QFrame):
             # Rollback to previous value
             self.__channel_entry.setText(str(self.__model.channels))
 
-    def update_widgets(self) -> None:
+        self.__model.channels_signal.connect(self._on_channels_signal)
+
+        # Trigger a redraw
+        self.__update_widgets()
+
+    def _on_channels_signal(self, new_value: int):
+        """Handle channel change from model side"""
+        self.__channel_entry.setText(str(new_value))
+        # Trigger a redraw
+        self.__update_widgets()
+
+    def __update_widgets(self) -> None:
         """Update widgets when model state changes"""
-        # Update the layout selection dropdown
-        current_layouts = [layout.value for layout in self.__model.possible_layouts]
-        current_selection = self.__layout_menu.currentText()
-
-        if current_selection not in current_layouts:
-            # Temporarily disconnect signal to avoid recursion
-            self.__layout_menu.currentTextChanged.disconnect()
-
-            # Update dropdown items
-            self.__layout_menu.clear()
-            self.__layout_menu.addItems(current_layouts)
-            self.__layout_menu.setCurrentText(self.__model.selected_layout.value)
-
-            # Reconnect signal
-            self.__layout_menu.currentTextChanged.connect(self._layout_changed)
 
         # Update channel entry state
         self.__channel_entry.setEnabled(self._channel_entry_enabled())

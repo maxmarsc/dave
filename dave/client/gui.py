@@ -94,7 +94,7 @@ class DaveGUI:
                     return False
                 elif isinstance(msg, DaveProcess.DeleteMessage):
                     Logger().debug(f"Received delete message : {msg.id}")
-                    self.__models[msg.id].mark_for_deletion()
+                    self.__models[msg.id].signal_deletion()
                 elif isinstance(msg, DaveProcess.FreezeMessage):
                     Logger().debug(f"Received freeze message : {msg.id}")
                     self.__models[msg.id].frozen = not self.__models[msg.id].frozen
@@ -108,7 +108,8 @@ class DaveGUI:
                         tmp_update_needed = tmp_update_needed or raw_entity.in_scope
                         new_entity = ModelFactory().build(raw_entity)
                         self.__models[raw_entity.id] = new_entity
-                        self.__settings_tab.add_model(new_entity)
+                        if new_entity.in_scope:
+                            self.__settings_tab.add_model(new_entity)
                     update_needed = tmp_update_needed
                 elif isinstance(msg, RawEntity.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
