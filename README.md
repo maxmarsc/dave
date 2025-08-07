@@ -250,5 +250,5 @@ for `.venv`
 PYTHON_VERSION="3.12"
 LLDB_VERSION="14"
 touch .venv/lib64/python${PYTHON_VERSION}/site-packages/lldb.pth
-echo "/usr/lib/llvm-${LLDB_VERSION}/lib/python${PYTHON_VERSION}/dist-packages/" > .venv/lib64/python${PYTHON_VERSION}/site-packages/lldb.pth
+echo "/usr/lib/llvm-${LLDB_VERSION}/lib/python${PYTHON_VERSION}/site-packages/" > .venv/lib64/python${PYTHON_VERSION}/site-packages/lldb.pth
 ```

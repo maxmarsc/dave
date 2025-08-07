@@ -38,12 +38,12 @@ class SyntheticChildrenProvider:
             )
 
     def num_children(self) -> int:
-        if self.__container.float_type.is_complex():
+        if self.__container.sample_type.is_complex():
             return self.__valobj.num_children
         return self.__num_channels + self.__valobj.num_children
 
     def get_child_index(self, name: str) -> int:
-        if self.__container.float_type.is_complex():
+        if self.__container.sample_type.is_complex():
             return self.__valobj.GetIndexOfChildWithName(name)
         if str.startswith(name, "dSparkline"):
             return int(name.lstrip("[").rstrip("]"))
@@ -51,7 +51,7 @@ class SyntheticChildrenProvider:
             return self.__valobj.GetIndexOfChildWithName(name) + self.__num_channels
 
     def get_child_at_index(self, index: int) -> lldb.SBValue:
-        if self.__container.float_type.is_complex():
+        if self.__container.sample_type.is_complex():
             return self.__valobj.GetChildAtIndex(index)
         if index < self.__num_channels:
             return self.__sparkline_value(index)
@@ -59,7 +59,7 @@ class SyntheticChildrenProvider:
             return self.__valobj.GetChildAtIndex(index - self.__num_channels)
 
     def update(self):
-        if not self.__container.float_type.is_complex():
+        if not self.__container.sample_type.is_complex():
             try:
                 self.__sparklines = self.__container.compute_sparklines()
                 self.__num_channels = len(self.__sparklines)

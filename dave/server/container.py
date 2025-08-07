@@ -24,9 +24,8 @@ class Container(Entity):
     def __init__(
         self, dbg_value: Any, name: str, data_type: SampleType, interleaved: bool
     ) -> None:
-        super().__init__(dbg_value, name)
+        super().__init__(dbg_value, name, data_type)
         self.__interleaved = interleaved
-        self.__type = data_type
 
     def compute_summary(self) -> str:
         shape = self.shape()
@@ -163,10 +162,6 @@ class Container(Entity):
             interleaved=self.__interleaved,
             sample_type=self.sample_type,
         )
-
-    @property
-    def sample_type(self) -> SampleType:
-        return self.__type
 
     @property
     def byte_size(self) -> int:

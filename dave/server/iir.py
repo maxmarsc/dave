@@ -21,8 +21,7 @@ class IIR(Entity):
     """
 
     def __init__(self, dbg_value: Any, name: str, data_type: SampleType):
-        super().__init__(dbg_value, name)
-        self.__type = data_type
+        super().__init__(dbg_value, name, data_type)
         # self._coeffs = Union[RawIir.BiquadCoeffs, RawIir.ZPKCoeffs]
 
     @staticmethod
@@ -52,10 +51,6 @@ class IIR(Entity):
             # IIr
             coeffs=None,
         )
-
-    @property
-    def float_type(self) -> SampleType:
-        return self.__type
 
     # @property
     # def byte_size(self) -> int:

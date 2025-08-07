@@ -21,6 +21,8 @@ class GdbValue(AbstractValue):
     def attr(self, name: str) -> GdbValue:
         try:
             return GdbValue(self.__value[name], f"{self.__varname}.{name}")
+        except gdb.MemoryError as e:
+            raise DebuggerMemoryError(e.args)
         except gdb.error as e:
             raise RuntimeError(
                 f"Failed to access member {name} on {self.__value.type.name}"
@@ -44,14 +46,14 @@ class GdbValue(AbstractValue):
     def __int__(self) -> int:
         try:
             return int(self.__value)
-        except TypeError as e:
+        except (TypeError, gdb.MemoryError) as e:
             raise DebuggerMemoryError(e.args)
 
     def __float__(self) -> float:
         assert self.__value.type.code == gdb.TYPE_CODE_FLT
         try:
             return float(self.__value)
-        except TypeError as e:
+        except (TypeError, gdb.MemoryError) as e:
             raise DebuggerMemoryError(e.args)
 
     def __getitem__(self, key: int) -> GdbValue:
@@ -59,7 +61,10 @@ class GdbValue(AbstractValue):
         Access value by index. Only available for pointer types
         """
         assert isinstance(key, int)
-        return GdbValue(self.__value[key], f"{self.__varname}[{key}]")
+        try:
+            return GdbValue(self.__value[key], f"{self.__varname}[{key}]")
+        except gdb.MemoryError as e:
+            raise DebuggerMemoryError(e.args)
 
     def in_scope(self) -> bool:
         # Try to reparse the varname
