@@ -2,6 +2,9 @@
 ## Added
 ## Changed
 ## Fixed
+
+# v0.11.1
+## Fixed
 - Fixed `float_type` error in JUCE wrappers (mentionned in #18)
 - Fixed crash when trying to read unitialized `old_svf_coeffs` in JUCE example
 
