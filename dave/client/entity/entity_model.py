@@ -5,6 +5,7 @@ from typing import Any, List, Tuple, Union
 
 from matplotlib.axes import Axes
 import numpy as np
+import pyqtgraph as pg
 
 from PySide6.QtCore import QObject, Signal
 
@@ -199,7 +200,7 @@ class EntityModel(QObject):
 
     # ==========================================================================
     @abstractmethod
-    def draw_view(self, axes: List[Axes], default_sr: int, **kwargs):
+    def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, **kwargs):
         """
         Draw the view of the audio entity.
 
@@ -209,8 +210,8 @@ class EntityModel(QObject):
 
         Parameters
         ----------
-        axes : List[Axes]
-            Either a single Axes in a list, or two if the container is frozen
+        plots : List[pg.PlotWidget]
+            Either a single pg.PlotWidget in a list, or two if the entity is frozen
             with a non-superposable view type
         default_sr : int
             The default samplerate to use RawEntityif not set in this specific model

@@ -2,7 +2,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, List, Tuple, Union
 import warnings
-from matplotlib.axes import Axes
+
+# from matplotlib.axes import Axes
+import pyqtgraph as pg
 import numpy as np
 
 from dave.client.entity.model_factory import ModelFactory
@@ -13,7 +15,12 @@ from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 
 from .raw_to_numpy import InternalNpy, raw_to_npy
-from .iir_views import IirView, MagnitudeResponseView, PhaseResponseView, PolesZerosView
+from .iir_views_new import (
+    IirView,
+    MagnitudeResponseView,
+    PhaseResponseView,
+    PolesZerosView,
+)
 
 
 class IirModel(EntityModel):
@@ -84,10 +91,10 @@ class IirModel(EntityModel):
         self._raw.update(update)
         self._data = raw_to_npy(self._raw.coeffs)
         self._in_scope = True
-        self._mark_for_update()
+        self.data_signal.emit()
 
     # ==========================================================================
-    def draw_view(self, axes: List[Axes], default_sr: int, **kwargs):
+    def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, **kwargs):
         """
         Draw the filter view
 
@@ -108,14 +115,14 @@ class IirModel(EntityModel):
 
         if self.frozen and not self.is_view_superposable:
             # Render frozen and live data on different subplots
-            assert len(axes) == 2
-            self._view.render_view(axes[0], self._data, samplerate)
-            self._view.render_view(axes[0], self._frozen_data, samplerate)
+            assert len(plots) == 2
+            self._view.render_view(plots[0], self._data, samplerate)
+            self._view.render_view(plots[0], self._frozen_data, samplerate)
         else:
             # Render live data
-            assert len(axes) == 1
+            assert len(plots) == 1
             if self.frozen:
                 self._view.render_view(
-                    axes[0], self._frozen_data, samplerate, "#ff7f0e"
+                    plots[0], self._frozen_data, samplerate, "#ff7f0e"
                 )
-            self._view.render_view(axes[0], self._data, samplerate)
+            self._view.render_view(plots[0], self._data, samplerate)

@@ -19,7 +19,7 @@ from dave.client.global_settings import GlobalSettings
 from dave.server.process import DaveProcess
 from dave.client.entity.entity_model import EntityModel
 
-# from dave.client.views_tab import AudioViewsTab
+from dave.client.views_tab_new import AudioViewsTab
 from dave.client.settings_tab_new import SettingsTab
 from .in_scope_dict import InScopeSet
 
@@ -78,9 +78,9 @@ class DaveGUI(QMainWindow):
         self.__notebook.setCurrentIndex(0)  # Set "Views" as default
 
         # Create tab content (you'll need to adapt these classes)
-        # self.__audio_views_tab = AudioViewsTab(
-        #     views_tab, self.__models, self.__global_settings
-        # )
+        self.__audio_views_tab = AudioViewsTab(
+            views_tab, self.__models, self.__in_scope_models, self.__global_settings
+        )
         self.__settings_tab = SettingsTab(
             settings_tab, self.__models, self.__in_scope_models, self.__global_settings
         )
@@ -173,12 +173,12 @@ class DaveGUI(QMainWindow):
                     Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)
                     if not self.__in_scope_models.has(msg.id):
-                        self.__in_scope_models.add(msg.id)
+                        self.__in_scope_models.add(self.__models[msg.id])
                 elif isinstance(msg, RawEntity.OutScopeUpdate):
                     Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     if self.__in_scope_models.has(msg.id):
-                        self.__in_scope_models.remove(msg.id)
+                        self.__in_scope_models.remove(self.__models[msg.id])
                 else:
                     Logger().warning(f"Received unknown data {type(msg)}:{msg}")
             except EOFError:

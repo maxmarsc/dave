@@ -2,9 +2,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, List, Tuple, Union
 import warnings
-from matplotlib.axes import Axes
+
+# from matplotlib.axes import Axes
 
 from PySide6.QtCore import Signal
+
+import pyqtgraph as pg
 
 # from dave.common.data_layout import RawContainer.Layout
 from dave.common.raw_container import RawContainer
@@ -18,7 +21,7 @@ from .raw_to_numpy import (
     raw_container_to_numpy,
 )
 
-from .container_views import (
+from .container_views_new import (
     ContainerView,
     WaveformView,
     CurveView,
@@ -258,7 +261,7 @@ class ContainerModel(EntityModel):
             mid_side_data[1] = (render_data[0][:] - render_data[1][:]) / 2.0
             return mid_side_data
 
-    def draw_view(self, axes: List[Axes], default_sr: int, channel: int, **_):
+    def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, channel: int, **_):
         """
         Draw the audio view of the given channel
 
@@ -284,18 +287,18 @@ class ContainerModel(EntityModel):
 
         if self.frozen and not self.is_view_superposable:
             # Render frozen and live data on different subplots
-            assert len(axes) == 2
-            self._view.render_view(axes[0], live_data[channel], samplerate)
-            self._view.render_view(axes[1], frozen_data[channel], samplerate)
+            assert len(plots) == 2
+            self._view.render_view(plots[0], live_data[channel], samplerate)
+            self._view.render_view(plots[1], frozen_data[channel], samplerate)
         else:
             # Render live data
-            assert len(axes) == 1
+            assert len(plots) == 1
             if self.frozen:
                 # Render frozen data on same subplot
                 self._view.render_view(
-                    axes[0], frozen_data[channel], samplerate, "#ff7f0e"
+                    plots[0], frozen_data[channel], samplerate, "#ff7f0e"
                 )
-            self._view.render_view(axes[0], live_data[channel], samplerate)
+            self._view.render_view(plots[0], live_data[channel], samplerate)
 
     def channel_name(self, channel):
         return (

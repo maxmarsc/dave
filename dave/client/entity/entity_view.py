@@ -1,21 +1,36 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Any, List, Union
+from typing import Any, List, Tuple, Union
 
-from matplotlib.axes import Axes
-import matplotlib as mpl
+# from matplotlib.axes import Axes
+# import matplotlib as mpl
+import pyqtgraph as pg
 import numpy as np
 
 # from dave.client.view_setting import Setting
-import tkinter as tk
+# import tkinter as tk
 
 
-def configure_matplotlib():
-    mpl.rcParams["path.simplify"] = True
-    mpl.rcParams["path.simplify_threshold"] = 0.3
+# def configure_matplotlib():
+#     mpl.rcParams["path.simplify"] = True
+#     mpl.rcParams["path.simplify_threshold"] = 0.3
+
+# DEFAULT_COLOR = "#1f77b4"
+
+
+def hex_to_rgb_tuple(hex_color: str) -> Tuple[int, int, int]:
+    """Convert matplotlib hex color to RGB tuple (0-255)"""
+    assert len(hex_color) == 7 and hex_color[0] == "#"
+    return (
+        int(hex_color[1:3], 16),
+        int(hex_color[3:5], 16),
+        int(hex_color[5:7], 16),
+    )
 
 
 class EntityView(ABC):
+    DEFAULT_COLOR = hex_to_rgb_tuple("#1f76b4")
+
     @staticmethod
     @abstractmethod
     def name() -> str:
@@ -26,7 +41,13 @@ class EntityView(ABC):
         return True
 
     @abstractmethod
-    def render_view(self, axes: Axes, data: Any, samplerate: int, color=None):
+    def render_view(
+        self,
+        axes: pg.PlotWidget,
+        data: Any,
+        samplerate: int,
+        color: Union[None, str] = None,
+    ):
         pass
 
     @abstractmethod
@@ -51,10 +72,10 @@ class EntityView(ABC):
         def value(self):
             pass
 
-        @staticmethod
-        @abstractmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, Any]:
-            pass
+        # @staticmethod
+        # @abstractmethod
+        # def parse_tkvar(var: tk.Variable) -> Union[None, Any]:
+        #     pass
 
     class BoolSetting(Setting):
         def __init__(self, name: str, value: bool = None):
@@ -76,12 +97,12 @@ class EntityView(ABC):
         def possible_values() -> List[bool]:
             return (True, False)
 
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, bool]:
-            try:
-                return bool(var.get())
-            except tk.TclError:
-                return None
+        # @staticmethod
+        # def parse_tkvar(var: tk.Variable) -> Union[None, bool]:
+        #     try:
+        #         return bool(var.get())
+        #     except tk.TclError:
+        #         return None
 
     class IntSetting(Setting):
         def __init__(
@@ -120,12 +141,12 @@ class EntityView(ABC):
             else:
                 self.__value = new_value
 
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, int]:
-            try:
-                return int(var.get())
-            except tk.TclError:
-                return None
+        # @staticmethod
+        # def parse_tkvar(var: tk.Variable) -> Union[None, int]:
+        #     try:
+        #         return int(var.get())
+        #     except tk.TclError:
+        #         return None
 
     class FloatSetting(Setting):
         def __init__(
@@ -164,12 +185,12 @@ class EntityView(ABC):
             else:
                 self.__value = new_value
 
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, float]:
-            try:
-                return float(var.get())
-            except tk.TclError:
-                return None
+        # @staticmethod
+        # def parse_tkvar(var: tk.Variable) -> Union[None, float]:
+        #     try:
+        #         return float(var.get())
+        #     except tk.TclError:
+        #         return None
 
     class StringSetting(Setting):
         def __init__(self, name: str, values: List[str], value: str = None) -> None:
@@ -192,9 +213,9 @@ class EntityView(ABC):
         def possible_values(self) -> List[str]:
             return self.__possible_values
 
-        @staticmethod
-        def parse_tkvar(var: tk.Variable) -> Union[None, str]:
-            try:
-                return str(var.get())
-            except tk.TclError:
-                return None
+        # @staticmethod
+        # def parse_tkvar(var: tk.Variable) -> Union[None, str]:
+        #     try:
+        #         return str(var.get())
+        #     except tk.TclError:
+        #         return None
