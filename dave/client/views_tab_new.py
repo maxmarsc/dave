@@ -20,7 +20,7 @@ from dave.common.logger import Logger
 
 
 class EntityPlots(QFrame):
-    MINIMUM_PLOT_HEIGHT = 200
+    MINIMUM_PLOT_HEIGHT = 220
 
     def __init__(
         self, parent: QWidget, model: EntityModel, global_settings: GlobalSettings
@@ -68,6 +68,8 @@ class EntityPlots(QFrame):
         if self.__model.frozen and not self.__model.is_view_superposable:
             # Create 2 plots per channel: live + frozen (non-superposable)
             for channel in range(self.__model.channels):
+                title = self.__model.channel_name(channel)
+
                 # live plot
                 live_plot = pg.PlotWidget(self)
                 live_plot.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT)
@@ -87,9 +89,14 @@ class EntityPlots(QFrame):
                     self.__global_settings.samplerate,
                     channel=channel,
                 )
+
+                live_plot.plotItem.setLabel("right", title + " (Live)")
+                frozen_plot.plotItem.setLabel("right", title + " (Frozen)")
         else:
             # Create 1 plot per channel: live + frozen
             for channel in range(self.__model.channels):
+                title = self.__model.channel_name(channel)
+
                 # live plot
                 live_plot = pg.PlotWidget(self)
                 live_plot.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT)
@@ -102,6 +109,8 @@ class EntityPlots(QFrame):
                     self.__global_settings.samplerate,
                     channel=channel,
                 )
+
+                live_plot.plotItem.setLabel("right", title + " (Live)")
 
         # for plot in self.__plots:
         #     # Access the PlotItem

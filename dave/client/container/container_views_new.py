@@ -70,7 +70,11 @@ class WaveformView(ContainerView):
                 name="Waveform",
             )
 
-            max_y = np.max(np.abs(data[finite_mask])) * 1.2
+            max_y = np.float64(np.max(np.abs(data[finite_mask])) * 1.2)
+
+            # Center Y axis on zero
+            if max_y != 0:
+                plot_widget.plotItem.setRange(yRange=[-max_y, max_y])
 
             # Add vertical lines for NaN values
             if np.any(nans):
@@ -324,7 +328,7 @@ class PSDView(ContainerView):
         self.__nfft = EntityView.IntSetting("nfft", 16, 4096, 256)
         self.__overlap = EntityView.FloatSetting("overlap", 0.01, 0.99, 0.5)
         self.__window = EntityView.StringSetting(
-            "window", ("hanning", "none", "blackman")
+            "window", ("hann", "boxcar", "blackman", "hamming")
         )
 
     @staticmethod

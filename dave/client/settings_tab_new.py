@@ -358,7 +358,7 @@ class EntitySettings(QFrame):
         return super().eventFilter(object, event)
 
     def _on_view_change(self, new_view: str):
-        """Handle view selection change (replaces view_var_callback)"""
+        """Handle view selection change"""
         # Update the model
         self.__model.update_view_type(new_view)
 
