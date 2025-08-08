@@ -66,7 +66,7 @@ class MagnitudeResponseView(IirView):
         w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
         magnitude = np.abs(h)
 
-        plot_widget.plotItem.plot(w, magnitude, pen=pg.mkPen(color))
+        plot_widget.plotItem.plot(w, magnitude, pen=pg.mkPen(color, width=2))
         plot_widget.plotItem.setLogMode(
             x=(self.__x_scale.value == "log"), y=(self.__y_scale.value == "log")
         )
@@ -119,7 +119,7 @@ class PhaseResponseView(IirView):
         whole = self.__limit.value == "samplerate"
         w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
 
-        plot_widget.plotItem.plot(w, np.angle(h), pen=pg.mkPen(color))
+        plot_widget.plotItem.plot(w, np.angle(h), pen=pg.mkPen(color, width=2))
         plot_widget.plotItem.setRange(yRange=[-np.pi, np.pi])
         plot_widget.plotItem.setLogMode(x=(self.__x_scale.value == "log"), y=False)
         plot_widget.plotItem.setLabel("left", "Phase", "radians")
@@ -170,8 +170,14 @@ class PolesZerosView(IirView):
 
         # Add unit circle
         circle = pg.CircleROI(
-            [0, 0], size=[2, 2], movable=False, pen=pg.mkPen("k", width=1)
+            [0, 0],
+            size=[2, 2],
+            movable=False,
+            rotatable=False,
+            resizable=False,
+            pen=pg.mkPen("white", width=1),
         )
+        circle.removeHandle(0)
         circle.setPos([-1, -1])  # Center at origin
         plot_widget.plotItem.addItem(circle)
 
@@ -207,7 +213,7 @@ class PolesZerosView(IirView):
                 pos=np.column_stack([z_to_plot.real, z_to_plot.imag]),
                 symbol="o",
                 size=12,
-                pen=pg.mkPen(color),
+                pen=pg.mkPen(color, width=3),
                 brush=None,  # Hollow circles
             )
             plot_widget.plotItem.addItem(zeros_scatter)

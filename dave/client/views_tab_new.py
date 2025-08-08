@@ -76,7 +76,6 @@ class EntityPlots(QFrame):
 
                 self.__plots.append(live_plot)
                 self.__layout.addWidget(live_plot)
-                # self.__model.draw_view(live_plot)
 
                 # frozen plot
                 frozen_plot = pg.PlotWidget(self)
@@ -111,16 +110,6 @@ class EntityPlots(QFrame):
                 )
 
                 live_plot.plotItem.setLabel("right", title + " (Live)")
-
-        # for plot in self.__plots:
-        #     # Access the PlotItem
-        #     plot_item = plot.getPlotItem()
-
-        #     # Then use the axis methods
-        #     plot_item.showAxis("left", True)
-        #     plot_item.showAxis("bottom", True)
-        #     plot_item.getAxis("left").setWidth(60)
-        #     plot_item.getAxis("bottom").setHeight(40)
 
         self.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT * len(self.__plots))
 
