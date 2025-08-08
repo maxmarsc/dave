@@ -1,5 +1,7 @@
 # `main`
 ## Added
+- Added an editable colorbar to spectrogram view
+- Added `magma` colormap for colorblind friendly spectrogram view
 ## Changed
 ## Fixed
 

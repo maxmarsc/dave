@@ -194,6 +194,7 @@ class SpectrogramView(ContainerView):
         self.__window = EntityView.StringSetting(
             "window", ("hann", "boxcar", "blackman", "hamming")
         )
+        self.__color_map = EntityView.StringSetting("colormap", ("magma", "viridis"))
 
     @staticmethod
     def name() -> str:
@@ -211,18 +212,18 @@ class SpectrogramView(ContainerView):
             self.__overlap.value = setting_value
         elif setting_name == self.__window.name:
             self.__window.value = setting_value
+        elif setting_name == self.__color_map.name:
+            self.__color_map.value = setting_value
         else:
             raise RuntimeError(f"{setting_name} is not a valid Spectrogram setting")
 
     def get_settings(self) -> List[EntityView.Setting]:
-        return (self.__nfft, self.__overlap, self.__window)
+        return (self.__nfft, self.__overlap, self.__window, self.__color_map)
 
     def render_view(
         self, plot_widget: pg.PlotWidget, data: np.ndarray, samplerate: int, _=None
     ):
         plot_widget.plotItem.clear()
-
-        Logger().warning(f"Plotting spectrogram")
 
         overlap = int(self.__overlap.value * self.__nfft.value)
         window_name = self.__window.value
@@ -267,8 +268,18 @@ class SpectrogramView(ContainerView):
             img.setTransform(tr)
 
             # Optional: Add colormap
-            cmap = pg.colormap.get("viridis")
+            cmap = pg.colormap.get(self.__color_map.value)
             img.setColorMap(cmap)
+
+            # Add colorbar
+            colorbar = pg.ColorBarItem(
+                interactive=True,
+                values=(np.min(Sxx_db), np.max(Sxx_db)),
+                colorMap=cmap,
+                label="Power (dB)",
+                width=15,
+            )
+            colorbar.setImageItem(img, insert_in=plot_widget.plotItem)
 
             plot_widget.plotItem.addItem(img)
             plot_widget.plotItem.setLabel("bottom", "Time", "s")
