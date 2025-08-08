@@ -35,12 +35,7 @@ class EntityPlots(QFrame):
         self.__update_widgets()
 
         # Connect to model signals
-        self.__model.view_signal.connect(self.__on_model_signal)
-        self.__model.data_signal.connect(self.__on_model_signal)
-        self.__model.frozen_signal.connect(self.__on_model_signal)
-        self.__model.concat_signal.connect(self.__on_model_signal)
-        self.__model.channels_signal.connect(self.__on_model_signal)
-        self.__model.samplerate_signal.connect(self.__on_model_signal)
+        self.__model.update_signal.connect(self.__on_model_signal)
 
     def __setup_layout(self):
         # Create the frame
@@ -57,7 +52,8 @@ class EntityPlots(QFrame):
             # Either not frozen, or frozen but superposable (overlaid)
             return self.__model.channels
 
-    def __on_model_signal(self, *_):
+    def __on_model_signal(self, source: str):
+        Logger().debug(f"View redraw requested from {source}")
         self.__update_widgets()
 
     def __update_widgets(self):

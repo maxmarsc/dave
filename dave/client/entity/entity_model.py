@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Set, Tuple, Union
 
 from matplotlib.axes import Axes
 import numpy as np
@@ -17,6 +17,7 @@ from .entity_side_panel_info import EntitySidePanelInfo
 
 
 class EntityModel(QObject):
+    # Settings signals to send when a specific part has been updated
     data_signal = Signal()
     possible_views_signal = Signal()
     view_signal = Signal(str)
@@ -25,7 +26,10 @@ class EntityModel(QObject):
     concat_signal = Signal(bool)
     channels_signal = Signal(int)
     samplerate_signal = Signal(int)
+    # Signal to send when the model is to be deleted
     deletion_signal = Signal(int)
+    # Signal when the model has been updated and the view should be updated
+    update_signal = Signal(str)
 
     def __init__(self, raw: RawEntity):
         super().__init__()
@@ -36,6 +40,22 @@ class EntityModel(QObject):
         self._channels = raw.channels()
         self._in_scope = raw.in_scope
         self._view: EntityView = self.possible_views[0]()
+
+        # Connect all settings signal to the update signal
+        self.data_signal.connect(lambda: self._emit_update("data"))
+        self.view_signal.connect(lambda: self._emit_update("view"))
+        self.view_settings_signal.connect(lambda: self._emit_update("view_settings"))
+        self.frozen_signal.connect(lambda: self._emit_update("frozen"))
+        self.concat_signal.connect(lambda: self._emit_update("concat"))
+        self.channels_signal.connect(lambda: self._emit_update("channel"))
+        self.samplerate_signal.connect(lambda: self._emit_update("samplerate"))
+
+    # ==========================================================================
+    def _emit_update(self, source: str):
+        """
+        This method will emit an update signal for the corresponding view to update
+        """
+        self.update_signal.emit(source)
 
     # ==========================================================================
     @staticmethod

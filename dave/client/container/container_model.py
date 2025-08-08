@@ -54,6 +54,10 @@ class ContainerModel(EntityModel):
         self.__interleaved = raw.interleaved
         self.__mid_side = False
 
+        # Connect all settings signal to the update signal
+        self.interleaved_signal.connect(lambda: self._emit_update("interleaved"))
+        self.mid_side_signal.connect(lambda: self._emit_update("mid_side"))
+
     # ==============================================================================
     @staticmethod
     def compatible_concatenate() -> bool:

@@ -3,6 +3,7 @@ import numpy as np
 from warnings import catch_warnings, warn
 import pyqtgraph as pg
 from scipy import signal
+from PySide6.QtGui import QTransform
 
 
 from dave.common.raw_container import RawContainer
@@ -191,7 +192,7 @@ class SpectrogramView(ContainerView):
         self.__nfft = EntityView.IntSetting("nfft", 16, 4096, 256)
         self.__overlap = EntityView.FloatSetting("overlap", 0.01, 0.99, 0.5)
         self.__window = EntityView.StringSetting(
-            "window", ("hanning", "none", "blackman")
+            "window", ("hann", "boxcar", "blackman", "hamming")
         )
 
     @staticmethod
@@ -203,6 +204,7 @@ class SpectrogramView(ContainerView):
         return False
 
     def update_setting(self, setting_name: str, setting_value: Any):
+        Logger().warning(f"SpectrogramView::update_setting")
         if setting_name == self.__nfft.name:
             self.__nfft.value = setting_value
         elif setting_name == self.__overlap.name:
@@ -220,39 +222,89 @@ class SpectrogramView(ContainerView):
     ):
         plot_widget.plotItem.clear()
 
+        Logger().warning(f"Plotting spectrogram")
+
         overlap = int(self.__overlap.value * self.__nfft.value)
-        window_name = self.__window.value if self.__window.value != "none" else None
+        window_name = self.__window.value
+        # window_name = self.__window.value if self.__window.value != "none" else None
 
         try:
             with catch_warnings(record=True) as w:
+                # Compute spectrogram (one-sided for audio is typical)
                 f, t, Sxx = signal.spectrogram(
                     data,
                     fs=samplerate,
                     nperseg=self.__nfft.value,
                     noverlap=overlap,
                     window=window_name,
+                    return_onesided=True,
+                    scaling="density",
                 )
 
             if w:
                 Logger().warning("Warning in Spectrogram computation")
 
-            # Convert to dB
-            Sxx_db = 10 * np.log10(Sxx + 1e-12)  # Add small epsilon to avoid log(0)
+            # Apply window correction factor for accurate power measurements
+            correction_factor = self._get_window_correction_factor(
+                window_name, self.__nfft.value
+            )
+            Sxx_corrected = Sxx * correction_factor
 
-            # Create ImageItem for spectrogram
+            # Convert to dB, handle zeros/negatives
+            Sxx_db = 10 * np.log10(np.maximum(Sxx_corrected, 1e-12))
+
+            # Create transform to map array indices to real time/frequency values
+            tr = QTransform()
+            tr.translate(t[0], f[0])  # Start at first time/freq values
+            tr.scale(
+                (t[-1] - t[0]) / (len(t) - 1),  # Time scaling
+                (f[-1] - f[0]) / (len(f) - 1),
+            )  # Frequency scaling
+
+            # Create and configure ImageItem
             img = pg.ImageItem()
-            img.setImage(Sxx_db.T)  # Transpose for correct orientation
+            img.setImage(Sxx_db, levels=[np.min(Sxx_db), np.max(Sxx_db)])
+            img.setTransform(tr)
 
-            # Set the position and scale of the image
-            img.setPos(t[0], f[0])
-            img.setScale((t[-1] - t[0]) / len(t), (f[-1] - f[0]) / len(f))
+            # Optional: Add colormap
+            cmap = pg.colormap.get("viridis")
+            img.setColorMap(cmap)
 
             plot_widget.plotItem.addItem(img)
             plot_widget.plotItem.setLabel("bottom", "Time", "s")
             plot_widget.plotItem.setLabel("left", "Frequency", "Hz")
 
+            # Set proper axis ranges
+            # plot_widget.plotItem.setRange(xRange=[t[0], t[-1]], yRange=[f[0], f[-1]])
+
         except Exception as e:
             Logger().warning(f"Error in Spectrogram rendering: {e}")
+
+    def _get_window_correction_factor(self, window_name: str, nfft: int) -> float:
+        """
+        Get power correction factor for window functions.
+
+        For power spectral density measurements, we need to compensate for the
+        power loss introduced by windowing.
+        """
+        # Generate the actual window to compute correction factor
+        match window_name:
+            case "boxcar":
+                return 1.0
+            case "hann":
+                window = signal.windows.hann(nfft)
+            case "hamming":
+                window = signal.windows.hamming(nfft)
+            case "blackman":
+                window = signal.windows.blackman(nfft)
+            case _:
+                raise NotImplementedError()
+
+        # Power correction factor = 1 / (mean of window squared)
+        # This compensates for the power loss due to windowing
+        power_correction = 1.0 / np.mean(window**2)
+
+        return power_correction
 
 
 # ===========================================================================
