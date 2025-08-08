@@ -66,7 +66,7 @@ class WaveformView(ContainerView):
             plot_widget.plotItem.plot(
                 full_time_vector[finite_mask].astype(np.float64),
                 data[finite_mask].astype(np.float64),
-                pen=pg.mkPen(color),
+                pen=pg.mkPen(color, width=2),
                 name="Waveform",
             )
 
@@ -151,7 +151,7 @@ class CurveView(ContainerView):
             plot_widget.plotItem.plot(
                 full_time_vector[finite_mask],
                 data[finite_mask],
-                pen=pg.mkPen(color=color),
+                pen=pg.mkPen(color=color, width=2),
                 name="Curve",
             )
 
@@ -390,7 +390,9 @@ class PSDView(ContainerView):
             # Convert to dB
             Pxx_db = 10 * np.log10(Pxx + 1e-12)
 
-            plot_widget.plotItem.plot(f, Pxx_db, pen=pg.mkPen(color), name="PSD")
+            plot_widget.plotItem.plot(
+                f, Pxx_db, pen=pg.mkPen(color, width=2), name="PSD"
+            )
             plot_widget.plotItem.setLogMode(x=True, y=False)  # Log frequency axis
             plot_widget.plotItem.showGrid(x=True, y=True)
             plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz")
@@ -440,7 +442,7 @@ class MagnitudeView(ContainerView):
             plot_widget.plotItem.plot(
                 full_x_vector[finite_mask],
                 data[finite_mask],
-                pen=pg.mkPen(color),
+                pen=pg.mkPen(color, width=2),
                 name="Magnitude",
             )
 
@@ -511,7 +513,7 @@ class PhaseView(ContainerView):
             plot_widget.plotItem.plot(
                 x_vector[finite_mask],
                 data[finite_mask],
-                pen=pg.mkPen(color),
+                pen=pg.mkPen(color, width=2),
                 name="Phase",
             )
 
