@@ -229,6 +229,23 @@ class PolesZerosView(IirView):
             text_item.setPos(coords.real, coords.imag)
             plot_widget.plotItem.addItem(text_item)
 
+        # Create legend
+        legend = pg.LegendItem(offset=(10, 10), pen="white")
+        legend.setParentItem(plot_widget.plotItem)
+        legend.anchor((1, 0), (0.90, 0.05))  # Top right corner
+
+        # Add legend entries
+        legend.addItem(
+            pg.ScatterPlotItem(
+                symbol="x", size=12, pen=pg.mkPen(color), brush=pg.mkBrush(color)
+            ),
+            "poles",
+        )
+        legend.addItem(
+            pg.ScatterPlotItem(symbol="o", size=12, pen=pg.mkPen(color), brush=None),
+            "zeros",
+        )
+
         plot_widget.plotItem.showGrid(x=True, y=True)
         plot_widget.plotItem.setAspectLocked(True)
         plot_widget.plotItem.setLabel("bottom", "Real Part")
