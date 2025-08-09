@@ -53,7 +53,7 @@ class ContainerSettingsFrame(QFrame):
         # Layout selection dropdown (replaces CTkOptionMenu)
         self.__layout_menu = QComboBox()
         self.__layout_menu.setFont(self._font)
-        self.__layout_menu.setFixedWidth(125)
+        self.__layout_menu.setFixedWidth(95)
         layout_values = [layout.value for layout in self.__model.possible_layouts]
         self.__layout_menu.addItems(layout_values)
         self.__layout_menu.setCurrentText(self.__model.selected_layout.value)

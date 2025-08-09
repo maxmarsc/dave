@@ -294,7 +294,7 @@ class EntitySettings(QFrame):
         # View selection dropdown
         self.__view_menu = QComboBox()
         self.__view_menu.setFont(self.__font)
-        self.__view_menu.setFixedWidth(125)
+        self.__view_menu.setFixedWidth(95)
         self.__view_menu.addItems(self.__model.possible_views_names)
         self.__view_menu.setCurrentText(self.__model.selected_view)
 
@@ -596,6 +596,7 @@ class ViewSettingsFrame(QFrame):
 
         # Set minimum width based on content
         self.setMinimumWidth(total_width)
+        self.__layout.addStretch(1)
 
     def _create_string_selector(self, setting: "EntityView.StringSetting") -> int:
         """Create label and dropdown for string setting"""
@@ -608,7 +609,7 @@ class ViewSettingsFrame(QFrame):
         # Create dropdown
         menu = QComboBox()
         menu.setFont(self.__font)
-        menu.setFixedWidth(125)
+        menu.setFixedWidth(95)
         menu.addItems(setting.possible_values())
         menu.setCurrentText(str(setting.value))
 
@@ -625,7 +626,7 @@ class ViewSettingsFrame(QFrame):
         self.__layout.addWidget(label)
         self.__layout.addWidget(menu)
 
-        return 130  # Width used
+        return 100  # Width used
 
     def _create_float_selector(self, setting: "EntityView.FloatSetting") -> int:
         """Create label and entry for float setting"""
@@ -769,6 +770,9 @@ class ViewSettingsFrame(QFrame):
         for widget in self.__widgets:
             self.__layout.removeWidget(widget)
             widget.deleteLater()
+
+        # Remove stretch
+        self.__layout.removeItem(self.__layout.itemAt(0))
 
         # Clear tracking dictionaries
         self.__widgets.clear()
