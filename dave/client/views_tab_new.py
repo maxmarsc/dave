@@ -216,14 +216,23 @@ class AudioViewsTab:
         self.__scroll_content.setLayout(self.__scroll_layout)
 
         # Make transparent
+        self.__scroll_area.setStyleSheet(
+            """
+            QScrollArea {
+                background-color: transparent;
+                border: none;
+            }
+            """
+        )
+
         self.__scroll_content.setStyleSheet(
             """
-            QWidget#scroll_content {
+            QWidget#views_scroll_content {
                 background-color: transparent;
             }
             """
         )
-        self.__scroll_content.setObjectName("scroll_content")
+        self.__scroll_content.setObjectName("views_scroll_content")
 
         # Set scroll content
         self.__scroll_area.setWidget(self.__scroll_content)

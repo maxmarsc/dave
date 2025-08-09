@@ -92,6 +92,8 @@ class SettingsTab:
         self.__scroll_layout = QVBoxLayout()
         self.__scroll_layout.setDirection(QVBoxLayout.Direction.TopToBottom)
         self.__scroll_content.setLayout(self.__scroll_layout)
+
+        # Make transparent
         self.__scroll_area.setStyleSheet(
             """
             QScrollArea {
@@ -103,17 +105,15 @@ class SettingsTab:
 
         self.__scroll_content.setStyleSheet(
             """
-            QWidget#scroll_content {
+            QWidget#settings_scroll_content {
                 background-color: transparent;
             }
             """
         )
+        self.__scroll_content.setObjectName("settings_scroll_content")
 
         # Force top alignment:
         self.__scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-        # And set an object name for the scroll content:
-        self.__scroll_content.setObjectName("scroll_content")
 
         # Set the content widget in the scroll area
         self.__scroll_area.setWidget(self.__scroll_content)
