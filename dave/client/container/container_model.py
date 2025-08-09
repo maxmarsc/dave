@@ -10,6 +10,7 @@ from PySide6.QtCore import Signal
 import pyqtgraph as pg
 
 # from dave.common.data_layout import RawContainer.Layout
+from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 
 from dave.client.entity.entity_model import EntityModel
@@ -298,6 +299,7 @@ class ContainerModel(EntityModel):
             # Render live data
             assert len(plots) == 1
             if self.frozen:
+                Logger().debug(f"Calling render_view with frozen data")
                 # Render frozen data on same subplot
                 self._view.render_view(
                     plots[0], frozen_data[channel], samplerate, "#ff7f0e"

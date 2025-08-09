@@ -49,7 +49,7 @@ class WaveformView(ContainerView):
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
         # color_rgb = hex_to_rgb_tuple(color)
-        plot_widget.plotItem.clear()
+        # plot_widget.plotItem.clear()
         assert len(data.shape) == 1
 
         full_time_vector: np.ndarray = np.arange(data.shape[0]) / samplerate
@@ -139,7 +139,7 @@ class CurveView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        plot_widget.plotItem.clear()
+        # plot_widget.plotItem.clear()
 
         full_time_vector = np.arange(data.shape[0]) / samplerate
         nans = np.isnan(data)
@@ -227,7 +227,7 @@ class SpectrogramView(ContainerView):
     def render_view(
         self, plot_widget: pg.PlotWidget, data: np.ndarray, samplerate: int, _=None
     ):
-        plot_widget.plotItem.clear()
+        # plot_widget.plotItem.clear()
 
         overlap = int(self.__overlap.value * self.__nfft.value)
         window_name = self.__window.value
@@ -360,7 +360,7 @@ class PSDView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        plot_widget.plotItem.clear()
+        # plot_widget.plotItem.clear()
 
         if np.any(np.isnan(data)) or np.any(np.isinf(data)):
             # PyQtGraph doesn't have direct text plotting, so we'll use a TextItem
@@ -429,7 +429,7 @@ class MagnitudeView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        plot_widget.plotItem.clear()
+        # plot_widget.plotItem.clear()
         data = np.abs(data)
 
         full_x_vector = np.arange(data.shape[0])
@@ -500,7 +500,7 @@ class PhaseView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        plot_widget.plotItem.clear()
+        # plot_widget.plotItem.clear()
         data = np.angle(data)
 
         x_vector = np.arange(data.shape[0])

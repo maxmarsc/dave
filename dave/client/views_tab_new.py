@@ -14,7 +14,7 @@ import pyqtgraph as pg
 from dave.client.entity.entity_model import EntityModel
 from dave.client.global_settings import GlobalSettings
 
-# from dave.client.side_panel import SidePanel
+from dave.client.side_panel_new import SidePanel
 from dave.client.in_scope_dict import InScopeSet
 from dave.common.logger import Logger
 
@@ -64,6 +64,8 @@ class EntityPlots(QFrame):
         self.__plots = []
 
         Logger().warning(f"Re-plotting entity with {self.__model.channels}")
+        live_suffix = " (Live)" if self.__model.frozen else ""
+        frozen_suffix = " (Frozen)"
 
         if self.__model.frozen and not self.__model.is_view_superposable:
             # Create 2 plots per channel: live + frozen (non-superposable)
@@ -89,8 +91,8 @@ class EntityPlots(QFrame):
                     channel=channel,
                 )
 
-                live_plot.plotItem.setLabel("right", title + " (Live)")
-                frozen_plot.plotItem.setLabel("right", title + " (Frozen)")
+                live_plot.plotItem.setLabel("right", title + live_suffix)
+                frozen_plot.plotItem.setLabel("right", title + frozen_suffix)
         else:
             # Create 1 plot per channel: live + frozen
             for channel in range(self.__model.channels):
@@ -109,7 +111,7 @@ class EntityPlots(QFrame):
                     channel=channel,
                 )
 
-                live_plot.plotItem.setLabel("right", title + " (Live)")
+                live_plot.plotItem.setLabel("right", title + live_suffix)
 
         self.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT * len(self.__plots))
 
@@ -147,10 +149,11 @@ class EntityRow(QFrame):
         self.__plot_frame = EntityPlots(self, self.__model, global_settings)
 
         # Create side panel (right side)
+        self.__side_panel = SidePanel(self, self.__model)
         # self.__side_panel = self.__model.side_panel_info_class()(self.__model)
-        self.__side_panel = QFrame()
-        self.__side_panel.setFixedWidth(60)
-        self.__side_panel.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
+        # self.__side_panel = QFrame()
+        # self.__side_panel.setFixedWidth(120)
+        # self.__side_panel.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
 
         # Add to main layout: [Plot Area (expandable) | SidePanel (fixed width)]
         self.__layout.addWidget(self.__plot_frame, 1)  # stretch factor 1
