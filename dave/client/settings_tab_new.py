@@ -42,15 +42,12 @@ class SettingsTab:
     ):
         self.__parent = parent
         self.__entity_models = entity_models
-        # self.__in_scope_models = in_scope_models
         self.__global_settings = global_settings
         self.__entity_settings: Dict[int, EntitySettings] = dict()
         self.__empty_label = None
 
-        # Create font (replaces CTkFont)
+        # Create font
         self.__bold_font = QFont()
-        # self.__bold_font.setPointSize(18)
-        # self.__bold_font.setBold(True)
 
         in_scope_models.scope_signal.connect(self._on_scope_signal)
 
@@ -74,10 +71,9 @@ class SettingsTab:
         self.__separator.setFrameShadow(QFrame.Shadow.Sunken)
         self.__separator.setFixedHeight(6)
 
-        # You can style this further with setStyleSheet if needed
         main_layout.addWidget(self.__separator)
 
-        # Create scrollable area (replaces CTkScrollableFrame)
+        # Create scrollable area
         self.__scroll_area = QScrollArea()
         self.__scroll_area.setWidgetResizable(True)
         self.__scroll_area.setHorizontalScrollBarPolicy(
@@ -157,7 +153,7 @@ class SettingsTab:
 
             # Create entity settings widget
             entity_settings = EntitySettings(
-                self.__scroll_content,  # Parent is the scroll content
+                self.__scroll_content,
                 new_model,
                 self.__global_settings,
             )
@@ -186,7 +182,7 @@ class SettingsTab:
             # Remove from layout
             self.__scroll_layout.removeWidget(settings)
 
-            # Delete the widget (Qt equivalent of destroy())
+            # Delete the widget
             settings.deleteLater()
 
             # Remove from our tracking dict
@@ -247,7 +243,7 @@ class EntitySettings(QFrame):
         self.setLayout(main_layout)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create horizontal scroll area (replaces CTkScrollableFrame)
+        # Create horizontal scroll area
         self.__scroll_area = QScrollArea()
         self.__scroll_area.setWidgetResizable(True)
         self.__scroll_area.setVerticalScrollBarPolicy(
@@ -316,7 +312,7 @@ class EntitySettings(QFrame):
         )
 
     def _setup_grid_layout(self):
-        """Setup the grid layout (replaces tkinter grid configuration)"""
+        """Setup the grid layout"""
         # Add widgets to grid layout
         # Row 0: Entity name (spans 5 columns)
         self.__scroll_layout.addWidget(self.__name_label, 0, 0, 1, 5)
@@ -327,7 +323,7 @@ class EntitySettings(QFrame):
         self.__scroll_layout.addWidget(self.__view_settings_frame, 1, 2)
         self.__scroll_layout.addWidget(self.__general_settings_frame, 1, 3)
 
-        # Configure row/column stretching (replaces grid_rowconfigure/grid_columnconfigure)
+        # Configure row/column stretching
         self.__scroll_layout.setRowStretch(0, 1)  # weight=1
         self.__scroll_layout.setRowStretch(1, 4)  # weight=4
 
@@ -398,7 +394,7 @@ class GeneralSettingsFrame(QFrame):
 
     def _setup_layout(self):
         """Setup horizontal layout and widgets"""
-        # Create horizontal layout (replaces pack with side=LEFT/RIGHT)
+        # Create horizontal layout
         layout = QHBoxLayout()
         self.setLayout(layout)
 
@@ -426,7 +422,7 @@ class GeneralSettingsFrame(QFrame):
             str(self.__global_settings.samplerate)
         )
 
-        # Connect Return key to callback (replaces bind("<Return>"))
+        # Connect Return key to callback
         self.__samplerate_entry.returnPressed.connect(self._samplerate_changed)
 
         # Create delete button
@@ -445,9 +441,6 @@ class GeneralSettingsFrame(QFrame):
     def _delete_button_clicked(self):
         """Handle delete button click (replaces delete_button_callback)"""
         self.__model.signal_deletion()
-        # parent = self.parent()
-        # if parent:
-        #     parent.deleteLater()
 
     def _samplerate_changed(self):
         """Handle samplerate entry Return key (replaces samplerate_var_callback)"""
@@ -493,7 +486,7 @@ class GlobalSettingsFrame(QFrame):
         layout = QHBoxLayout()
         self.setLayout(layout)
 
-        # Set margins and spacing to match tkinter padding
+        # Set margins and spacing
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
 
@@ -516,7 +509,7 @@ class GlobalSettingsFrame(QFrame):
         self.__samplerate_entry.setText(str(self.__settings.samplerate))
         self.__samplerate_entry.setPlaceholderText("samplerate")
 
-        # Connect Return key (replaces bind("<Return>"))
+        # Connect Return key
         self.__samplerate_entry.returnPressed.connect(self._samplerate_changed)
 
         # Add to layout
@@ -524,7 +517,7 @@ class GlobalSettingsFrame(QFrame):
         layout.addWidget(self.__samplerate_entry)
 
     def _samplerate_changed(self):
-        """Handle samplerate entry Return key (replaces samplerate_var_callback)"""
+        """Handle samplerate entry Return key"""
         new_val = self.__samplerate_entry.text().strip()
 
         if not self.__settings.validate_samplerate(new_val):
@@ -565,7 +558,6 @@ class ViewSettingsFrame(QFrame):
         # Track current view type for updates
         self.__current_view_type = self.__model.selected_view
 
-        # Set fixed height - let Qt handle background
         self.setFixedHeight(28)
 
         # Create layout
@@ -731,10 +723,10 @@ class ViewSettingsFrame(QFrame):
 
         try:
             if isinstance(widget, QComboBox):
-                # String setting - value is already the string
+                # String setting
                 self.__model.update_view_settings(setting_name, value)
             elif isinstance(widget, QLineEdit):
-                # Int/Float setting - parse like parse_tkvar() did
+                # Int/Float setting
                 if isinstance(setting, EntityView.IntSetting):
                     parsed_value = int(value) if value.strip() else None
                 elif isinstance(setting, EntityView.FloatSetting):
@@ -745,7 +737,7 @@ class ViewSettingsFrame(QFrame):
                 if parsed_value is not None:
                     self.__model.update_view_settings(setting_name, parsed_value)
         except ValueError:
-            # Parse error - equivalent to tk.TclError, ignore
+            # Parse error, ignore
             pass
 
     def _on_view_signal(self, view_name: str):

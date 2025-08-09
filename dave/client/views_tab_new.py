@@ -20,6 +20,13 @@ from dave.common.logger import Logger
 
 
 class EntityPlots(QFrame):
+    """
+    An vertical box contains all the plots of an entity.
+
+    At least one per channel, or two per channel (live + frozen) if the view is
+    frozen and the view type is not superposable
+    """
+
     MINIMUM_PLOT_HEIGHT = 220
 
     def __init__(
@@ -120,13 +127,7 @@ class EntityRow(QFrame):
     """
     A horizontal row containing plots for all channels of one entity and its corresponding side panel
 
-    Each ViewRow handles one complete entity with all its channels:
-    - If model.frozen=True and model.is_view_superposable=False:
-      Height = 2 * channels * 200px (separate live/frozen plots per channel)
-    - If model.frozen=True and model.is_view_superposable=True:
-      Height = channels * 200px (overlaid live+frozen plots per channel)
-    - If model.frozen=False:
-      Height = channels * 200px (live plots per channel)
+    Each ViewRow handles one complete entity with all its channels
     """
 
     def __init__(
@@ -150,10 +151,6 @@ class EntityRow(QFrame):
 
         # Create side panel (right side)
         self.__side_panel = SidePanel(self, self.__model)
-        # self.__side_panel = self.__model.side_panel_info_class()(self.__model)
-        # self.__side_panel = QFrame()
-        # self.__side_panel.setFixedWidth(120)
-        # self.__side_panel.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
 
         # Add to main layout: [Plot Area (expandable) | SidePanel (fixed width)]
         self.__layout.addWidget(self.__plot_frame, 1)  # stretch factor 1
@@ -162,15 +159,11 @@ class EntityRow(QFrame):
 
 class AudioViewsTab:
     """
-    The Views tab of the dave GUI - PySide6 version with new layout
-
-    New layout: Vertical stack of horizontal [Plot Area | SidePanel] rows
-    instead of [all plots | all sidepanels] layout
+    The Views tab of the dave GUI
 
     Structure:
     - One EntityRow per entity
-    - Each ViewRow contains ALL channels for that entity
-    - Plot area height = channels * 200px (or 2 * channels * 200px if frozen non-superposable)
+    - Each ViewRow contains all channels for that entity
     """
 
     def __init__(

@@ -180,6 +180,13 @@ class CurveView(ContainerView):
 
 # ===========================================================================
 class SpectrogramView(ContainerView):
+    __WINDOW_CORRECTION_FACTOR = {
+        "hann": 1.63,
+        "blackman": 1.97,
+        "hamming": 1.59,
+        "boxcar": 1.0,
+    }
+
     def __init__(self) -> None:
         self.__nfft = EntityView.IntSetting("nfft", 16, 4096, 256)
         self.__overlap = EntityView.FloatSetting("overlap", 0.01, 0.99, 0.5)
@@ -221,7 +228,7 @@ class SpectrogramView(ContainerView):
 
         try:
             with catch_warnings(record=True) as w:
-                # Compute spectrogram (one-sided for audio is typical)
+                # Compute spectrogram
                 f, t, Sxx = signal.spectrogram(
                     data,
                     fs=samplerate,
@@ -236,9 +243,7 @@ class SpectrogramView(ContainerView):
                 Logger().warning("Warning in Spectrogram computation")
 
             # Apply window correction factor for accurate power measurements
-            correction_factor = self._get_window_correction_factor(
-                window_name, self.__nfft.value
-            )
+            correction_factor = self.__WINDOW_CORRECTION_FACTOR[window_name]
             Sxx_corrected = Sxx * correction_factor
 
             # Convert to dB, handle zeros/negatives
@@ -257,7 +262,7 @@ class SpectrogramView(ContainerView):
             img.setImage(Sxx_db, levels=[np.min(Sxx_db), np.max(Sxx_db)])
             img.setTransform(tr)
 
-            # Optional: Add colormap
+            # Add colormap
             cmap = pg.colormap.get(self.__color_map.value)
             img.setColorMap(cmap)
 
@@ -275,37 +280,34 @@ class SpectrogramView(ContainerView):
             plot_widget.plotItem.setLabel("bottom", "Time", "s")
             plot_widget.plotItem.setLabel("left", "Frequency", "Hz")
 
-            # Set proper axis ranges
-            # plot_widget.plotItem.setRange(xRange=[t[0], t[-1]], yRange=[f[0], f[-1]])
-
         except Exception as e:
             Logger().warning(f"Error in Spectrogram rendering: {e}")
 
-    def _get_window_correction_factor(self, window_name: str, nfft: int) -> float:
-        """
-        Get power correction factor for window functions.
+    # def _get_window_correction_factor(self, window_name: str, nfft: int) -> float:
+    #     """
+    #     Get power correction factor for window functions.
 
-        For power spectral density measurements, we need to compensate for the
-        power loss introduced by windowing.
-        """
-        # Generate the actual window to compute correction factor
-        match window_name:
-            case "boxcar":
-                return 1.0
-            case "hann":
-                window = signal.windows.hann(nfft)
-            case "hamming":
-                window = signal.windows.hamming(nfft)
-            case "blackman":
-                window = signal.windows.blackman(nfft)
-            case _:
-                raise NotImplementedError()
+    #     For power spectral density measurements, we need to compensate for the
+    #     power loss introduced by windowing.
+    #     """
+    #     # Generate the actual window to compute correction factor
+    #     match window_name:
+    #         case "boxcar":
+    #             return 1.0
+    #         case "hann":
+    #             window = signal.windows.hann(nfft)
+    #         case "hamming":
+    #             window = signal.windows.hamming(nfft)
+    #         case "blackman":
+    #             window = signal.windows.blackman(nfft)
+    #         case _:
+    #             raise NotImplementedError()
 
-        # Power correction factor = 1 / (mean of window squared)
-        # This compensates for the power loss due to windowing
-        power_correction = 1.0 / np.mean(window**2)
+    #     # Power correction factor = 1 / (mean of window squared)
+    #     # This compensates for the power loss due to windowing
+    #     power_correction = 1.0 / np.mean(window**2)
 
-        return power_correction
+    #     return power_correction
 
 
 # ===========================================================================
