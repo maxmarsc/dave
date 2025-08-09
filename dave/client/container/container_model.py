@@ -32,7 +32,6 @@ from .container_views_new import (
     PhaseView,
 )
 
-# from .container_side_panel_info import ContainerSidePanelInfo
 
 from dataclasses import dataclass
 import numpy as np

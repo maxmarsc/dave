@@ -11,13 +11,6 @@ from dave.common.logger import Logger
 
 from ..entity.entity_view import EntityView, hex_to_rgb_tuple
 
-# DEFAULT_COLOR = "#1f77b4"
-
-# def hex_to_rgb_tuple(hex_color: str) -> tuple:
-#     """Convert matplotlib hex color to RGB tuple (0-255)"""
-#     rgb_float = to_rgb(hex_color)
-#     return tuple(int(c * 255) for c in rgb_float)
-
 
 # ===========================================================================
 class ContainerView(EntityView):
@@ -48,8 +41,6 @@ class WaveformView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        # color_rgb = hex_to_rgb_tuple(color)
-        # plot_widget.plotItem.clear()
         assert len(data.shape) == 1
 
         full_time_vector: np.ndarray = np.arange(data.shape[0]) / samplerate
@@ -97,9 +88,6 @@ class WaveformView(ContainerView):
                         pen=pg.mkPen("g", style=pg.QtCore.Qt.PenStyle.DotLine),
                     )
                     plot_widget.plotItem.addItem(line)
-
-            # if -max_y != max_y:
-            #     plot_widget.plotItem.setRange(yRange=[-max_y, max_y])
 
         plot_widget.plotItem.showGrid(x=True, y=True)
         plot_widget.plotItem.setLabel("bottom", "Time", "s")
@@ -227,11 +215,9 @@ class SpectrogramView(ContainerView):
     def render_view(
         self, plot_widget: pg.PlotWidget, data: np.ndarray, samplerate: int, _=None
     ):
-        # plot_widget.plotItem.clear()
 
         overlap = int(self.__overlap.value * self.__nfft.value)
         window_name = self.__window.value
-        # window_name = self.__window.value if self.__window.value != "none" else None
 
         try:
             with catch_warnings(record=True) as w:
@@ -360,8 +346,6 @@ class PSDView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        # plot_widget.plotItem.clear()
-
         if np.any(np.isnan(data)) or np.any(np.isinf(data)):
             # PyQtGraph doesn't have direct text plotting, so we'll use a TextItem
             text = pg.TextItem(
@@ -429,7 +413,6 @@ class MagnitudeView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        # plot_widget.plotItem.clear()
         data = np.abs(data)
 
         full_x_vector = np.arange(data.shape[0])
@@ -500,7 +483,6 @@ class PhaseView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        # plot_widget.plotItem.clear()
         data = np.angle(data)
 
         x_vector = np.arange(data.shape[0])

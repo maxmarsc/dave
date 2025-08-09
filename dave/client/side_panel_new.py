@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QFont
 
-from .container.container_model import ContainerModel
+from .entity.entity_model import EntityModel
 
 
 # =========================  SidePanel  ============================
@@ -24,7 +24,7 @@ class SidePanel(QFrame):
     (Freeze, Concatenate, Save)
     """
 
-    def __init__(self, parent, model: ContainerModel) -> None:
+    def __init__(self, parent, model: EntityModel) -> None:
         super().__init__(parent)
         self.__entity = model
         self.__font = QFont()
@@ -34,6 +34,9 @@ class SidePanel(QFrame):
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
         self.setFixedWidth(140)
 
+        self.__setup_layout()
+
+    def __setup_layout(self):
         # Create layout
         layout = QGridLayout(self)
 
@@ -43,14 +46,14 @@ class SidePanel(QFrame):
         self.__name_label.setToolTip(self.__entity.variable_name)
 
         # Create infos
-        # self.__infos = model.side_panel_info_class()(self, self.__entity)
+        self.__infos = self.__entity.side_panel_info_class()(self, self.__entity)
 
         # Create freeze checkbox
         self.__freeze_button = QCheckBox("Freeze")
         self.__freeze_button.setFont(self.__font)
         self.__freeze_button.setChecked(self.__entity.frozen)
         self.__freeze_button.toggled.connect(self.__freeze_button_clicked)
-        model.frozen_signal.connect(self.__on_frozen_signal)
+        self.__entity.frozen_signal.connect(self.__on_frozen_signal)
 
         # Create concat checkbox
         self.__concat_button = QCheckBox("Concat")
@@ -59,7 +62,7 @@ class SidePanel(QFrame):
         if self.__entity.compatible_concatenate():
             self.__concat_button.setChecked(self.__entity.concat)
             self.__concat_button.toggled.connect(self.__concat_button_clicked)
-            model.concat_signal.connect(self.__on_concat_signal)
+            self.__entity.concat_signal.connect(self.__on_concat_signal)
 
         # Create save button
         self.__save_button = QPushButton("Save to disc")
@@ -70,7 +73,7 @@ class SidePanel(QFrame):
 
         # Add widgets to layout
         layout.addWidget(self.__name_label, 0, 0)
-        # layout.addWidget(self.__infos, 1, 0)
+        layout.addWidget(self.__infos, 1, 0)
         layout.addWidget(self.__freeze_button, 2, 0)
         layout.addWidget(self.__concat_button, 3, 0)
         layout.addWidget(self.__save_button, 4, 0)
@@ -81,11 +84,11 @@ class SidePanel(QFrame):
 
         # Set column and row stretch
         layout.setColumnStretch(0, 1)
-        layout.setRowStretch(0, 1)
-        layout.setRowStretch(1, 3)
-        layout.setRowStretch(2, 3)
-        layout.setRowStretch(3, 3)
-        layout.setRowStretch(4, 3)
+        layout.setRowStretch(0, 0)
+        layout.setRowStretch(1, 1)
+        layout.setRowStretch(2, 0)
+        layout.setRowStretch(3, 0)
+        layout.setRowStretch(4, 0)
 
     def __freeze_button_clicked(self, checked: bool):
         self.__entity.frozen = checked

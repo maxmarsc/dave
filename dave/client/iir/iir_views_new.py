@@ -4,16 +4,7 @@ from scipy import signal
 from warnings import catch_warnings, warn
 import pyqtgraph as pg
 
-from dave.common.raw_iir import RawIir
-from dave.common.logger import Logger
-from .raw_to_numpy import InternalNpy
-
 from ..entity.entity_view import EntityView, hex_to_rgb_tuple
-
-# def hex_to_rgb_tuple(hex_color: str) -> tuple:
-#     """Convert matplotlib hex color to RGB tuple (0-255)"""
-#     rgb_float = to_rgb(hex_color)
-#     return tuple(int(c * 255) for c in rgb_float)
 
 
 # ===========================================================================
@@ -59,8 +50,6 @@ class MagnitudeResponseView(IirView):
             color = self.DEFAULT_COLOR
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
-
-        plot_widget.plotItem.clear()
 
         whole = self.__limit.value == "samplerate"
         w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
@@ -114,8 +103,6 @@ class PhaseResponseView(IirView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        plot_widget.plotItem.clear()
-
         whole = self.__limit.value == "samplerate"
         w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
 
@@ -165,8 +152,6 @@ class PolesZerosView(IirView):
             color = self.DEFAULT_COLOR
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
-
-        plot_widget.plotItem.clear()
 
         # Add unit circle
         circle = pg.CircleROI(

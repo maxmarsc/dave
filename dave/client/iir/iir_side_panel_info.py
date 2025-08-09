@@ -1,5 +1,7 @@
-import tkinter as tk
-import customtkinter as ctk
+from PySide6.QtWidgets import (
+    QLabel,
+    QVBoxLayout,
+)
 
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 from .iir_model import IirModel
@@ -13,27 +15,35 @@ class IirSidePanelInfo(EntitySidePanelInfo):
     - zeros, poles
     """
 
-    def __init__(self, master: tk.Misc, model: IirModel) -> None:
-        super().__init__(master)
-        self.__model = model
+    def __init__(self, parent, iir: IirModel):
+        super().__init__(parent)
+        self.__iir = iir
 
-        z, p = self.__model.zeros_poles
-        self.__zp_labels = ctk.CTkLabel(
-            self,
-            text=f"Zeros: {z} Poles: {p}",
-            height=20,
-        )
-        order = self.__model.order
-        self.__order_label = ctk.CTkLabel(
-            self,
-            text=f"Order: {order}",
-            height=20,
-        )
-        self.__zp_labels.pack(side=tk.TOP, anchor="w")
-        self.__order_label.pack(side=tk.TOP, anchor="w")
+        self.__setup_layout()
 
-    def update_widgets(self):
-        z, p = self.__model.zeros_poles
-        order = self.__model.order
-        self.__zp_labels.configure(text=f"Zeros: {z} Poles: {p}")
-        self.__order_label.configure(text=f"Order: {order}")
+    def __setup_layout(self):
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        # Create Z/P label
+        z, p = self.__iir.zeros_poles
+        self.__zp_labels = QLabel(f"Zeros: {z} Poles: {p}")
+
+        # Create Order label
+        order = self.__iir.order
+        self.__order_label = QLabel(f"Order: {order}")
+
+        # Adjust layout
+        layout.addWidget(self.__zp_labels)
+        layout.addWidget(self.__order_label)
+        layout.addStretch(1)
+
+        # Connect signals
+        self.__iir.data_signal.connect(self.__on_data_signal)
+
+    def __on_data_signal(self, *_):
+        z, p = self.__iir.zeros_poles
+        self.__zp_labels.setText(f"Zeros: {z} Poles: {p}")
+
+        order = self.__iir.order
+        self.__order_label.setText(f"Order: {order}")
