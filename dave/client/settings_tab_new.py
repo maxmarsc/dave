@@ -68,7 +68,7 @@ class SettingsTab:
         )
         main_layout.addWidget(self.__global_settings_frame)
 
-        # Create separator (replaces CTkFrame separator)
+        # Create separator
         self.__separator = QFrame()
         self.__separator.setFrameShape(QFrame.Shape.HLine)
         self.__separator.setFrameShadow(QFrame.Shadow.Sunken)
