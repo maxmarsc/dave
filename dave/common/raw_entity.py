@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from typing import List, Union
 
 
 @dataclass
@@ -59,3 +59,8 @@ class RawEntity(ABC):
 @dataclass
 class RawEntityList:
     raw_entities: List[RawEntity]
+
+
+@dataclass
+class RawEntityUpdates:
+    raw_updates: List[Union[RawEntity.InScopeUpdate, RawEntity.OutScopeUpdate]]

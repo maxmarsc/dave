@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QTimer, Signal, QObject
 from PySide6.QtGui import QIcon, QCloseEvent
 
-from typing import Dict
+from typing import Dict, List
 from multiprocessing.connection import Connection
 from typing import override
 
@@ -163,22 +163,32 @@ class DaveGUI(QMainWindow):
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawEntityList):
                     Logger().debug(f"Received new entities")
+                    new_in_scope: List[EntityModel] = list()
                     for raw_entity in msg.raw_entities:
                         new_entity = ModelFactory().build(raw_entity)
                         self.__models[raw_entity.id] = new_entity
                         new_entity.deletion_signal.connect(self._on_deletion_signal)
                         if new_entity.in_scope:
-                            self.__in_scope_models.add(new_entity)
+                            new_in_scope.append(new_entity)
+                    self.__in_scope_models.add(new_in_scope)
                 elif isinstance(msg, RawEntity.InScopeUpdate):
                     Logger().debug(f"Received data update : {msg.id}")
                     self.__models[msg.id].update_data(msg)
                     if not self.__in_scope_models.has(msg.id):
-                        self.__in_scope_models.add(self.__models[msg.id])
+                        self.__in_scope_models.add(
+                            [
+                                self.__models[msg.id],
+                            ]
+                        )
                 elif isinstance(msg, RawEntity.OutScopeUpdate):
                     Logger().debug(f"Received oos update : {msg.id}")
                     self.__models[msg.id].mark_as_out_of_scope()
                     if self.__in_scope_models.has(msg.id):
-                        self.__in_scope_models.remove(self.__models[msg.id])
+                        self.__in_scope_models.remove(
+                            [
+                                self.__models[msg.id],
+                            ]
+                        )
                 else:
                     Logger().warning(f"Received unknown data {type(msg)}:{msg}")
             except EOFError:

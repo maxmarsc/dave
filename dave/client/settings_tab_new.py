@@ -117,19 +117,11 @@ class SettingsTab:
         # Add scroll area to main layout with stretch
         main_layout.addWidget(self.__scroll_area, 1)  # stretch factor 1
 
-    def _on_scope_signal(self, id: int, in_scope: bool):
+    def _on_scope_signal(self, ids: List[int], in_scope: bool):
         if in_scope:
-            self.__add_models(
-                [
-                    id,
-                ]
-            )
+            self.__add_models(ids)
         else:
-            self.__remove_models(
-                [
-                    id,
-                ]
-            )
+            self.__remove_models(ids)
 
     def __add_models(self, ids: List[int]):
         assert len(ids) > 0

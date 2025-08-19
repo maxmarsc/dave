@@ -283,32 +283,6 @@ class SpectrogramView(ContainerView):
         except Exception as e:
             Logger().warning(f"Error in Spectrogram rendering: {e}")
 
-    # def _get_window_correction_factor(self, window_name: str, nfft: int) -> float:
-    #     """
-    #     Get power correction factor for window functions.
-
-    #     For power spectral density measurements, we need to compensate for the
-    #     power loss introduced by windowing.
-    #     """
-    #     # Generate the actual window to compute correction factor
-    #     match window_name:
-    #         case "boxcar":
-    #             return 1.0
-    #         case "hann":
-    #             window = signal.windows.hann(nfft)
-    #         case "hamming":
-    #             window = signal.windows.hamming(nfft)
-    #         case "blackman":
-    #             window = signal.windows.blackman(nfft)
-    #         case _:
-    #             raise NotImplementedError()
-
-    #     # Power correction factor = 1 / (mean of window squared)
-    #     # This compensates for the power loss due to windowing
-    #     power_correction = 1.0 / np.mean(window**2)
-
-    #     return power_correction
-
 
 # ===========================================================================
 class PSDView(ContainerView):

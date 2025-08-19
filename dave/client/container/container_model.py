@@ -110,8 +110,10 @@ class ContainerModel(EntityModel):
     @property
     def samples(self) -> int:
         """
-        Num of samples per channel, not editable
+        Num of samples per channel, not editable. Forced to 0 if channels is set to zero
         """
+        if self._channels == 0:
+            return 0
         return int(self._data.size / self._channels)
 
     @property
