@@ -134,7 +134,11 @@ class DaveGUI(QMainWindow):
     def _on_deletion_signal(self, model_id: int):
         # Remove from in_scope models first
         if self.__in_scope_models.has(model_id):
-            self.__in_scope_models.remove(self.__models[model_id])
+            self.__in_scope_models.remove(
+                [
+                    self.__models[model_id],
+                ]
+            )
 
         # Disconnect
         self.__models[model_id].deletion_signal.disconnect(self._on_deletion_signal)

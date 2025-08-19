@@ -113,7 +113,7 @@ class ContainerModel(EntityModel):
         Num of samples per channel, not editable. Forced to 0 if channels is set to zero
         """
         if self._channels == 0:
-            return 0
+            return None
         return int(self._data.size / self._channels)
 
     @property

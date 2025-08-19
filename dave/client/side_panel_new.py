@@ -30,9 +30,18 @@ class SidePanel(QFrame):
         self.__font = QFont()
         # self.__font.setPointSize(15)
 
+        # Use system palette colors
+        self.setStyleSheet(
+            """
+            SidePanel {
+                background-color: palette(button);
+            }
+        """
+        )
+
         # Set frame properties
-        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
         self.setFixedWidth(140)
+        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
 
         self.__setup_layout()
 
