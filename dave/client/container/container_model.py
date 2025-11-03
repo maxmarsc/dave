@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Union, override
 import warnings
 
 # from matplotlib.axes import Axes
@@ -161,6 +161,19 @@ class ContainerModel(EntityModel):
         else:
             return False
 
+    # ==========================================================================
+    @override
+    def _live_render_data(self) -> np.ndarray:
+        """
+        Returns the live data as it should be drawn
+        """
+        return self.__compute_render_array(self._data)
+
+    @override
+    def _frozen_render_data(self) -> np.ndarray:
+        assert self._frozen_data is not None
+        return self.__compute_render_array(self._frozen_data)
+
     # ==============================================================================
     def serialize_types(self) -> List[Tuple[str, str]]:
         filetypes = [("Numpy file", ".npy")]
@@ -267,45 +280,45 @@ class ContainerModel(EntityModel):
             mid_side_data[1] = (render_data[0][:] - render_data[1][:]) / 2.0
             return mid_side_data
 
-    def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, channel: int, **_):
-        """
-        Draw the audio view of the given channel
+    # def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, channel: int, **_):
+    #     """
+    #     Draw the audio view of the given channel
 
-        If the container is frozen, both frozen and live data will be drawn.
-        If the container is frozen and the current selected view type does not support
-        superposable data (eg: spectrogram), then the caller must provide two Axes to draw
+    #     If the container is frozen, both frozen and live data will be drawn.
+    #     If the container is frozen and the current selected view type does not support
+    #     superposable data (eg: spectrogram), then the caller must provide two Axes to draw
 
-        Parameters
-        ----------
-        axes : List[Axes]
-            Either a single Axes in a list, or two if the container is frozen
-            with a non-superposable view type
-        default_sr: int
-            The default samplerate to use if not set in this specific model
-        channel : int
-            The channel to draw
-        """
-        # Compute the rendering shape
-        samplerate = self._sr if self._sr is not None else default_sr
-        live_data = self.__compute_render_array(self._data)
-        if self.frozen:
-            frozen_data = self.__compute_render_array(self._frozen_data)
+    #     Parameters
+    #     ----------
+    #     axes : List[Axes]
+    #         Either a single Axes in a list, or two if the container is frozen
+    #         with a non-superposable view type
+    #     default_sr: int
+    #         The default samplerate to use if not set in this specific model
+    #     channel : int
+    #         The channel to draw
+    #     """
+    #     # Compute the rendering shape
+    #     samplerate = self._sr if self._sr is not None else default_sr
+    #     live_data = self.__compute_render_array(self._data)
+    #     if self.frozen:
+    #         frozen_data = self.__compute_render_array(self._frozen_data)
 
-        if self.frozen and not self.is_view_superposable:
-            # Render frozen and live data on different subplots
-            assert len(plots) == 2
-            self._view.render_view(plots[0], live_data[channel], samplerate)
-            self._view.render_view(plots[1], frozen_data[channel], samplerate)
-        else:
-            # Render live data
-            assert len(plots) == 1
-            if self.frozen:
-                Logger().debug(f"Calling render_view with frozen data")
-                # Render frozen data on same subplot
-                self._view.render_view(
-                    plots[0], frozen_data[channel], samplerate, "#ff7f0e"
-                )
-            self._view.render_view(plots[0], live_data[channel], samplerate)
+    #     if self.frozen and not self.is_view_superposable:
+    #         # Render frozen and live data on different subplots
+    #         assert len(plots) == 2
+    #         self._view.render_view(plots[0], live_data[channel], samplerate)
+    #         self._view.render_view(plots[1], frozen_data[channel], samplerate)
+    #     else:
+    #         # Render live data
+    #         assert len(plots) == 1
+    #         if self.frozen:
+    #             Logger().debug(f"Calling render_view with frozen data")
+    #             # Render frozen data on same subplot
+    #             self._view.render_view(
+    #                 plots[0], frozen_data[channel], samplerate, "#ff7f0e"
+    #             )
+    #         self._view.render_view(plots[0], live_data[channel], samplerate)
 
     def channel_name(self, channel):
         return (

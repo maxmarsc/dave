@@ -29,7 +29,7 @@ class WaveformView(ContainerView):
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
 
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
         assert len(data.shape) == 1
@@ -93,7 +93,7 @@ class CurveView(ContainerView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid CurveView setting")
 
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
 
@@ -166,7 +166,7 @@ class SpectrogramView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, _=None):
+    def _render_view(self, axes: Axes, data: np.ndarray, samplerate: int, _=None):
         overlap = int(self.__overlap.value * self.__nfft.value)
         with catch_warnings(record=True) as w:
             axes.specgram(data, NFFT=self.__nfft.value, Fs=samplerate, noverlap=overlap)
@@ -200,7 +200,7 @@ class PSDView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
         if any(np.isnan(data)) or any(np.isinf(data)):
@@ -242,7 +242,7 @@ class MagnitudeView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
         data = np.abs(data)
@@ -297,7 +297,7 @@ class PhaseView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return []
 
-    def render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: np.ndarray, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
         data = np.angle(data)

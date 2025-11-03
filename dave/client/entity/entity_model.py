@@ -185,6 +185,17 @@ class EntityModel(QObject):
         self.view_settings_signal.emit()
 
     # ==========================================================================
+    def _live_render_data(self) -> np.ndarray:
+        """
+        Returns the live data as it should be drawn
+        """
+        return self._data
+
+    def _frozen_render_data(self) -> np.ndarray:
+        assert self._frozen_data is not None
+        return self._frozen_data
+
+    # ==========================================================================
     @abstractmethod
     def serialize_types(self) -> List[Tuple[str, str]]:
         """
@@ -219,8 +230,10 @@ class EntityModel(QObject):
         self._in_scope = False
 
     # ==========================================================================
-    @abstractmethod
-    def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, **kwargs):
+    # @abstractmethod
+    def draw_view(
+        self, plots: List[pg.PlotWidget], default_sr: int, channel: int, base_name: str
+    ):
         """
         Draw the view of the audio entity.
 
@@ -235,9 +248,43 @@ class EntityModel(QObject):
             with a non-superposable view type
         default_sr : int
             The default samplerate to use RawEntityif not set in this specific model
+        channel : int
+            The channel to draw
         kwargs: additional parameters for the concrete class's method
         """
-        pass
+        # pass
+        samplerate = self._sr if self._sr is not None else default_sr
+
+        if self.frozen and not self.is_view_superposable:
+            # Render frozen and live data on different subplots
+            assert len(plots) == 2
+            self._view.render_view(
+                plots[0],
+                self._live_render_data()[channel],
+                samplerate,
+                base_name + " (Live)",
+            )
+            self._view.render_view(
+                plots[1],
+                self._frozen_render_data()[channel],
+                samplerate,
+                base_name + " (Frozen)",
+            )
+        else:
+            # Render live data
+            assert len(plots) == 1
+            if self.frozen:
+                # Render frozen data on same subplot
+                self._view.render_view(
+                    plots[0],
+                    self._frozen_render_data()[channel],
+                    samplerate,
+                    base_name,
+                    color="#ff7f0e",
+                )
+            self._view.render_view(
+                plots[0], self._live_render_data()[channel], samplerate, base_name
+            )
 
     def channel_name(_, channel: int) -> str:
         return f"channel {channel}"

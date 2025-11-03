@@ -29,7 +29,7 @@ class WaveformView(ContainerView):
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -43,14 +43,12 @@ class WaveformView(ContainerView):
 
         assert len(data.shape) == 1
 
+        fg_color = self.palette_colors(plot_widget)[2]
+
         full_time_vector: np.ndarray = np.arange(data.shape[0]) / samplerate
         nans = np.isnan(data)
         infs = np.isinf(data)
         finite_mask = ~nans & ~infs
-
-        Logger().warning(
-            f"Plotting {full_time_vector[finite_mask].size}x{data[finite_mask].size} values"
-        )
 
         # Plot finite data
         if np.any(finite_mask):
@@ -90,8 +88,8 @@ class WaveformView(ContainerView):
                     plot_widget.plotItem.addItem(line)
 
         plot_widget.plotItem.showGrid(x=True, y=True)
-        plot_widget.plotItem.setLabel("bottom", "Time", "s")
-        plot_widget.plotItem.setLabel("left", "Amplitude")
+        plot_widget.plotItem.setLabel("bottom", "Time", "s", pen=fg_color)
+        plot_widget.plotItem.setLabel("left", "Amplitude", pen=fg_color)
 
     def get_settings(self) -> List[EntityView.Setting]:
         return []
@@ -115,7 +113,7 @@ class CurveView(ContainerView):
         else:
             raise RuntimeError(f"{setting_name} is not a valid CurveView setting")
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -127,7 +125,7 @@ class CurveView(ContainerView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        # plot_widget.plotItem.clear()
+        fg_color = self.palette_colors(plot_widget)[2]
 
         full_time_vector = np.arange(data.shape[0]) / samplerate
         nans = np.isnan(data)
@@ -171,8 +169,8 @@ class CurveView(ContainerView):
         )
 
         plot_widget.plotItem.showGrid(x=True, y=True)
-        plot_widget.plotItem.setLabel("bottom", "Time", "s")
-        plot_widget.plotItem.setLabel("left", "Amplitude")
+        plot_widget.plotItem.setLabel("bottom", "Time", "s", pen=fg_color)
+        plot_widget.plotItem.setLabel("left", "Amplitude", pen=fg_color)
 
     def get_settings(self) -> List[EntityView.Setting]:
         return [self.__x_scale, self.__y_scale]
@@ -219,7 +217,7 @@ class SpectrogramView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return (self.__nfft, self.__overlap, self.__window, self.__color_map)
 
-    def render_view(
+    def _render_view(
         self, plot_widget: pg.PlotWidget, data: np.ndarray, samplerate: int, _=None
     ):
 
@@ -242,6 +240,8 @@ class SpectrogramView(ContainerView):
             if w:
                 Logger().warning("Warning in Spectrogram computation")
 
+            fg_color = self.palette_colors(plot_widget)[2]
+
             # Apply window correction factor for accurate power measurements
             correction_factor = self.__WINDOW_CORRECTION_FACTOR[window_name]
             Sxx_corrected = Sxx * correction_factor
@@ -249,17 +249,29 @@ class SpectrogramView(ContainerView):
             # Convert to dB, handle zeros/negatives
             Sxx_db = 10 * np.log10(np.maximum(Sxx_corrected, 1e-12))
 
-            # Create transform to map array indices to real time/frequency values
-            tr = QTransform()
-            tr.translate(t[0], f[0])  # Start at first time/freq values
-            tr.scale(
-                (t[-1] - t[0]) / (len(t) - 1),  # Time scaling
-                (f[-1] - f[0]) / (len(f) - 1),
-            )  # Frequency scaling
-
             # Create and configure ImageItem
             img = pg.ImageItem()
-            img.setImage(Sxx_db, levels=[np.min(Sxx_db), np.max(Sxx_db)])
+            img.setImage(Sxx_db.T, levels=[np.min(Sxx_db), np.max(Sxx_db)])
+
+            # Create transform to map array indices to real time/frequency values
+            # Logger().warning(
+            #     "t: len: {}\tt[0]: {}\tt[-1] {}".format(len(t), t[0], t[-1])
+            # )
+            # Logger().warning(
+            #     "f: len: {}\tf[0]: {}\tf[-1] {}".format(len(f), f[0], f[-1])
+            # )
+            # block_size = data.shape[0] / samplerate
+            # Logger().warning(f"block_size: {block_size}")
+            tr = QTransform()
+            tr.translate(0, 0)  # Start at first time/freq values
+            tr.scale(
+                (
+                    (self.__nfft.value / samplerate)
+                    if len(t) == 1
+                    else (t[-1] - t[0]) / (len(t) - 1)
+                ),  # Time scaling
+                (f[-1] - f[0]) / (len(f) - 1),  # Frequency scaling
+            )
             img.setTransform(tr)
 
             # Add colormap
@@ -277,8 +289,8 @@ class SpectrogramView(ContainerView):
             colorbar.setImageItem(img, insert_in=plot_widget.plotItem)
 
             plot_widget.plotItem.addItem(img)
-            plot_widget.plotItem.setLabel("bottom", "Time", "s")
-            plot_widget.plotItem.setLabel("left", "Frequency", "Hz")
+            plot_widget.plotItem.setLabel("bottom", "Time", "s", pen=fg_color)
+            plot_widget.plotItem.setLabel("left", "Frequency", "Hz", pen=fg_color)
 
         except Exception as e:
             Logger().warning(f"Error in Spectrogram rendering: {e}")
@@ -310,7 +322,7 @@ class PSDView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return (self.__nfft, self.__overlap, self.__window)
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -321,6 +333,8 @@ class PSDView(ContainerView):
             color = self.DEFAULT_COLOR
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
+
+        fg_color = self.palette_colors(plot_widget)[2]
 
         if np.any(np.isnan(data)) or np.any(np.isinf(data)):
             # PyQtGraph doesn't have direct text plotting, so we'll use a TextItem
@@ -355,8 +369,8 @@ class PSDView(ContainerView):
             )
             plot_widget.plotItem.setLogMode(x=True, y=False)  # Log frequency axis
             plot_widget.plotItem.showGrid(x=True, y=True)
-            plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz")
-            plot_widget.plotItem.setLabel("left", "PSD", "dB/Hz")
+            plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz", pen=fg_color)
+            plot_widget.plotItem.setLabel("left", "PSD", "dB/Hz", pen=fg_color)
 
         except Exception as e:
             Logger().warning(f"Error in PSD rendering: {e}")
@@ -377,7 +391,7 @@ class MagnitudeView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return []
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -388,6 +402,8 @@ class MagnitudeView(ContainerView):
             color = self.DEFAULT_COLOR
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
+
+        fg_color = self.palette_colors(plot_widget)[2]
 
         data = np.abs(data)
 
@@ -428,8 +444,8 @@ class MagnitudeView(ContainerView):
                     plot_widget.plotItem.addItem(line)
 
         plot_widget.plotItem.showGrid(x=True, y=True)
-        plot_widget.plotItem.setLabel("bottom", "Sample")
-        plot_widget.plotItem.setLabel("left", "Magnitude")
+        plot_widget.plotItem.setLabel("bottom", "Sample", pen=fg_color)
+        plot_widget.plotItem.setLabel("left", "Magnitude", pen=fg_color)
 
 
 # ===========================================================================
@@ -447,7 +463,7 @@ class PhaseView(ContainerView):
     def get_settings(self) -> List[EntityView.Setting]:
         return []
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -458,6 +474,8 @@ class PhaseView(ContainerView):
             color = self.DEFAULT_COLOR
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
+
+        fg_color = self.palette_colors(plot_widget)[2]
 
         data = np.angle(data)
 
@@ -498,8 +516,8 @@ class PhaseView(ContainerView):
                     plot_widget.plotItem.addItem(line)
 
         plot_widget.plotItem.showGrid(x=True, y=True)
-        plot_widget.plotItem.setLabel("bottom", "Sample")
-        plot_widget.plotItem.setLabel("left", "Phase", "radians")
+        plot_widget.plotItem.setLabel("bottom", "Sample", pen=fg_color)
+        plot_widget.plotItem.setLabel("left", "Phase", "radians", pen=fg_color)
 
 
 # ===========================================================================

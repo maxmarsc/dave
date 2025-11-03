@@ -70,9 +70,9 @@ class EntityPlots(QFrame):
             old_plot.deleteLater()
         self.__plots = []
 
-        Logger().warning(f"Re-plotting entity with {self.__model.channels}")
-        live_suffix = " (Live)" if self.__model.frozen else ""
-        frozen_suffix = " (Frozen)"
+        # Logger().warning(f"Re-plotting entity with {self.__model.channels}")
+        # live_suffix = " (Live)" if self.__model.frozen else ""
+        # frozen_suffix = " (Frozen)"
 
         if self.__model.frozen and not self.__model.is_view_superposable:
             # Create 2 plots per channel: live + frozen (non-superposable)
@@ -96,10 +96,11 @@ class EntityPlots(QFrame):
                     [live_plot, frozen_plot],
                     self.__global_settings.samplerate,
                     channel=channel,
+                    base_name=title,
                 )
 
-                live_plot.plotItem.setLabel("right", title + live_suffix)
-                frozen_plot.plotItem.setLabel("right", title + frozen_suffix)
+                # live_plot.plotItem.setLabel("right", title + live_suffix)
+                # frozen_plot.plotItem.setLabel("right", title + frozen_suffix)
         else:
             # Create 1 plot per channel: live + frozen
             for channel in range(self.__model.channels):
@@ -116,9 +117,10 @@ class EntityPlots(QFrame):
                     ],
                     self.__global_settings.samplerate,
                     channel=channel,
+                    base_name=title,
                 )
 
-                live_plot.plotItem.setLabel("right", title + live_suffix)
+                # live_plot.plotItem.setLabel("right", title + live_suffix)
 
         self.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT * len(self.__plots))
 

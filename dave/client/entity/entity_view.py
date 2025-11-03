@@ -2,6 +2,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Union
 
+from PySide6.QtWidgets import QWidget
+from PySide6.QtGui import QPalette, QColor
+
 # from matplotlib.axes import Axes
 # import matplotlib as mpl
 import pyqtgraph as pg
@@ -30,6 +33,7 @@ def hex_to_rgb_tuple(hex_color: str) -> Tuple[int, int, int]:
 
 class EntityView(ABC):
     DEFAULT_COLOR = hex_to_rgb_tuple("#1f76b4")
+    # __THEME_COLORS: Tuple[Tuple[int, int, int], Tuple[int, int, int]] = None
 
     @staticmethod
     @abstractmethod
@@ -41,14 +45,39 @@ class EntityView(ABC):
         return True
 
     @abstractmethod
-    def render_view(
+    def _render_view(
         self,
-        axes: pg.PlotWidget,
+        plot_widget: pg.PlotWidget,
         data: Any,
         samplerate: int,
         color: Union[None, str] = None,
     ):
         pass
+
+    def render_view(
+        self,
+        plot_widget: pg.PlotWidget,
+        data: Any,
+        samplerate: int,
+        name: str,
+        color: Union[None, str] = None,
+    ):
+        # Plot the graph
+        self._render_view(plot_widget, data, samplerate, color)
+
+        # Get default colors
+        bg_color, mid_color, fg_color = self.palette_colors(plot_widget)
+
+        # Setup axis colors
+        plot_widget.plotItem.getAxis("left").setPen(mid_color)
+        plot_widget.plotItem.getAxis("right").setPen(mid_color)
+        plot_widget.plotItem.getAxis("bottom").setPen(mid_color)
+
+        # Set background color
+        plot_widget.setBackground(bg_color)
+
+        # Setup graph name
+        plot_widget.plotItem.setLabel("right", name, pen=fg_color)
 
     @abstractmethod
     def get_settings(self) -> List[EntityView.Setting]:
@@ -57,6 +86,17 @@ class EntityView(ABC):
     @abstractmethod
     def update_setting(self, setting_name: str, setting_value: Any):
         pass
+
+    @staticmethod
+    def palette_colors(
+        widget: QWidget,
+    ) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
+        palette = widget.palette()
+        bg_color = hex_to_rgb_tuple(palette.color(QPalette.ColorRole.Window).name())
+        mid_color = hex_to_rgb_tuple(palette.color(QPalette.ColorRole.Mid).name())
+        fg_color = hex_to_rgb_tuple(palette.color(QPalette.ColorRole.WindowText).name())
+
+        return (bg_color, mid_color, fg_color)
 
     # ==========================================================================
     class Setting(ABC):

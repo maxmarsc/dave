@@ -39,7 +39,7 @@ class MagnitudeResponseView(IirView):
                     f"{setting_name} is not a valid MagnitudeResponseView setting"
                 )
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -51,16 +51,18 @@ class MagnitudeResponseView(IirView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
+        fg_color = self.palette_colors(plot_widget)[2]
+
         whole = self.__limit.value == "samplerate"
-        w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
+        w, h = signal.freqz_sos(data, self.__resolution.value, whole, fs=samplerate)
         magnitude = np.abs(h)
 
         plot_widget.plotItem.plot(w, magnitude, pen=pg.mkPen(color, width=2))
         plot_widget.plotItem.setLogMode(
             x=(self.__x_scale.value == "log"), y=(self.__y_scale.value == "log")
         )
-        plot_widget.plotItem.setLabel("left", "Magnitude")
-        plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz")
+        plot_widget.plotItem.setLabel("left", "Magnitude", pen=fg_color)
+        plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz", pen=fg_color)
         plot_widget.plotItem.showGrid(x=True, y=True)
 
     def get_settings(self) -> List[EntityView.Setting]:
@@ -91,7 +93,7 @@ class PhaseResponseView(IirView):
                     f"{setting_name} is not a valid PhaseResponseView setting"
                 )
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -103,14 +105,16 @@ class PhaseResponseView(IirView):
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
+        fg_color = self.palette_colors(plot_widget)[2]
+
         whole = self.__limit.value == "samplerate"
-        w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
+        w, h = signal.freqz_sos(data, self.__resolution.value, whole, fs=samplerate)
 
         plot_widget.plotItem.plot(w, np.angle(h), pen=pg.mkPen(color, width=2))
         plot_widget.plotItem.setRange(yRange=[-np.pi, np.pi])
         plot_widget.plotItem.setLogMode(x=(self.__x_scale.value == "log"), y=False)
-        plot_widget.plotItem.setLabel("left", "Phase", "radians")
-        plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz")
+        plot_widget.plotItem.setLabel("left", "Phase", "radians", pen=fg_color)
+        plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz", pen=fg_color)
         plot_widget.plotItem.showGrid(x=True, y=True)
 
     def get_settings(self) -> List[EntityView.Setting]:
@@ -141,7 +145,7 @@ class PolesZerosView(IirView):
                     f"{setting_name} is not a valid PolesZerosView setting"
                 )
 
-    def render_view(
+    def _render_view(
         self,
         plot_widget: pg.PlotWidget,
         data: np.ndarray,
@@ -152,6 +156,8 @@ class PolesZerosView(IirView):
             color = self.DEFAULT_COLOR
         else:
             color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
+
+        fg_color = self.palette_colors(plot_widget)[2]
 
         # Add unit circle
         circle = pg.CircleROI(
@@ -176,7 +182,7 @@ class PolesZerosView(IirView):
         plot_widget.plotItem.addItem(vline)
         plot_widget.plotItem.addItem(hline)
 
-        z, p, _ = signal.sos2zpk(data.sos)
+        z, p, _ = signal.sos2zpk(data)
 
         z_to_plot, z_duplicates = self.__find_duplicates(z)
         p_to_plot, p_duplicates = self.__find_duplicates(p)
@@ -233,8 +239,8 @@ class PolesZerosView(IirView):
 
         plot_widget.plotItem.showGrid(x=True, y=True)
         plot_widget.plotItem.setAspectLocked(True)
-        plot_widget.plotItem.setLabel("bottom", "Real Part")
-        plot_widget.plotItem.setLabel("left", "Imaginary Part")
+        plot_widget.plotItem.setLabel("bottom", "Real Part", pen=fg_color)
+        plot_widget.plotItem.setLabel("left", "Imaginary Part", pen=fg_color)
 
     def __find_duplicates(
         self, complex_points: np.ndarray[np.complex128]

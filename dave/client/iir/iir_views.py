@@ -49,7 +49,7 @@ class MagnitudeResponseView(IirView):
                     f"{setting_name} is not a valid MagnitudeResponseView setting"
                 )
 
-    def render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
 
@@ -91,7 +91,7 @@ class PhaseResponseView(IirView):
                     f"{setting_name} is not a valid PhaseResponseView setting"
                 )
 
-    def render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
 
@@ -132,7 +132,7 @@ class PolesZerosView(IirView):
                     f"{setting_name} is not a valid PolesZerosView setting"
                 )
 
-    def render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
+    def _render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
         if color is None:
             color = DEFAULT_COLOR
 
