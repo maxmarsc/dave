@@ -93,39 +93,39 @@ for PY3 in $PY3_VERSIONS; do
         continue
     fi
 
-    # Check for tkinter
-    TKINTER_CHECK_CALL="$PY3 -c 'import tkinter;tkinter.Tk()'"
-    if ! eval "$TKINTER_CHECK_CALL" > /dev/null 2>&1 ; then
-        continue
-    fi
+    # # Check for tkinter
+    # TKINTER_CHECK_CALL="$PY3 -c 'import tkinter;tkinter.Tk()'"
+    # if ! eval "$TKINTER_CHECK_CALL" > /dev/null 2>&1 ; then
+    #     continue
+    # fi
 
-    # Check for TCL version
-    TCL_VERSION=$("$PY3" -c "import tkinter;print(tkinter.TclVersion, end='')")
-    if version_ge "$TCL_VERSION" "9.0";then
-      >&2 echo "Skipping $VERSION because of Tcl version $TCL_VERSION"
-      continue
-    fi
+    # # Check for TCL version
+    # TCL_VERSION=$("$PY3" -c "import tkinter;print(tkinter.TclVersion, end='')")
+    # if version_ge "$TCL_VERSION" "9.0";then
+    #   >&2 echo "Skipping $VERSION because of Tcl version $TCL_VERSION"
+    #   continue
+    # fi
 
     SELECTED_PY3="$PY3"
     break
 done
 
 if [[ "$SELECTED_PY3" == "" ]];then
-  >&2 echo "Failed to find a working python >= 3.10 installation with working venv and tkinter modules"
-  if [[ "$(uname)" == ""* ]]; then
-        >&2 echo ""
-        >&2 echo "On MacOS python>=3.12 installed with Homebrew is known to come with Tcl 9.0 which breaks matplotlib"
-        >&2 echo "If you have such an installation I recommend installing a 3.10 or 3.11 version of python-tk"
-        >&2 echo "You can install tkinter using homebrew or macports"
-        >&2 printf "\tbrew install python-tk@3.10 \nor\n"
-        >&2 printf "\tbrew install python-tk@3.11 \nor\n"
-        >&2 printf "\tsudo port install py-tkinter # >= 3.10\n"
-  fi
+  >&2 echo "Failed to find a working python >= 3.10 installation with working venv module"
+  # if [[ "$(uname)" == ""* ]]; then
+  #       >&2 echo ""
+  #       >&2 echo "On MacOS python>=3.12 installed with Homebrew is known to come with Tcl 9.0 which breaks matplotlib"
+  #       >&2 echo "If you have such an installation I recommend installing a 3.10 or 3.11 version of python-tk"
+  #       >&2 echo "You can install tkinter using homebrew or macports"
+  #       >&2 printf "\tbrew install python-tk@3.10 \nor\n"
+  #       >&2 printf "\tbrew install python-tk@3.11 \nor\n"
+  #       >&2 printf "\tsudo port install py-tkinter # >= 3.10\n"
+  # fi
   exit 1
 fi
 
 echo "Selection $SELECTED_PY3 for dave installation"
-echo "With Tcl ${TCL_VERSION}"
+# echo "With Tcl ${TCL_VERSION}"
 echo ""
 
 #============================   DAVE folder   ==================================
