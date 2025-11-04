@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'  
+NC='\033[0m'           # No Color (reset to default)
+
 show_help() {
     echo "usage: $(basename "$0") [-h] [-b BRANCH]"
     echo ""
@@ -17,10 +22,12 @@ show_help() {
 }
 
 show_intro() {
+  echo -e "${GREEN}"
   echo "Hello ! This is the installation script for dave. First thanks a lot for trying it out"
   echo "Please note that DAVE is still in early development. If you encounter any issue"
   echo "or have any suggestion, please visit https://github.com/maxmarsc/dave"
   echo ""
+  echo -e "${YELLOW}"
   echo "I'm working hard to make this project stable HOWEVER if you encounter an issue during or after the installation DON'T PANIC"
   echo "To revert the installation process you can simply follow these commands :"
   printf "\trm -rf ~/.dave     # Will remove the dave environment and its module\n"
@@ -28,6 +35,7 @@ show_intro() {
   printf "\trm -rf ~/.lldbinit # Will remove lldb bindings\n"
   printf "\nIf you don't wanna remove the init files of your debuggers for any reason, just edit out the lines between --- DAVE BEGIN --- and --- DAVE END ---"
   printf "\n\nThis message should disappear soon enough, happy coding !\n\n"
+  echo -e "${NC}"
 
   read -rp "Type Enter to continue" response
 }
@@ -37,7 +45,9 @@ PIP_SRC="davext"
 # Check for dev flag
 if [[ "$#" -eq 2 && "$1" == "-b" ]]; then
     PIP_SRC="git+ssh://git@github.com/maxmarsc/dave.git@$2"
+    echo -e "${YELLOW}"
     echo "Installing python module from git, for advised developers only"
+    echo -e "${NC}"
 # Check for help flag
 elif  [[ ("$#" -eq 1 && "$1" == "-h") || "$#" -gt 0 ]]; then
     show_help
@@ -50,11 +60,17 @@ fi
 
 #============================   OS detection   =================================
 if [[ "$(uname)" == "Darwin"* ]]; then
+    echo -e "${GREEN}"
     echo "MacOS detected"
+    echo -e "${NC}"
 elif [[ "$(uname)" == "Linux"* ]]; then
+    echo -e "${GREEN}"
     echo "Linux detected"
+    echo -e "${NC}"
 else
+    echo -e "${RED}"
     echo "ERROR : Unsupported OS $(uname)"
+    echo -e "${NC}"
     exit 1
 fi
 
@@ -93,39 +109,20 @@ for PY3 in $PY3_VERSIONS; do
         continue
     fi
 
-    # # Check for tkinter
-    # TKINTER_CHECK_CALL="$PY3 -c 'import tkinter;tkinter.Tk()'"
-    # if ! eval "$TKINTER_CHECK_CALL" > /dev/null 2>&1 ; then
-    #     continue
-    # fi
-
-    # # Check for TCL version
-    # TCL_VERSION=$("$PY3" -c "import tkinter;print(tkinter.TclVersion, end='')")
-    # if version_ge "$TCL_VERSION" "9.0";then
-    #   >&2 echo "Skipping $VERSION because of Tcl version $TCL_VERSION"
-    #   continue
-    # fi
-
     SELECTED_PY3="$PY3"
     break
 done
 
 if [[ "$SELECTED_PY3" == "" ]];then
-  >&2 echo "Failed to find a working python >= 3.10 installation with working venv module"
-  # if [[ "$(uname)" == ""* ]]; then
-  #       >&2 echo ""
-  #       >&2 echo "On MacOS python>=3.12 installed with Homebrew is known to come with Tcl 9.0 which breaks matplotlib"
-  #       >&2 echo "If you have such an installation I recommend installing a 3.10 or 3.11 version of python-tk"
-  #       >&2 echo "You can install tkinter using homebrew or macports"
-  #       >&2 printf "\tbrew install python-tk@3.10 \nor\n"
-  #       >&2 printf "\tbrew install python-tk@3.11 \nor\n"
-  #       >&2 printf "\tsudo port install py-tkinter # >= 3.10\n"
-  # fi
+  echo -e "${RED}"
+  >&2 echo "Failed to find a working python >= 3.10 installation with a working venv module"
+  echo -e "${NC}"
   exit 1
 fi
 
-echo "Selection $SELECTED_PY3 for dave installation"
-# echo "With Tcl ${TCL_VERSION}"
+echo -e "${GREEN}"
+echo "Selected $SELECTED_PY3 for dave installation"
+echo -e "${NC}"
 echo ""
 
 #============================   DAVE folder   ==================================
@@ -137,8 +134,10 @@ if [[ -d "$DAVE_DIR" ]]; then
 
     # if the only thing left is the custom folder it's ok
     if [[ $ITEM_COUNT -ne 1 || ! -d "$DAVE_DIR/custom" ]];then
+        echo -e "${RED}"
         echo "Previous installation of dave found in $DAVE_DIR. Aborting"
         echo "You're only allowed to keep $DAVE_DIR/custom between installations"
+        echo -e "${NC}"
         exit 1
     fi
 fi
@@ -148,7 +147,9 @@ mkdir -p "$DAVE_DIR"
 
 #============================   DAVE venv   ====================================
 # Create the venv
+echo -e "${GREEN}"
 echo "Creating custom dave venv..."
+echo -e "${NC}"
 "$SELECTED_PY3" -m venv "$DAVE_DIR/venv"
 ACTIVATE_SCRIPT="$HOME/.dave/venv/bin/activate"
 # Activate the venv
@@ -156,7 +157,9 @@ ACTIVATE_SCRIPT="$HOME/.dave/venv/bin/activate"
 source "$ACTIVATE_SCRIPT"
 
 # Install dave package
+echo -e "${GREEN}"
 echo "Installing dave module..."
+echo -e "${NC}"
 pip install "$PIP_SRC"
 deactivate
 
@@ -182,12 +185,18 @@ zsh_path_install() {
         # Check if the command already exists in ~/.zshrc
         if ! grep -Fxq "$PATH_COMMAND" ~/.zshrc; then
             echo "$PATH_COMMAND" >> ~/.zshrc
+            echo -e "${GREEN}"
             echo "Added to ~/.zshrc: $PATH_COMMAND"
+            echo -e "${NC}"
         else
+            echo -e "${YELLOW}"
             echo "The command is already present in ~/.zshrc. Skipping"
+            echo -e "${NC}"
         fi
     else
+        echo -e "${GREEN}"
         echo "Skipping ~/.zshrc"
+        echo -e "${NC}"
     fi
 }
 
@@ -202,12 +211,18 @@ bash_path_install() {
         # Check if the command already exists in ~/.zshrc
         if ! grep -Fxq "$PATH_COMMAND" ~/.bashrc; then
             echo "$PATH_COMMAND" >> ~/.bashrc
+            echo -e "${GREEN}"
             echo "Added to ~/.bashrc: $PATH_COMMAND"
+            echo -e "${NC}"
         else
+            echo -e "${YELLOW}"
             echo "The command is already present in ~/.bashrc. Skipping"
+            echo -e "${NC}"
         fi
     else
+        echo -e "${GREEN}"
         echo "Skipping ~/.bashrc"
+        echo -e "${NC}"
     fi
 }
 
@@ -252,6 +267,8 @@ fi
 automatic_bind
 
 echo ""
+echo -e "${GREEN}"
 echo "DAVE was successfully installed. To access the dave shell command, source your .bashrc/.zshrc file"
 echo ""
 echo "Don't forget to check the User Guide : https://github.com/maxmarsc/dave/blob/main/USER_GUIDE.md"
+echo -e "${NC}"
