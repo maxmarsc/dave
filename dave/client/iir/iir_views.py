@@ -1,20 +1,10 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 import numpy as np
 from scipy import signal
 from warnings import catch_warnings, warn
+import pyqtgraph as pg
 
-from matplotlib.axes import Axes
-from matplotlib import patches
-
-# from matplotlib.pyplot import axvline, axhline
-
-from dave.common.raw_iir import RawIir
-from dave.common.logger import Logger
-from .raw_to_numpy import InternalNpy
-
-from ..entity.entity_view import EntityView
-
-DEFAULT_COLOR = "#1f77b4"
+from ..entity.entity_view import EntityView, hex_to_rgb_tuple
 
 
 # ===========================================================================
@@ -49,19 +39,31 @@ class MagnitudeResponseView(IirView):
                     f"{setting_name} is not a valid MagnitudeResponseView setting"
                 )
 
-    def _render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
+    def _render_view(
+        self,
+        plot_widget: pg.PlotWidget,
+        data: np.ndarray,
+        samplerate: int,
+        color: Union[None, str] = None,
+    ):
         if color is None:
-            color = DEFAULT_COLOR
+            color = self.DEFAULT_COLOR
+        else:
+            color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
+
+        fg_color = self.palette_colors(plot_widget)[2]
 
         whole = self.__limit.value == "samplerate"
-        w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
+        w, h = signal.freqz_sos(data, self.__resolution.value, whole, fs=samplerate)
         magnitude = np.abs(h)
 
-        axes.plot(w, magnitude, color=color)
-        axes.set_xscale(self.__x_scale.value)
-        axes.set_yscale(self.__y_scale.value)
-        axes.set_ylabel("Magnitude")
-        axes.grid(visible=True, which="both")
+        plot_widget.plotItem.plot(w, magnitude, pen=pg.mkPen(color, width=2))
+        plot_widget.plotItem.setLogMode(
+            x=(self.__x_scale.value == "log"), y=(self.__y_scale.value == "log")
+        )
+        plot_widget.plotItem.setLabel("left", "Magnitude", pen=fg_color)
+        plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz", pen=fg_color)
+        plot_widget.plotItem.showGrid(x=True, y=True)
 
     def get_settings(self) -> List[EntityView.Setting]:
         return [self.__x_scale, self.__y_scale, self.__resolution, self.__limit]
@@ -91,18 +93,29 @@ class PhaseResponseView(IirView):
                     f"{setting_name} is not a valid PhaseResponseView setting"
                 )
 
-    def _render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
+    def _render_view(
+        self,
+        plot_widget: pg.PlotWidget,
+        data: np.ndarray,
+        samplerate: int,
+        color: Union[None, str] = None,
+    ):
         if color is None:
-            color = DEFAULT_COLOR
+            color = self.DEFAULT_COLOR
+        else:
+            color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
+
+        fg_color = self.palette_colors(plot_widget)[2]
 
         whole = self.__limit.value == "samplerate"
-        w, h = signal.freqz_sos(data.sos, self.__resolution.value, whole, fs=samplerate)
+        w, h = signal.freqz_sos(data, self.__resolution.value, whole, fs=samplerate)
 
-        axes.plot(w, np.angle(h), color=color)
-        axes.set_ylim(-np.pi, np.pi)
-        axes.set_xscale(self.__x_scale.value)
-        axes.set_ylabel("Phase")
-        axes.grid(visible=True, which="both")
+        plot_widget.plotItem.plot(w, np.angle(h), pen=pg.mkPen(color, width=2))
+        plot_widget.plotItem.setRange(yRange=[-np.pi, np.pi])
+        plot_widget.plotItem.setLogMode(x=(self.__x_scale.value == "log"), y=False)
+        plot_widget.plotItem.setLabel("left", "Phase", "radians", pen=fg_color)
+        plot_widget.plotItem.setLabel("bottom", "Frequency", "Hz", pen=fg_color)
+        plot_widget.plotItem.showGrid(x=True, y=True)
 
     def get_settings(self) -> List[EntityView.Setting]:
         return [self.__x_scale, self.__resolution, self.__limit]
@@ -132,56 +145,102 @@ class PolesZerosView(IirView):
                     f"{setting_name} is not a valid PolesZerosView setting"
                 )
 
-    def _render_view(self, axes: Axes, data: InternalNpy, samplerate: int, color=None):
+    def _render_view(
+        self,
+        plot_widget: pg.PlotWidget,
+        data: np.ndarray,
+        samplerate: int,
+        color: Union[None, str] = None,
+    ):
         if color is None:
-            color = DEFAULT_COLOR
+            color = self.DEFAULT_COLOR
+        else:
+            color: Tuple[int, int, int] = hex_to_rgb_tuple(color)
 
-        # Add unit circle and zero axes
-        unit_circle = patches.Circle(
-            (0, 0), radius=1, fill=False, color="black", ls="solid", alpha=0.1
+        fg_color = self.palette_colors(plot_widget)[2]
+
+        # Add unit circle
+        circle = pg.CircleROI(
+            [0, 0],
+            size=[2, 2],
+            movable=False,
+            rotatable=False,
+            resizable=False,
+            pen=pg.mkPen("white", width=1),
         )
-        axes.add_patch(unit_circle)
-        axes.axvline(0, color="0.7")
-        axes.axhline(0, color="0.7")
+        circle.removeHandle(0)
+        circle.setPos([-1, -1])  # Center at origin
+        plot_widget.plotItem.addItem(circle)
 
-        z, p, _ = signal.sos2zpk(data.sos)
+        # Add zero axes (vertical and horizontal lines through origin)
+        vline = pg.InfiniteLine(
+            pos=0, angle=90, pen=pg.mkPen(color=(180, 180, 180), width=1)
+        )
+        hline = pg.InfiniteLine(
+            pos=0, angle=0, pen=pg.mkPen(color=(180, 180, 180), width=1)
+        )
+        plot_widget.plotItem.addItem(vline)
+        plot_widget.plotItem.addItem(hline)
+
+        z, p, _ = signal.sos2zpk(data)
 
         z_to_plot, z_duplicates = self.__find_duplicates(z)
         p_to_plot, p_duplicates = self.__find_duplicates(p)
 
-        # Plot the poles and set marker properties
-        axes.plot(p_to_plot.real, p_to_plot.imag, "x", markersize=9, color=color)
+        # Plot poles as X markers
+        if len(p_to_plot) > 0:
+            poles_scatter = pg.ScatterPlotItem(
+                pos=np.column_stack([p_to_plot.real, p_to_plot.imag]),
+                symbol="x",
+                size=12,
+                pen=pg.mkPen(color),
+                brush=pg.mkBrush(color),
+            )
+            plot_widget.plotItem.addItem(poles_scatter)
 
-        # Plot the zeros and set marker properties
-        axes.plot(
-            z_to_plot.real,
-            z_to_plot.imag,
-            "o",
-            markersize=9,
-            color="none",
-            markeredgecolor=color,
+        # Plot zeros as O markers
+        if len(z_to_plot) > 0:
+            zeros_scatter = pg.ScatterPlotItem(
+                pos=np.column_stack([z_to_plot.real, z_to_plot.imag]),
+                symbol="o",
+                size=12,
+                pen=pg.mkPen(color, width=3),
+                brush=None,  # Hollow circles
+            )
+            plot_widget.plotItem.addItem(zeros_scatter)
+
+        # Add duplicate markers as text
+        for coords, count in z_duplicates.items():
+            text_item = pg.TextItem(f"^{count}", anchor=(0, 0), color=color)
+            text_item.setPos(coords.real, coords.imag)
+            plot_widget.plotItem.addItem(text_item)
+
+        for coords, count in p_duplicates.items():
+            text_item = pg.TextItem(f"^{count}", anchor=(0, 0), color=color)
+            text_item.setPos(coords.real, coords.imag)
+            plot_widget.plotItem.addItem(text_item)
+
+        # Create legend
+        legend = pg.LegendItem(offset=(10, 10), pen="white")
+        legend.setParentItem(plot_widget.plotItem)
+        legend.anchor((1, 0), (0.90, 0.05))  # Top right corner
+
+        # Add legend entries
+        legend.addItem(
+            pg.ScatterPlotItem(
+                symbol="x", size=12, pen=pg.mkPen(color), brush=pg.mkBrush(color)
+            ),
+            "poles",
+        )
+        legend.addItem(
+            pg.ScatterPlotItem(symbol="o", size=12, pen=pg.mkPen(color), brush=None),
+            "zeros",
         )
 
-        # Plot the duplicate markers
-        for coords, count in z_duplicates.items():
-            axes.text(
-                coords.real,
-                coords.imag,
-                r" ${}^{" + str(count) + "}$",
-                fontsize=13,
-                color=color,
-            )
-        for coords, count in p_duplicates.items():
-            axes.text(
-                coords.real,
-                coords.imag,
-                r" ${}^{" + str(count) + "}$",
-                fontsize=13,
-                color=color,
-            )
-
-        axes.grid(visible=True, which="both")
-        axes.set_aspect("equal", adjustable="box")
+        plot_widget.plotItem.showGrid(x=True, y=True)
+        plot_widget.plotItem.setAspectLocked(True)
+        plot_widget.plotItem.setLabel("bottom", "Real Part", pen=fg_color)
+        plot_widget.plotItem.setLabel("left", "Imaginary Part", pen=fg_color)
 
     def __find_duplicates(
         self, complex_points: np.ndarray[np.complex128]

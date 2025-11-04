@@ -1,120 +1,170 @@
-import customtkinter as ctk
-import tkinter as tk
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QComboBox,
+    QLineEdit,
+    QCheckBox,
+    QWidget,
+)
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from typing import TYPE_CHECKING
 
+from dave.client.container.container_model import ContainerModel
 from dave.common.logger import Logger
-from dave.client.tooltip import Tooltip
-from dave.client.entity.entity_settings_frame import EntitySettingsFrame
-from .container_model import ContainerModel
 
 
-class ContainerSettingsFrame(EntitySettingsFrame):
+class ContainerSettingsFrame(QFrame):
     """
     Contains all settings specific to a container
     """
 
-    def __init__(self, master: tk.Misc, model: ContainerModel):
-        super().__init__(master)
+    def __init__(self, parent: QWidget, model: ContainerModel):
+        super().__init__(parent)
+
+        # Store model reference
         self.__model = model
 
-        # Layout selection
-        self.__layout_var = tk.StringVar(value=self.__model.selected_layout.value)
-        self.__layout_var.trace_add("write", self.layout_var_callback)
-        self.__layout_menu = ctk.CTkOptionMenu(
-            self,
-            values=[layout.value for layout in self.__model.possible_layouts],
-            variable=self.__layout_var,
-            font=self._font,
-            width=125,
-        )
-        Tooltip(self.__layout_menu, text="Select data layout of the container")
-        self.__layout_menu.pack(side=tk.LEFT, padx=(5, 5))
+        # Create font (assuming _font was available in parent)
+        self._font = QFont()
 
-        # Number of channels
-        self.__channel_var = tk.StringVar(value=str(self.__model.channels))
-        self.__channel_label = ctk.CTkLabel(self, text=f"channels :", font=self._font)
-        self.__channel_entry = ctk.CTkEntry(
-            self,
-            textvariable=self.__channel_var,
-            width=40,
-            font=self._font,
-            placeholder_text=str(self.__model.channels),
-            state=("normal" if self.channel_entry_enabled() else "disabled"),
-        )
-        self.__channel_entry.bind("<Return>", self.channel_var_callback)
-        self.__channel_label.pack(side=tk.LEFT, padx=(5, 5))
-        self.__channel_entry.pack(side=tk.LEFT, padx=(5, 5))
+        # Set transparent background to match other settings frames
+        self.setStyleSheet("ContainerSettingsFrame { background-color: transparent; }")
 
-        # Interleaved switch
-        self.__channel_interleaved_var = tk.BooleanVar(value=self.__model.interleaved)
-        self.__channel_interleaved_var.trace_add("write", self.interleaved_var_callback)
-        self.__channel_interleaved_switch = ctk.CTkSwitch(
-            self,
-            text="Interleaved",
-            font=self._font,
-            variable=self.__channel_interleaved_var,
-            onvalue=True,
-            offvalue=False,
-            state=("normal" if self.interleaved_enabled() else "disabled"),
-        )
-        self.__channel_interleaved_switch.pack(side=tk.LEFT, padx=(5, 5))
+        self._setup_layout()
 
-        # Mid/Side switch
-        self.__channel_midside_var = tk.BooleanVar(value=self.__model.mid_side)
-        self.__channel_midside_var.trace_add("write", self.midside_var_callback)
-        self.__channel_mid_side_switch = ctk.CTkSwitch(
-            self,
-            text="Mid/Side",
-            font=self._font,
-            variable=self.__channel_midside_var,
-            onvalue=True,
-            offvalue=False,
-            state="normal" if self.__model.channels == 2 else "disabled",
-        )
-        self.__channel_mid_side_switch.pack(side=tk.LEFT, padx=(5, 5))
+    def _setup_layout(self) -> None:
+        """Setup horizontal layout and widgets"""
+        # Create horizontal layout (replaces pack with side=LEFT)
+        layout = QHBoxLayout()
+        self.setLayout(layout)
 
-    def layout_var_callback(self, *_):
+        # Set margins and spacing to match tkinter padding
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
+
+        self._create_widgets(layout)
+
+    def _create_widgets(self, layout: QHBoxLayout) -> None:
+        """Create all widgets and add to layout"""
+
+        # Layout selection dropdown (replaces CTkOptionMenu)
+        self.__layout_menu = QComboBox()
+        self.__layout_menu.setFont(self._font)
+        self.__layout_menu.setFixedWidth(95)
+        layout_values = [layout.value for layout in self.__model.possible_layouts]
+        self.__layout_menu.addItems(layout_values)
+        self.__layout_menu.setCurrentText(self.__model.selected_layout.value)
+        self.__layout_menu.setToolTip("Select data layout of the container")
+
+        # Connect signal (replaces StringVar trace)
+        self.__layout_menu.currentTextChanged.connect(self._layout_changed)
+
+        layout.addWidget(self.__layout_menu)
+
+        # Number of channels label and entry
+        self.__channel_label = QLabel("channels :")
+        self.__channel_label.setFont(self._font)
+
+        self.__channel_entry = QLineEdit()
+        self.__channel_entry.setFont(self._font)
+        self.__channel_entry.setFixedWidth(40)
+        self.__channel_entry.setText(str(self.__model.channels))
+        self.__channel_entry.setPlaceholderText(str(self.__model.channels))
+        self.__channel_entry.setEnabled(self._channel_entry_enabled())
+
+        # Connect Return key (replaces bind("<Return>"))
+        self.__channel_entry.returnPressed.connect(self._channel_changed)
+        self.__model.channels_signal.connect(self._on_channels_signal)
+
+        layout.addWidget(self.__channel_label)
+        layout.addWidget(self.__channel_entry)
+
+        # Interleaved checkbox (replaces CTkSwitch)
+        self.__channel_interleaved_switch = QCheckBox("Interleaved")
+        self.__channel_interleaved_switch.setFont(self._font)
+        self.__channel_interleaved_switch.setChecked(self.__model.interleaved)
+        self.__channel_interleaved_switch.setEnabled(self._interleaved_enabled())
+
+        # Connect signal (replaces BooleanVar trace)
+        self.__channel_interleaved_switch.stateChanged.connect(
+            self._interleaved_changed
+        )
+
+        layout.addWidget(self.__channel_interleaved_switch)
+
+        # Mid/Side checkbox (replaces CTkSwitch)
+        self.__channel_mid_side_switch = QCheckBox("Mid/Side")
+        self.__channel_mid_side_switch.setFont(self._font)
+        self.__channel_mid_side_switch.setChecked(self.__model.mid_side)
+        self.__channel_mid_side_switch.setEnabled(self.__model.channels == 2)
+
+        # Connect signal (replaces BooleanVar trace)
+        self.__channel_mid_side_switch.stateChanged.connect(self._midside_changed)
+
+        layout.addWidget(self.__channel_mid_side_switch)
+
+    def _layout_changed(self, new_layout: str) -> None:
+        """Handle layout dropdown change (replaces layout_var_callback)"""
         # Update the model
-        self.__model.update_layout(self.__layout_var.get())
+        self.__model.update_layout(new_layout)
 
         # Trigger a redraw
-        self.update_widgets()
+        self.__update_widgets()
 
-    def interleaved_var_callback(self, *_):
-        self.__model.interleaved = self.__channel_interleaved_var.get()
+    def _interleaved_changed(self, state: int) -> None:
+        """Handle interleaved checkbox change (replaces interleaved_var_callback)"""
+        self.__model.interleaved = bool(state == Qt.CheckState.Checked.value)
 
-    def midside_var_callback(self, *_):
-        self.__model.mid_side = self.__channel_midside_var.get()
+    def _midside_changed(self, state: int) -> None:
+        """Handle mid/side checkbox change (replaces midside_var_callback)"""
+        self.__model.mid_side = bool(state == Qt.CheckState.Checked.value)
 
-    def interleaved_enabled(self) -> bool:
+    def _interleaved_enabled(self) -> bool:
+        """Check if interleaved switch should be enabled"""
         return not self.__model.are_dimensions_fixed and self.__model.channels != 1
 
-    def channel_entry_enabled(self) -> bool:
+    def _channel_entry_enabled(self) -> bool:
+        """Check if channel entry should be enabled"""
         return not self.__model.are_dimensions_fixed
 
-    def channel_var_callback(self, *_):
-        new_val = self.__channel_var.get()
+    def _channel_changed(self) -> None:
+        """Handle channel entry Return key"""
+        new_val = self.__channel_entry.text().strip()
+
+        # Temporarily disconnect signal to avoid recursion
+        self.__model.channels_signal.disconnect(self._on_channels_signal)
         if not self.__model.validate_and_update_channel(new_val):
             Logger().warning(
                 f"{new_val} is not a valid channel number for this container"
             )
-            self.__channel_var.set(str(self.__model.channels))
+            # Rollback to previous value
+            self.__channel_entry.setText(str(self.__model.channels))
 
-    def update_widgets(self):
-        # Update the layout selection
-        self.__layout_menu.configure(
-            values=[layout.value for layout in self.__model.possible_layouts]
-        )
+        self.__model.channels_signal.connect(self._on_channels_signal)
 
-        # Update channel selector
-        self.__channel_entry.configure(
-            state=("normal" if self.channel_entry_enabled() else "disabled"),
-        )
+        # Trigger a redraw
+        self.__update_widgets()
 
-        # Update interleaved switch
-        self.__channel_interleaved_switch.configure(
-            state=("normal" if self.interleaved_enabled() else "disabled")
-        )
-        # Update mid/side switch
-        self.__channel_mid_side_switch.configure(
-            state="normal" if self.__model.channels == 2 else "disabled"
-        )
+    def _on_channels_signal(self, new_value: int):
+        """Handle channel change from model side"""
+        self.__channel_entry.setText(str(new_value))
+        # Trigger a redraw
+        self.__update_widgets()
+
+    def __update_widgets(self) -> None:
+        """Update widgets when model state changes"""
+
+        # Update channel entry state
+        self.__channel_entry.setEnabled(self._channel_entry_enabled())
+
+        # Update interleaved switch state
+        self.__channel_interleaved_switch.setEnabled(self._interleaved_enabled())
+
+        # Update mid/side switch state
+        self.__channel_mid_side_switch.setEnabled(self.__model.channels == 2)
+
+        # Update checkbox states if model values changed
+        self.__channel_interleaved_switch.setChecked(self.__model.interleaved)
+        self.__channel_mid_side_switch.setChecked(self.__model.mid_side)

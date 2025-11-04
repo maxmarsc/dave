@@ -15,7 +15,7 @@ from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 
 from .raw_to_numpy import InternalNpy, raw_to_npy
-from .iir_views_new import (
+from .iir_views import (
     IirView,
     MagnitudeResponseView,
     PhaseResponseView,
@@ -37,7 +37,7 @@ class IirModel(EntityModel):
 
     @staticmethod
     def settings_frame_class() -> type[EntitySettingsFrame]:
-        from .iir_settings_frame_new import IirSettingsFrame
+        from .iir_settings_frame import IirSettingsFrame
 
         return IirSettingsFrame
 

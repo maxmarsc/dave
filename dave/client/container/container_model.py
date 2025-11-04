@@ -22,7 +22,7 @@ from .raw_to_numpy import (
     raw_container_to_numpy,
 )
 
-from .container_views_new import (
+from .container_views import (
     ContainerView,
     WaveformView,
     CurveView,
@@ -72,7 +72,7 @@ class ContainerModel(EntityModel):
 
     @staticmethod
     def settings_frame_class() -> type[EntitySettingsFrame]:
-        from .container_settings_frames_new import ContainerSettingsFrame
+        from .container_settings_frames import ContainerSettingsFrame
 
         return ContainerSettingsFrame
 

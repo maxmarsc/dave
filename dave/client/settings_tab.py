@@ -1,16 +1,29 @@
-from typing import Callable, Dict, List, Tuple
-
-
-import tkinter as tk
-import customtkinter as ctk
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QScrollArea,
+    QFrame,
+    QGridLayout,
+    QLabel,
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QPushButton,
+    QLineEdit,
+    QScrollBar,
+    QSizePolicy,
+)
+from PySide6.QtCore import Qt, QObject, QEvent
+from PySide6.QtGui import QFont
+from typing import Dict, List, Tuple, Union, override
 
 from dave.common.logger import Logger
 
-from .entity.entity_view import EntityView
+from dave.client.entity.entity_model import EntityModel
+from dave.client.global_settings import GlobalSettings
 
-from .entity.entity_model import EntityModel
-from .tooltip import Tooltip
-from .global_settings import GlobalSettings
+from .entity.entity_view import EntityView
+from .in_scope_dict import InScopeSet
 
 
 # ==============================   SettingsTab  =================================
@@ -22,83 +35,166 @@ class SettingsTab:
 
     def __init__(
         self,
-        master,
+        parent: QWidget,
         entity_models: Dict[int, EntityModel],
+        in_scope_models: InScopeSet,
         global_settings: GlobalSettings,
     ):
-        self.__master = master
+        self.__parent = parent
         self.__entity_models = entity_models
         self.__global_settings = global_settings
         self.__entity_settings: Dict[int, EntitySettings] = dict()
         self.__empty_label = None
-        self.__bold_font = ctk.CTkFont(size=18, weight="bold")
+
+        # Create font
+        self.__bold_font = QFont()
+
+        in_scope_models.scope_signal.connect(self._on_scope_signal)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup the main layout and widgets"""
+        # Create main layout for the parent widget
+        main_layout = QVBoxLayout()
+        self.__parent.setLayout(main_layout)
+
+        # Create global settings frame
         self.__global_settings_frame = GlobalSettingsFrame(
-            self.__master, global_settings
+            self.__parent, self.__global_settings
         )
-        self.__global_settings_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
-        self.__separator = ctk.CTkFrame(
-            self.__master,
-            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
-            width=100,
-            height=6,
-            corner_radius=3,
-        )
-        self.__settings_scrollable_frame = ctk.CTkScrollableFrame(
-            self.__master,
-            corner_radius=0,
-            orientation="vertical",
-        )
-        self.__separator.pack(side=tk.TOP, anchor=tk.N, pady=(3, 5))
-        self.__settings_scrollable_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-        self.update_widgets()
+        main_layout.addWidget(self.__global_settings_frame)
 
-    def add_model(self, model: EntityModel):
-        assert model.id not in self.__entity_settings
-        assert model.id in self.__entity_models
-        self.__entity_settings[model.id] = EntitySettings(
-            self.__settings_scrollable_frame,
-            model,
-            self.__global_settings,
+        # Create separator
+        self.__separator = QFrame()
+        self.__separator.setFrameShape(QFrame.Shape.HLine)
+        self.__separator.setFrameShadow(QFrame.Shadow.Sunken)
+        self.__separator.setFixedHeight(6)
+
+        main_layout.addWidget(self.__separator)
+
+        # Create scrollable area
+        self.__scroll_area = QScrollArea()
+        self.__scroll_area.setWidgetResizable(True)
+        self.__scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.__scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
         )
 
-    def delete_model(self, id: int):
-        """
-        Calling this will remove the SettingsFrame from the given entity.
+        # Create content widget for the scroll area
+        self.__scroll_content = QWidget()
+        self.__scroll_layout = QVBoxLayout()
+        self.__scroll_layout.setDirection(QVBoxLayout.Direction.TopToBottom)
+        self.__scroll_content.setLayout(self.__scroll_layout)
 
-        This will never delete the model itself, at is is the responsibility
-        of the main GUI handler
-        """
-        # Warning : This will mark the entity for deletion, this should
-        # not be called when just being out of scope
-        if id in self.__entity_settings:
-            self.__entity_settings[id].destroy()
-            del self.__entity_settings[id]
+        # Make transparent
+        self.__scroll_area.setStyleSheet(
+            """
+            QScrollArea {
+                background-color: transparent;
+                border: none;
+            }
+            """
+        )
 
-    def update_widgets(self):
-        for id, entity in self.__entity_models.items():
-            if id not in self.__entity_settings and entity.in_scope:
-                # Back in scope, let's add it
-                self.add_model(entity)
-            elif id in self.__entity_settings and not entity.in_scope:
-                # Left the scope, let's remove it
-                self.__entity_settings[id].destroy()
-                del self.__entity_settings[id]
-            elif id in self.__entity_settings and entity.in_scope:
-                # Still in scope, let's update it
-                self.__entity_settings[id].update_widgets()
+        self.__scroll_content.setStyleSheet(
+            """
+            QWidget#settings_scroll_content {
+                background-color: transparent;
+            }
+            """
+        )
+        self.__scroll_content.setObjectName("settings_scroll_content")
 
-        if len(self.__entity_settings) == 0 and self.__empty_label is None:
-            self.__empty_label = ctk.CTkLabel(
-                self.__master, text="No entity in scope", font=self.__bold_font
-            )
-            self.__empty_label.pack(anchor=tk.CENTER, expand=True)
-        elif len(self.__entity_settings) != 0 and self.__empty_label is not None:
-            self.__empty_label.destroy()
+        # Force top alignment:
+        self.__scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        # Set the content widget in the scroll area
+        self.__scroll_area.setWidget(self.__scroll_content)
+
+        # Add scroll area to main layout with stretch
+        main_layout.addWidget(self.__scroll_area, 1)  # stretch factor 1
+
+    def _on_scope_signal(self, ids: List[int], in_scope: bool):
+        if in_scope:
+            self.__add_models(ids)
+        else:
+            self.__remove_models(ids)
+
+    def __add_models(self, ids: List[int]):
+        assert len(ids) > 0
+
+        if self.__empty_label is None:
+            if self.__scroll_layout.count() != 0:
+                # Delete the old stretch
+                self.__scroll_layout.removeItem(
+                    self.__scroll_layout.itemAt(self.__scroll_layout.count() - 1)
+                )
+        else:
+            # Delete the label if any
+            self.__scroll_layout.removeWidget(self.__empty_label)
+            self.__empty_label.deleteLater()
             self.__empty_label = None
 
+        for id in ids:
+            # Get the model
+            new_model = self.__entity_models[id]
+            assert new_model.in_scope
 
-# ========================  ContainerSettingsFrame  =============================
-class EntitySettings(ctk.CTkFrame):
+            # Create entity settings widget
+            entity_settings = EntitySettings(
+                self.__scroll_content,
+                new_model,
+                self.__global_settings,
+            )
+            self.__entity_settings[id] = entity_settings
+
+            # Add to layout
+            self.__scroll_layout.addWidget(entity_settings)
+
+        # Use stretching to anchor everything at the top
+        self.__scroll_layout.addStretch(1)
+
+    def __remove_models(self, ids: List[int]):
+        assert len(ids) > 0
+        assert self.__empty_label is None
+
+        # Delete the old stretch
+        self.__scroll_layout.removeItem(
+            self.__scroll_layout.itemAt(self.__scroll_layout.count() - 1)
+        )
+
+        for id in ids:
+            assert id in self.__entity_settings
+            # Get the EntitySettings
+            settings = self.__entity_settings[id]
+
+            # Remove from layout
+            self.__scroll_layout.removeWidget(settings)
+
+            # Delete the widget
+            settings.deleteLater()
+
+            # Remove from our tracking dict
+            del self.__entity_settings[id]
+
+        # Handle empty state label
+        if len(self.__entity_settings) == 0:
+            self.__empty_label = QLabel("No entity in scope")
+            self.__empty_label.setFont(self.__bold_font)
+            self.__empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            # Add to scroll layout
+            self.__scroll_layout.addWidget(self.__empty_label)
+        else:
+            # Add stretching back
+            self.__scroll_layout.addStretch(1)
+
+
+# ============================  EntitySettings  =================================
+class EntitySettings(QFrame):
     """
     Holds all the settings of an entity
 
@@ -110,216 +206,323 @@ class EntitySettings(ctk.CTkFrame):
     """
 
     def __init__(
-        self, master: tk.Misc, model: EntityModel, global_settings: GlobalSettings
+        self, parent: QWidget, model: EntityModel, global_settings: GlobalSettings
     ) -> None:
-        super().__init__(
-            master,
-            corner_radius=0,
-            height=70,
-        )
-        # Forced to put the scrollable frame into another frame because of a
-        # deletion bug https://github.com/TomSchimansky/CustomTkinter/issues/2443
-        self.__scrollable_frame = ctk.CTkScrollableFrame(
-            self,
-            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
-            height=70,
-            orientation="horizontal",
-        )
-        self.grid_propagate(False)
+        super().__init__(parent)
+
+        # Store references
         self.__model = model
-        self.__bold_font = ctk.CTkFont(size=16, weight="bold")
-        self.__font = ctk.CTkFont(size=15)
-        # entity name
-        self.__name_label = ctk.CTkLabel(
-            self.__scrollable_frame,
-            text=f"{self.__model.variable_name} : ",
-            font=self.__font,
-            width=200,
-            height=20,
-            anchor="w",
+        self.__global_settings = global_settings
+
+        # Create fonts
+        self.__bold_font = QFont()
+        # self.__bold_font.setPointSize(16)
+        # self.__bold_font.setBold(True)
+
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        # Set fixed height (replaces CTkFrame height=70)
+        self.setFixedHeight(70)
+        self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup the scrollable layout and widgets"""
+        # Create main layout for this frame
+        main_layout = QGridLayout()
+        self.setLayout(main_layout)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create horizontal scroll area
+        self.__scroll_area = QScrollArea()
+        self.__scroll_area.setWidgetResizable(True)
+        self.__scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-        self.__name_label.grid(row=0, column=0, sticky="w", padx=(5, 5), columnspan=5)
+        self.__scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.__scroll_area.horizontalScrollBar().installEventFilter(self)
+
+        # Create content widget for scroll area
+        self.__scroll_content = QWidget()
+        self.__scroll_layout = QGridLayout()
+        self.__scroll_content.setLayout(self.__scroll_layout)
+        self.__scroll_content.setSizePolicy(
+            QSizePolicy.Policy.Expanding,  # Allow horizontal expansion
+            QSizePolicy.Policy.Fixed,  # Keep vertical size fixed
+        )
+
+        # Set content in scroll area
+        self.__scroll_area.setWidget(self.__scroll_content)
+        main_layout.addWidget(self.__scroll_area)
+
+        self._create_widgets()
+        self._setup_grid_layout()
+
+    def _create_widgets(self):
+        """Create all child widgets"""
+        # Entity name label
+        self.__name_label = QLabel(f"{self.__model.variable_name} : ")
+        self.__name_label.setFont(self.__font)
+        self.__name_label.setFixedWidth(200)
+        self.__name_label.setFixedHeight(20)
+        self.__name_label.setAlignment(
+            Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+        )
 
         # Entity-specific settings frame
-        self.__entity_settings_frame = self.__model.settings_frame_class()(
-            self.__scrollable_frame, self.__model
+        settings_frame_class = self.__model.settings_frame_class()
+        self.__entity_settings_frame = settings_frame_class(
+            self.__scroll_content, self.__model
         )
-        self.__entity_settings_frame.grid(row=1, column=0, sticky="w")
 
-        # View selection
-        self.__view_menu = None
-        self.__view_var = tk.StringVar(value=self.__model.selected_view)
-        self.__view_var.trace_add("write", self.view_var_callback)
-        self.__view_menu = ctk.CTkOptionMenu(
-            self.__scrollable_frame,
-            values=self.__model.possible_views_names,
-            variable=self.__view_var,
-            font=self.__font,
-            width=125,
-        )
-        Tooltip(self.__view_menu, text="Select which view to render")
-        self.__view_menu.grid(row=1, column=1, sticky="w", padx=(5, 5))
+        # View selection dropdown
+        self.__view_menu = QComboBox()
+        self.__view_menu.setFont(self.__font)
+        self.__view_menu.setFixedWidth(95)
+        self.__view_menu.addItems(self.__model.possible_views_names)
+        self.__view_menu.setCurrentText(self.__model.selected_view)
 
-        #  View settings
+        # Connect signal
+        self.__view_menu.currentTextChanged.connect(self._on_view_change)
+        self.__model.possible_views_signal.connect(self._on_possible_views_signal)
+
+        # Add tooltip
+        self.__view_menu.setToolTip("Select which view to render")
+
+        # View settings frame
         self.__view_settings_frame = ViewSettingsFrame(
-            self.__scrollable_frame, self.__model
+            self.__scroll_content, self.__model
         )
-        self.__view_settings_frame.grid(row=1, column=2, sticky="w", padx=(5, 0))
 
-        # General section
+        # General settings frame
         self.__general_settings_frame = GeneralSettingsFrame(
-            self.__scrollable_frame, self.__model, global_settings
+            self.__scroll_content, self.__model, self.__global_settings
         )
-        self.__general_settings_frame.grid(row=1, column=3, sticky="e", padx=(0, 5))
 
-        self.__scrollable_frame.grid_rowconfigure(0, weight=1)
-        self.__scrollable_frame.grid_rowconfigure(1, weight=4)
-        self.__scrollable_frame.grid_columnconfigure(0, weight=0)
-        self.__scrollable_frame.grid_columnconfigure(1, weight=0)
-        self.__scrollable_frame.grid_columnconfigure(2, weight=1)
-        self.__scrollable_frame.grid_columnconfigure(3, weight=0)
-        # self.__scrollable_frame.grid_columnconfigure(4, weight=0)
-        self.__scrollable_frame.pack(fill=tk.BOTH)
-        self.pack(side=tk.TOP, fill=tk.BOTH, padx=2, pady=2)
+    def _setup_grid_layout(self):
+        """Setup the grid layout"""
+        # Add widgets to grid layout
+        # Row 0: Entity name (spans 5 columns)
+        self.__scroll_layout.addWidget(self.__name_label, 0, 0, 1, 5)
 
-    def view_var_callback(self, *_):
+        # Row 1: All settings components
+        self.__scroll_layout.addWidget(self.__entity_settings_frame, 1, 0)
+        self.__scroll_layout.addWidget(self.__view_menu, 1, 1)
+        self.__scroll_layout.addWidget(self.__view_settings_frame, 1, 2)
+        self.__scroll_layout.addWidget(self.__general_settings_frame, 1, 3)
+
+        # Configure row/column stretching
+        self.__scroll_layout.setRowStretch(0, 1)  # weight=1
+        self.__scroll_layout.setRowStretch(1, 4)  # weight=4
+
+        self.__scroll_layout.setColumnStretch(0, 0)  # weight=0 (fixed size)
+        self.__scroll_layout.setColumnStretch(1, 0)  # weight=0 (fixed size)
+        self.__scroll_layout.setColumnStretch(2, 1)  # weight=1 (expandable)
+        self.__scroll_layout.setColumnStretch(3, 0)  # weight=0 (fixed size)
+
+        # Set margins and spacing
+        self.__scroll_layout.setContentsMargins(5, 5, 5, 5)
+        self.__scroll_layout.setHorizontalSpacing(5)
+        self.__scroll_layout.setVerticalSpacing(5)
+
+    @override
+    def eventFilter(self, object: QObject, event: QEvent):
+        """Monitor horizontal scrollbar show/hide events"""
+        if object == self.__scroll_area.horizontalScrollBar():
+            if event.type() == QEvent.Type.Show:
+                # Scrollbar appeared
+                scrollbar_height = self.__scroll_area.horizontalScrollBar().height()
+                self.setFixedHeight(70 + scrollbar_height)
+                return False
+            elif event.type() == QEvent.Type.Hide:
+                # Scrollbar disappeared
+                self.setFixedHeight(70)
+                return False
+
+        return super().eventFilter(object, event)
+
+    def _on_view_change(self, new_view: str):
+        """Handle view selection change"""
         # Update the model
-        self.__model.update_view_type(self.__view_var.get())
+        self.__model.update_view_type(new_view)
 
-        # Trigger a redraw
-        self.update_widgets()
+    def _on_possible_views_signal(self):
+        # Temporarily disconnect signal to avoid recursion
+        self.__view_menu.currentTextChanged.disconnect()
 
-    def update_widgets(self):
-        # Update the channel menu
-        self.__entity_settings_frame.update_widgets()
+        possibles_views = self.__model.possible_views_names
 
-        # Update the view selection
-        if self.__view_var.get() not in self.__model.possible_views_names:
-            self.__view_menu.configure(values=self.__model.possible_views_names)
-            self.__view_var.set(self.__model.selected_view)
+        # Update dropdown items
+        self.__view_menu.clear()
+        self.__view_menu.addItems(possibles_views)
+        self.__view_menu.setCurrentText(self.__model.selected_view)
 
-        # Update the view settings
-        self.__view_settings_frame.update_widgets()
+        # Reconnect signal
+        self.__view_menu.currentTextChanged.connect(self._on_view_change)
 
 
 # ===========================  GeneralSettingsFrame  ===========================
-class GeneralSettingsFrame(ctk.CTkFrame):
-    def __init__(
-        self, master: tk.Misc, model: EntityModel, global_settings: GlobalSettings
-    ):
-        super().__init__(master, fg_color="transparent")
+class GeneralSettingsFrame(QFrame):
+    """
+    Frame containing general settings like sample rate and delete button
+    """
+
+    def __init__(self, parent, model: EntityModel, global_settings: GlobalSettings):
+        super().__init__(parent)
+
+        # Store references
         self.__model = model
         self.__global_settings = global_settings
-        self.__font = ctk.CTkFont(size=15)
 
-        # Delete button
-        self.__delete_button = ctk.CTkButton(
-            self, text="X", command=self.delete_button_callback, width=28
+        # Create font
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup horizontal layout and widgets"""
+        # Create horizontal layout
+        layout = QHBoxLayout()
+        self.setLayout(layout)
+
+        # Set margins to match tkinter padding
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(3)
+
+        # Create samplerate label
+        self.__samplerate_label = QLabel("samplerate:")
+        self.__samplerate_label.setFont(self.__font)
+
+        # Create samplerate entry field
+        self.__samplerate_entry = QLineEdit()
+        self.__samplerate_entry.setFont(self.__font)
+        self.__samplerate_entry.setFixedWidth(80)
+
+        # Set initial value and placeholder
+        initial_value = (
+            str(self.__model.samplerate)
+            if self.__model.samplerate is not None
+            else str(self.__global_settings.samplerate)
+        )
+        self.__samplerate_entry.setText(initial_value)
+        self.__samplerate_entry.setPlaceholderText(
+            str(self.__global_settings.samplerate)
         )
 
-        # Samplerate
-        self.__samplerate_label = ctk.CTkLabel(
-            self, text="samplerate:", font=self.__font
-        )
-        self.__samplerate_var = tk.StringVar(
-            value=(
-                self.__model.samplerate
-                if self.__model.samplerate is not None
-                else self.__global_settings.samplerate
-            )
-        )
-        self.__samplerate_entry = ctk.CTkEntry(
-            self,
-            textvariable=self.__samplerate_var,
-            placeholder_text=f"{self.__global_settings.samplerate}",
-            width=80,
-            font=self.__font,
-        )
-        self.__samplerate_entry.bind("<Return>", self.samplerate_var_callback)
-        self.__samplerate_label.pack(side=tk.LEFT, padx=3)
-        self.__samplerate_entry.pack(side=tk.LEFT, padx=3)
+        # Connect Return key to callback
+        self.__samplerate_entry.returnPressed.connect(self._samplerate_changed)
 
-        self.__delete_button.pack(side=tk.RIGHT, anchor=tk.CENTER, padx=3)
+        # Create delete button
+        self.__delete_button = QPushButton("X")
+        self.__delete_button.setFixedWidth(28)
 
-    def delete_button_callback(self):
+        # Connect button click (replaces command parameter)
+        self.__delete_button.clicked.connect(self._delete_button_clicked)
+
+        # Add widgets to layout (left to right)
+        layout.addWidget(self.__samplerate_label)  # side=LEFT
+        layout.addWidget(self.__samplerate_entry)  # side=LEFT
+        layout.addStretch()  # Push delete button to the right
+        layout.addWidget(self.__delete_button)  # side=RIGHT
+
+    def _delete_button_clicked(self):
+        """Handle delete button click (replaces delete_button_callback)"""
         self.__model.signal_deletion()
-        self.master.destroy()
 
-    def samplerate_var_callback(self, *_):
-        new_val = self.__samplerate_var.get()
+    def _samplerate_changed(self):
+        """Handle samplerate entry Return key (replaces samplerate_var_callback)"""
+        new_val = self.__samplerate_entry.text().strip()
+
         if new_val == "":
-            # Field is validated empty, let's use the global setting
+            # Field is empty, use the global setting
             self.__model.samplerate = None
-            self.__samplerate_var.set(self.__global_settings.samplerate)
+            self.__samplerate_entry.setText(str(self.__global_settings.samplerate))
         elif not self.__model.validate_and_update_samplerate(new_val):
-            # Value is not valid, let's rollback
+            # Value is not valid, rollback
             Logger().warning(f"{new_val} is not a valid samplerate")
-            self.__samplerate_var.set(
-                self.__model.samplerate
+            rollback_value = (
+                str(self.__model.samplerate)
                 if self.__model.samplerate is not None
-                else self.__global_settings.samplerate
+                else str(self.__global_settings.samplerate)
             )
+            self.__samplerate_entry.setText(rollback_value)
         # Else the samplerate has been updated in the model
 
 
 # ===========================  GlobalSettingsFrame  ===========================
-class GlobalSettingsFrame(ctk.CTkFrame):
-    def __init__(self, master: tk.Misc, global_settings: GlobalSettings):
-        super().__init__(
-            master,
-            fg_color=ctk.ThemeManager.theme["CTkFrame"]["top_fg_color"],
-        )
-        self.__settings = global_settings
-        self.__font = ctk.CTkFont(size=15)
+class GlobalSettingsFrame(QFrame):
+    """
+    Frame containing global application settings like appearance and default samplerate
+    """
 
-        # Appearance selector
-        self.__appearance_label = ctk.CTkLabel(
-            self, text="Appeareance :", font=self.__font
-        )
-        self.__appearance_var = tk.StringVar(value=self.__settings.appearance)
-        self.__appearance_var.trace_add("write", self.appearance_var_callback)
-        self.__appearance_menu = ctk.CTkOptionMenu(
-            self,
-            values=("Dark", "Light"),
-            variable=self.__appearance_var,
-            font=self.__font,
-            width=100,
-        )
-        self.__appearance_label.pack(side=tk.LEFT, pady=5, padx=5)
-        self.__appearance_menu.pack(side=tk.LEFT, pady=5, padx=5)
+    def __init__(self, parent: QWidget, global_settings: GlobalSettings):
+        super().__init__(parent)
+
+        # Store reference
+        self.__settings = global_settings
+
+        # Create font
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """Setup horizontal layout with samplerate controls"""
+        # Create horizontal layout
+        layout = QHBoxLayout()
+        self.setLayout(layout)
+
+        # Set margins and spacing
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
+
+        # Add stretch to push samplerate controls to the right
+        layout.addStretch()
+
+        # Samplerate controls
+        self._create_samplerate_controls(layout)
+
+    def _create_samplerate_controls(self, layout: QHBoxLayout):
+        """Create samplerate label and entry"""
+        # Samplerate label
+        self.__samplerate_label = QLabel("samplerate :")
+        self.__samplerate_label.setFont(self.__font)
 
         # Samplerate entry
-        self.__samplerate_label = ctk.CTkLabel(
-            self, text="samplerate :", font=self.__font
-        )
-        self.__samplerate_var = tk.StringVar(value=self.__settings.samplerate)
-        self.__samplerate_entry = ctk.CTkEntry(
-            self,
-            textvariable=self.__samplerate_var,
-            placeholder_text="samplerate",
-            width=80,
-            font=self.__font,
-        )
-        self.__samplerate_entry.bind("<Return>", self.samplerate_var_callback)
-        self.__samplerate_entry.pack(side=tk.RIGHT, pady=5, padx=5)
-        self.__samplerate_label.pack(side=tk.RIGHT, pady=5, padx=5)
+        self.__samplerate_entry = QLineEdit()
+        self.__samplerate_entry.setFont(self.__font)
+        self.__samplerate_entry.setFixedWidth(80)
+        self.__samplerate_entry.setText(str(self.__settings.samplerate))
+        self.__samplerate_entry.setPlaceholderText("samplerate")
 
-    def appearance_var_callback(self, *_):
-        self.__settings.appearance = self.__appearance_var.get()
-        ctk.set_appearance_mode(self.__settings.appearance)
+        # Connect Return key
+        self.__samplerate_entry.returnPressed.connect(self._samplerate_changed)
 
-    def samplerate_var_callback(self, *_):
-        new_val = self.__samplerate_var.get()
+        # Add to layout
+        layout.addWidget(self.__samplerate_label)
+        layout.addWidget(self.__samplerate_entry)
+
+    def _samplerate_changed(self):
+        """Handle samplerate entry Return key"""
+        new_val = self.__samplerate_entry.text().strip()
+
         if not self.__settings.validate_samplerate(new_val):
             Logger().warning(f"{new_val} is not a valid samplerate")
-            self.__samplerate_var.set(self.__settings.samplerate)
+            # Rollback to previous value
+            self.__samplerate_entry.setText(str(self.__settings.samplerate))
         else:
+            # Update the setting
             self.__settings.samplerate = int(new_val)
-            self.__settings.update_needed = True
 
 
 # ===========================  ViewSettingsFrame  ===========================
-class ViewSettingsFrame(ctk.CTkFrame):
+class ViewSettingsFrame(QFrame):
     """
     A frame containing the selector for every view setting of a model.
 
@@ -328,148 +531,233 @@ class ViewSettingsFrame(ctk.CTkFrame):
     selected view type
     """
 
-    def __init__(self, master: tk.Misc, model: EntityModel) -> None:
-        super().__init__(master, height=28, fg_color="transparent")
+    def __init__(self, parent: QWidget, model: "EntityModel") -> None:
+        super().__init__(parent)
+
         self.__model = model
         self.__entity_suffix = "_" + str(model.id)
-        self.__vars: Dict[str, Tuple[tk.Variable, EntityView.Setting]] = dict()
-        self.__widgets: List[tk.Misc] = list()
-        self.__font = ctk.CTkFont(size=15)
-        self.__width = 0
-        self.__crt_view_type = self.__model.selected_view
-        self.__create_selectors()
 
-    def __create_selectors(self):
+        # Store widget references and their associated settings
+        self.__setting_widgets: Dict[
+            str, Tuple[Union[QComboBox, QLineEdit], EntityView.Setting]
+        ] = dict()
+        self.__widgets: List[QWidget] = list()
+
+        # Create font
+        self.__font = QFont()
+        # self.__font.setPointSize(15)
+
+        # Track current view type for updates
+        self.__current_view_type = self.__model.selected_view
+
+        self.setFixedHeight(28)
+
+        # Create layout
+        self.__layout = QHBoxLayout()
+        self.setLayout(self.__layout)
+        self.__layout.setContentsMargins(0, 0, 0, 0)
+        self.__layout.setSpacing(5)
+        self.__layout.setSizeConstraint(QHBoxLayout.SizeConstraint.SetMinimumSize)
+
+        self._create_selectors()
+        self.__model.view_signal.connect(self._on_view_signal)
+
+    def _create_selectors(self) -> None:
+        """Create selector widgets for current view settings"""
         assert len(self.__widgets) == 0
-        self.__width = 0
+
+        total_width = 0
         for setting in self.__model.view_settings:
             match type(setting):
                 case EntityView.StringSetting:
-                    self.create_string_selector(setting)
+                    total_width += self._create_string_selector(setting)
                 case EntityView.IntSetting:
-                    self.create_int_selector(setting)
+                    total_width += self._create_int_selector(setting)
                 case EntityView.FloatSetting:
-                    self.create_float_selector(setting)
+                    total_width += self._create_float_selector(setting)
                 case _:
-                    raise NotImplementedError()
-        self.configure(width=self.__width)
+                    raise NotImplementedError(f"Unknown setting type: {type(setting)}")
 
-    def create_string_selector(self, setting: EntityView.StringSetting):
-        # Create the StringVar to keep updated of changes
+        # Set minimum width based on content
+        self.setMinimumWidth(total_width)
+        self.__layout.addStretch(1)
+
+    def _create_string_selector(self, setting: "EntityView.StringSetting") -> int:
+        """Create label and dropdown for string setting"""
         var_name = setting.name + self.__entity_suffix
-        var = tk.StringVar(value=setting.value, name=var_name)
-        self.__vars[var_name] = (var, setting)
-        var.trace_add("write", self.update_setting)
-        # Create the option menu & the label
-        label = ctk.CTkLabel(self, text=setting.name)
-        menu = ctk.CTkOptionMenu(
-            self,
-            values=setting.possible_values(),
-            variable=var,
-            font=self.__font,
-            width=125,
-        )
-        self.__width += 130
-        label.pack(side=tk.LEFT, padx=5)
-        menu.pack(side=tk.LEFT)
-        self.__widgets.append(label)
-        self.__widgets.append(menu)
 
-    def create_float_selector(self, setting: EntityView.FloatSetting):
-        # Create the Var to keep the entry value before validating it
+        # Create label
+        label = QLabel(setting.name)
+        label.setFont(self.__font)
+
+        # Create dropdown
+        menu = QComboBox()
+        menu.setFont(self.__font)
+        menu.setFixedWidth(95)
+        menu.addItems(setting.possible_values())
+        menu.setCurrentText(str(setting.value))
+
+        # Connect signal (replaces StringVar trace)
+        menu.currentTextChanged.connect(
+            lambda value, name=var_name: self._update_setting(name, value)
+        )
+
+        # Store references
+        self.__setting_widgets[var_name] = (menu, setting)
+        self.__widgets.extend([label, menu])
+
+        # Add to layout
+        self.__layout.addWidget(label)
+        self.__layout.addWidget(menu)
+
+        return 100  # Width used
+
+    def _create_float_selector(self, setting: "EntityView.FloatSetting") -> int:
+        """Create label and entry for float setting"""
         var_name = setting.name + self.__entity_suffix
-        var = tk.StringVar(value=str(setting.value), name=var_name)
-        self.__vars[var_name] = (var, setting)
-        # Create the entry and the label
-        label = ctk.CTkLabel(self, text=setting.name, font=self.__font)
-        entry = ctk.CTkEntry(
-            self,
-            textvariable=var,
-            width=60,
-            placeholder_text=setting.name,
-            font=self.__font,
-        )
-        validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
-            name, event
-        )
-        self.__width += 65
-        entry.bind("<Return>", validate_lambda)
-        label.pack(side=tk.LEFT, padx=5)
-        entry.pack(side=tk.LEFT)
-        self.__widgets.append(label)
-        self.__widgets.append(entry)
 
-    def create_int_selector(self, setting: EntityView.IntSetting):
-        # Create the Var to keep the entry value before validating it
+        # Create label
+        label = QLabel(setting.name)
+        label.setFont(self.__font)
+
+        # Create entry
+        entry = QLineEdit()
+        entry.setFont(self.__font)
+        entry.setFixedWidth(60)
+        entry.setText(str(setting.value))
+        entry.setPlaceholderText(setting.name)
+
+        # Connect return key for validation (replaces bind("<Return>"))
+        entry.returnPressed.connect(
+            lambda name=var_name: self._entry_validation_callback(name)
+        )
+
+        # Store references
+        self.__setting_widgets[var_name] = (entry, setting)
+        self.__widgets.extend([label, entry])
+
+        # Add to layout
+        self.__layout.addWidget(label)
+        self.__layout.addWidget(entry)
+
+        return 65  # Width used
+
+    def _create_int_selector(self, setting: "EntityView.IntSetting") -> int:
+        """Create label and entry for int setting"""
         var_name = setting.name + self.__entity_suffix
-        var = tk.StringVar(value=str(setting.value), name=var_name)
-        self.__vars[var_name] = (var, setting)
-        # Create the entry and the label
-        label = ctk.CTkLabel(self, text=setting.name, font=self.__font)
-        entry = ctk.CTkEntry(
-            self,
-            textvariable=var,
-            width=60,
-            placeholder_text=setting.name,
-            font=self.__font,
-        )
-        validate_lambda = lambda event, name=f"{var_name}": self.entry_var_callback(
-            name, event
-        )
-        self.__width += 65
-        entry.bind("<Return>", validate_lambda)
-        label.pack(side=tk.LEFT, padx=5)
-        entry.pack(side=tk.LEFT)
-        self.__widgets.append(label)
-        self.__widgets.append(entry)
 
-    def entry_var_callback(self, varname, _):
-        var, setting = self.__vars[varname]
-        assert isinstance(setting, EntityView.FloatSetting) or isinstance(
-            setting, EntityView.IntSetting
+        # Create label
+        label = QLabel(setting.name)
+        label.setFont(self.__font)
+
+        # Create entry
+        entry = QLineEdit()
+        entry.setFont(self.__font)
+        entry.setFixedWidth(60)
+        entry.setText(str(setting.value))
+        entry.setPlaceholderText(setting.name)
+
+        # Connect return key for validation (replaces bind("<Return>"))
+        entry.returnPressed.connect(
+            lambda name=var_name: self._entry_validation_callback(name)
         )
+
+        # Store references
+        self.__setting_widgets[var_name] = (entry, setting)
+        self.__widgets.extend([label, entry])
+
+        # Add to layout
+        self.__layout.addWidget(label)
+        self.__layout.addWidget(entry)
+
+        return 65  # Width used
+
+    def _entry_validation_callback(self, var_name: str) -> None:
+        """Handle entry validation for int/float settings (replaces entry_var_callback)"""
+        if var_name not in self.__setting_widgets:
+            return
+
+        widget, setting = self.__setting_widgets[var_name]
+        assert isinstance(widget, QLineEdit)
+        assert isinstance(setting, (EntityView.FloatSetting, EntityView.IntSetting))
+
+        current_text = widget.text().strip()
+
         try:
-            if setting.validate(setting.parse_tkvar(var)):
-                # New input was validated
-                self.update_setting(varname)
+            # Parse the value (equivalent to setting.parse_tkvar(var))
+            if isinstance(setting, EntityView.IntSetting):
+                parsed_value = int(current_text) if current_text else None
+            elif isinstance(setting, EntityView.FloatSetting):
+                parsed_value = float(current_text) if current_text else None
             else:
-                # bad input, rollback
-                self.__vars[varname][0].set(setting.value)
-        except tk.TclError:
-            # Might fail when tk update the var with an empty string
-            pass
+                parsed_value = current_text
+
+            if parsed_value is not None and setting.validate(parsed_value):
+                # New input was validated
+                self._update_setting(var_name, current_text)
+            else:
+                # Bad input, rollback
+                widget.setText(str(setting.value))
         except ValueError:
-            # bad input, rollback
-            self.__vars[varname][0].set(setting.value)
+            # Bad input (equivalent to TclError + ValueError), rollback
+            widget.setText(str(setting.value))
 
-    def update_setting(self, var_name: str, *_):
+    def _update_setting(self, var_name: str, value: str) -> None:
         """
-        To be called when a variable has been modified, and validated if concerned
-        by validation
+        Update model setting when widget value changes
+        (replaces update_setting)
         """
-        assert var_name in self.__vars
+        if var_name not in self.__setting_widgets:
+            return
+
         setting_name = var_name[: -len(self.__entity_suffix)]
-        var, setting = self.__vars[var_name]
+        widget, setting = self.__setting_widgets[var_name]
+
         try:
-            self.__model.update_view_settings(setting_name, setting.parse_tkvar(var))
-        except tk.TclError:
-            # Might fail when tk update the var with an empty string
+            if isinstance(widget, QComboBox):
+                # String setting
+                self.__model.update_view_settings(setting_name, value)
+            elif isinstance(widget, QLineEdit):
+                # Int/Float setting
+                if isinstance(setting, EntityView.IntSetting):
+                    parsed_value = int(value) if value.strip() else None
+                elif isinstance(setting, EntityView.FloatSetting):
+                    parsed_value = float(value) if value.strip() else None
+                else:
+                    parsed_value = value
+
+                if parsed_value is not None:
+                    self.__model.update_view_settings(setting_name, parsed_value)
+        except ValueError:
+            # Parse error, ignore
             pass
 
-    def update_widgets(self):
-        if self.__crt_view_type != self.__model.selected_view:
-            # Delete old widgets & vars
-            for widget in self.__widgets:
-                widget.destroy()
-            self.__widgets.clear()
-            # Delete the update_setting trace before deleting the var
-            for var, _ in self.__vars.values():
-                for trace_type, trace_name in var.trace_info():
-                    if trace_name.endswith("update_setting"):
-                        var.trace_remove(trace_type, trace_name)
-            # Delete the vars
-            self.__vars.clear()
+    def _on_view_signal(self, view_name: str):
+        if self.__current_view_type != view_name:
+            # Clear old widgets and connections
+            self._clear_widgets()
 
-            # Recreate new widgets
-            self.__crt_view_type = self.__model.selected_view
-            self.__create_selectors()
+            # Recreate widgets for new view type
+            self.__current_view_type = view_name
+            self._create_selectors()
+
+    def _clear_widgets(self) -> None:
+        """Clear all widgets and disconnect signals"""
+        # Disconnect all signals to prevent callbacks during destruction
+        for var_name, (widget, setting) in self.__setting_widgets.items():
+            if isinstance(widget, QComboBox):
+                widget.currentTextChanged.disconnect()
+            elif isinstance(widget, QLineEdit):
+                widget.returnPressed.disconnect()
+
+        # Remove widgets from layout and schedule deletion
+        for widget in self.__widgets:
+            self.__layout.removeWidget(widget)
+            widget.deleteLater()
+
+        # Remove stretch
+        self.__layout.removeItem(self.__layout.itemAt(0))
+
+        # Clear tracking dictionaries
+        self.__widgets.clear()
+        self.__setting_widgets.clear()
