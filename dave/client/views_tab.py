@@ -51,16 +51,18 @@ class EntityPlots(QFrame):
         self.__layout.setContentsMargins(0, 0, 0, 0)
         self.__layout.setSpacing(2)
 
-    def compute_num_plots(self) -> int:
-        if self.__model.frozen and not self.__model.is_view_superposable:
-            # Need space for both live and frozen plots per channel
-            return 2 * self.__model.channels
-        else:
-            # Either not frozen, or frozen but superposable (overlaid)
-            return self.__model.channels
+    # def compute_num_plots(self) -> int:
+    #     if self.__model.frozen and not self.__model.is_view_superposable:
+    #         # Need space for both live and frozen plots per channel
+    #         return 2 * self.__model.channels
+    #     else:
+    #         # Either not frozen, or frozen but superposable (overlaid)
+    #         return self.__model.channels
 
     def __on_model_signal(self, source: str):
-        Logger().debug(f"View redraw requested from {source}")
+        Logger().debug(
+            f"View redraw requested from {source} for model {self.__model.id}"
+        )
         self.__update_widgets()
 
     def __update_widgets(self):
@@ -69,10 +71,6 @@ class EntityPlots(QFrame):
             self.__layout.removeWidget(old_plot)
             old_plot.deleteLater()
         self.__plots = []
-
-        # Logger().warning(f"Re-plotting entity with {self.__model.channels}")
-        # live_suffix = " (Live)" if self.__model.frozen else ""
-        # frozen_suffix = " (Frozen)"
 
         if self.__model.frozen and not self.__model.is_view_superposable:
             # Create 2 plots per channel: live + frozen (non-superposable)
@@ -98,9 +96,6 @@ class EntityPlots(QFrame):
                     channel=channel,
                     base_name=title,
                 )
-
-                # live_plot.plotItem.setLabel("right", title + live_suffix)
-                # frozen_plot.plotItem.setLabel("right", title + frozen_suffix)
         else:
             # Create 1 plot per channel: live + frozen
             for channel in range(self.__model.channels):
@@ -119,8 +114,6 @@ class EntityPlots(QFrame):
                     channel=channel,
                     base_name=title,
                 )
-
-                # live_plot.plotItem.setLabel("right", title + live_suffix)
 
         self.setMinimumHeight(self.MINIMUM_PLOT_HEIGHT * len(self.__plots))
 

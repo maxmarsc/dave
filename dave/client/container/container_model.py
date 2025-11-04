@@ -227,6 +227,7 @@ class ContainerModel(EntityModel):
             self._data = np.concatenate((self._data, new_data), -1)
         else:
             self._data = new_data
+        self._channels = self._raw.channels()
         self._in_scope = True
         self.data_signal.emit()
 

@@ -105,6 +105,7 @@ class IirModel(EntityModel):
     def update_data(self, update: RawIir.InScopeUpdate):
         self._raw.update(update)
         self._data = raw_to_npy(self._raw.coeffs)
+        self._channels = self._raw.channels()
         self._in_scope = True
         self.data_signal.emit()
 

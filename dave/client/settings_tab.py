@@ -222,7 +222,7 @@ class EntitySettings(QFrame):
         self.__font = QFont()
         # self.__font.setPointSize(15)
 
-        # Set fixed height (replaces CTkFrame height=70)
+        # Set fixed height
         self.setFixedHeight(70)
         self.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Raised)
 
