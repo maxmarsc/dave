@@ -29,7 +29,7 @@ def load_icon() -> QIcon:
     import dave
     import os
 
-    png_icon = Path(dave.__file__).parent / "assets/dave_logo_v7.png"
+    png_icon = Path(dave.__file__).parent / "assets/dave_logo_v6.png"
     assert os.path.isfile(png_icon)
     icon = QIcon()
     icon.addFile(str(png_icon))
