@@ -1,3 +1,4 @@
+from pathlib import Path
 from PySide6.QtWidgets import (
     QMainWindow,
     QTabWidget,
@@ -22,6 +23,17 @@ from dave.client.entity.entity_model import EntityModel
 from dave.client.views_tab import AudioViewsTab
 from dave.client.settings_tab import SettingsTab
 from .in_scope_dict import InScopeSet
+
+
+def load_icon() -> QIcon:
+    import dave
+    import os
+
+    png_icon = Path(dave.__file__).parent / "assets/dave_logo_v7.png"
+    assert os.path.isfile(png_icon)
+    icon = QIcon()
+    icon.addFile(str(png_icon))
+    return icon
 
 
 class DaveGUI(QMainWindow):
@@ -57,7 +69,7 @@ class DaveGUI(QMainWindow):
         self.setMinimumSize(900, 600)
 
         # Set window icon
-        # self.setWindowIcon(QIcon(load_icon()))  # You'll need to adapt load_icon()
+        self.setWindowIcon(load_icon())
 
         # Create central widget and layout
         central_widget = QWidget()
@@ -120,7 +132,7 @@ class DaveGUI(QMainWindow):
         gui.run()
 
         # Start Qt event loop
-        app.exec()  # This replaces tkinter's mainloop()
+        app.exec()
 
     def _update_callback(self):
         """Timer callback for updates"""

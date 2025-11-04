@@ -10,7 +10,6 @@ class InScopeSet(QObject):
 
     def __init__(self):
         super().__init__()
-        # self.__set: Dict[int, EntityModel] = dict()
         self.__set: Set[int] = set()
 
     def add(self, models: List[EntityModel]):

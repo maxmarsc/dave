@@ -390,7 +390,7 @@ class GeneralSettingsFrame(QFrame):
         layout = QHBoxLayout()
         self.setLayout(layout)
 
-        # Set margins to match tkinter padding
+        # Set margins
         layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(3)
 
