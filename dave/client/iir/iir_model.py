@@ -108,37 +108,3 @@ class IirModel(EntityModel):
         self._channels = self._raw.channels()
         self._in_scope = True
         self.data_signal.emit()
-
-    # ==========================================================================
-    # def draw_view(self, plots: List[pg.PlotWidget], default_sr: int, **kwargs):
-    #     """
-    #     Draw the filter view
-
-    #     If the filter is frozen, both frozen and live data will be drawn
-    #     If the filter is frozen and the current selected view type does not support
-    #     superposable data (eg: spectrogram), then the caller must provide two Axes to draw
-
-    #     Parameters
-    #     ----------
-    #     axes : List[Axes]
-    #         Either a single Axes in a list, or two if the filter is frozen
-    #         with a non-superposable view type
-    #     default_sr: int
-    #         The default samplerate to use if not set in this specific model
-    #     """
-    #     assert isinstance(self._view, IirView)
-    #     samplerate = self._sr if self._sr is not None else default_sr
-
-    #     if self.frozen and not self.is_view_superposable:
-    #         # Render frozen and live data on different subplots
-    #         assert len(plots) == 2
-    #         self._view.render_view(plots[0], self._data, samplerate)
-    #         self._view.render_view(plots[0], self._frozen_data, samplerate)
-    #     else:
-    #         # Render live data
-    #         assert len(plots) == 1
-    #         if self.frozen:
-    #             self._view.render_view(
-    #                 plots[0], self._frozen_data, samplerate, "#ff7f0e"
-    #             )
-    #         self._view.render_view(plots[0], self._data, samplerate)

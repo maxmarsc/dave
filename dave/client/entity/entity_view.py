@@ -5,20 +5,7 @@ from typing import Any, List, Tuple, Union
 from PySide6.QtWidgets import QWidget
 from PySide6.QtGui import QPalette, QColor
 
-# from matplotlib.axes import Axes
-# import matplotlib as mpl
 import pyqtgraph as pg
-import numpy as np
-
-# from dave.client.view_setting import Setting
-# import tkinter as tk
-
-
-# def configure_matplotlib():
-#     mpl.rcParams["path.simplify"] = True
-#     mpl.rcParams["path.simplify_threshold"] = 0.3
-
-# DEFAULT_COLOR = "#1f77b4"
 
 
 def hex_to_rgb_tuple(hex_color: str) -> Tuple[int, int, int]:
@@ -33,7 +20,6 @@ def hex_to_rgb_tuple(hex_color: str) -> Tuple[int, int, int]:
 
 class EntityView(ABC):
     DEFAULT_COLOR = hex_to_rgb_tuple("#1f76b4")
-    # __THEME_COLORS: Tuple[Tuple[int, int, int], Tuple[int, int, int]] = None
 
     @staticmethod
     @abstractmethod
@@ -112,11 +98,6 @@ class EntityView(ABC):
         def value(self):
             pass
 
-        # @staticmethod
-        # @abstractmethod
-        # def parse_tkvar(var: tk.Variable) -> Union[None, Any]:
-        #     pass
-
     class BoolSetting(Setting):
         def __init__(self, name: str, value: bool = None):
             super().__init__(name)
@@ -136,13 +117,6 @@ class EntityView(ABC):
         @staticmethod
         def possible_values() -> List[bool]:
             return (True, False)
-
-        # @staticmethod
-        # def parse_tkvar(var: tk.Variable) -> Union[None, bool]:
-        #     try:
-        #         return bool(var.get())
-        #     except tk.TclError:
-        #         return None
 
     class IntSetting(Setting):
         def __init__(
@@ -181,13 +155,6 @@ class EntityView(ABC):
             else:
                 self.__value = new_value
 
-        # @staticmethod
-        # def parse_tkvar(var: tk.Variable) -> Union[None, int]:
-        #     try:
-        #         return int(var.get())
-        #     except tk.TclError:
-        #         return None
-
     class FloatSetting(Setting):
         def __init__(
             self, name: str, min: float, max: float, default: float, value: float = None
@@ -225,13 +192,6 @@ class EntityView(ABC):
             else:
                 self.__value = new_value
 
-        # @staticmethod
-        # def parse_tkvar(var: tk.Variable) -> Union[None, float]:
-        #     try:
-        #         return float(var.get())
-        #     except tk.TclError:
-        #         return None
-
     class StringSetting(Setting):
         def __init__(self, name: str, values: List[str], value: str = None) -> None:
             super().__init__(name)
@@ -252,10 +212,3 @@ class EntityView(ABC):
 
         def possible_values(self) -> List[str]:
             return self.__possible_values
-
-        # @staticmethod
-        # def parse_tkvar(var: tk.Variable) -> Union[None, str]:
-        #     try:
-        #         return str(var.get())
-        #     except tk.TclError:
-        #         return None

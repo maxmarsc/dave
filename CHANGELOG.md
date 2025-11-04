@@ -4,6 +4,7 @@
 - Added `magma` colormap for colorblind friendly spectrogram view
 ## Changed
 ## Fixed
+- A bug when a 2D entity previously out of scope would not appear
 
 # v0.11.1
 ## Fixed
