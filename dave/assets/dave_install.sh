@@ -26,7 +26,6 @@ show_intro() {
   echo "Hello ! This is the installation script for dave. First thanks a lot for trying it out"
   echo "Please note that DAVE is still in early development. If you encounter any issue"
   echo "or have any suggestion, please visit https://github.com/maxmarsc/dave"
-  echo ""
   echo -e "${YELLOW}"
   echo "I'm working hard to make this project stable HOWEVER if you encounter an issue during or after the installation DON'T PANIC"
   echo "To revert the installation process you can simply follow these commands :"
@@ -45,9 +44,7 @@ PIP_SRC="davext"
 # Check for dev flag
 if [[ "$#" -eq 2 && "$1" == "-b" ]]; then
     PIP_SRC="git+ssh://git@github.com/maxmarsc/dave.git@$2"
-    echo -e "${YELLOW}"
-    echo "Installing python module from git, for advised developers only"
-    echo -e "${NC}"
+    echo -e "${YELLOW}Installing python module from git, for advised developers only${NC}"
 # Check for help flag
 elif  [[ ("$#" -eq 1 && "$1" == "-h") || "$#" -gt 0 ]]; then
     show_help
@@ -60,17 +57,11 @@ fi
 
 #============================   OS detection   =================================
 if [[ "$(uname)" == "Darwin"* ]]; then
-    echo -e "${GREEN}"
-    echo "MacOS detected"
-    echo -e "${NC}"
+    echo -e "${GREEN}MacOS detected${NC}"
 elif [[ "$(uname)" == "Linux"* ]]; then
-    echo -e "${GREEN}"
-    echo "Linux detected"
-    echo -e "${NC}"
+    echo -e "${GREEN}Linux detected${NC}"
 else
-    echo -e "${RED}"
-    echo "ERROR : Unsupported OS $(uname)"
-    echo -e "${NC}"
+    echo -e "${RED}ERROR : Unsupported OS $(uname)${NC}"
     exit 1
 fi
 
@@ -114,15 +105,11 @@ for PY3 in $PY3_VERSIONS; do
 done
 
 if [[ "$SELECTED_PY3" == "" ]];then
-  echo -e "${RED}"
-  >&2 echo "Failed to find a working python >= 3.10 installation with a working venv module"
-  echo -e "${NC}"
+  >&2 echo -e "${RED}Failed to find a working python >= 3.10 installation with a working venv module${NC}"
   exit 1
 fi
 
-echo -e "${GREEN}"
-echo "Selected $SELECTED_PY3 for dave installation"
-echo -e "${NC}"
+echo -e "${GREEN}Selected $SELECTED_PY3 for dave installation${NC}"
 echo ""
 
 #============================   DAVE folder   ==================================
@@ -147,9 +134,7 @@ mkdir -p "$DAVE_DIR"
 
 #============================   DAVE venv   ====================================
 # Create the venv
-echo -e "${GREEN}"
-echo "Creating custom dave venv..."
-echo -e "${NC}"
+echo -e "${GREEN}Creating custom dave venv...${NC}"
 "$SELECTED_PY3" -m venv "$DAVE_DIR/venv"
 ACTIVATE_SCRIPT="$HOME/.dave/venv/bin/activate"
 # Activate the venv
@@ -157,9 +142,7 @@ ACTIVATE_SCRIPT="$HOME/.dave/venv/bin/activate"
 source "$ACTIVATE_SCRIPT"
 
 # Install dave package
-echo -e "${GREEN}"
-echo "Installing dave module..."
-echo -e "${NC}"
+echo -e "${GREEN}Installing dave module...${NC}"
 pip install "$PIP_SRC"
 deactivate
 
@@ -185,18 +168,12 @@ zsh_path_install() {
         # Check if the command already exists in ~/.zshrc
         if ! grep -Fxq "$PATH_COMMAND" ~/.zshrc; then
             echo "$PATH_COMMAND" >> ~/.zshrc
-            echo -e "${GREEN}"
-            echo "Added to ~/.zshrc: $PATH_COMMAND"
-            echo -e "${NC}"
+            echo -e "${GREEN}Added to ~/.zshrc: $PATH_COMMAND${NC}"
         else
-            echo -e "${YELLOW}"
-            echo "The command is already present in ~/.zshrc. Skipping"
-            echo -e "${NC}"
+            echo -e "${YELLOW}The command is already present in ~/.zshrc. Skipping${NC}"
         fi
     else
-        echo -e "${GREEN}"
-        echo "Skipping ~/.zshrc"
-        echo -e "${NC}"
+        echo -e "${GREEN}Skipping ~/.zshrc${NC}"
     fi
 }
 
@@ -211,18 +188,12 @@ bash_path_install() {
         # Check if the command already exists in ~/.zshrc
         if ! grep -Fxq "$PATH_COMMAND" ~/.bashrc; then
             echo "$PATH_COMMAND" >> ~/.bashrc
-            echo -e "${GREEN}"
-            echo "Added to ~/.bashrc: $PATH_COMMAND"
-            echo -e "${NC}"
+            echo -e "${GREEN}Added to ~/.bashrc: $PATH_COMMAND${NC}"
         else
-            echo -e "${YELLOW}"
-            echo "The command is already present in ~/.bashrc. Skipping"
-            echo -e "${NC}"
+            echo -e "${YELLOW}The command is already present in ~/.bashrc. Skipping${NC}"
         fi
     else
-        echo -e "${GREEN}"
-        echo "Skipping ~/.bashrc"
-        echo -e "${NC}"
+        echo -e "${GREEN}Skipping ~/.bashrc${NC}"
     fi
 }
 
@@ -266,7 +237,6 @@ fi
 
 automatic_bind
 
-echo ""
 echo -e "${GREEN}"
 echo "DAVE was successfully installed. To access the dave shell command, source your .bashrc/.zshrc file"
 echo ""
