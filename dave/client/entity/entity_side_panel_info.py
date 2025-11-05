@@ -1,7 +1,3 @@
-# from abc import ABC, abstractmethod
-
-# import tkinter as tk
-# import customtkinter as ctk
 from PySide6.QtWidgets import QFrame
 
 

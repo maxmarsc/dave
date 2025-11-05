@@ -7,8 +7,18 @@ When adding DAVE to your system it's important to understand it's composed of
 two parts : the `dave` python module itself, and the bindings for the debuggers.
 
 The bindings for gdb and lldb uses the `~/.gdbinit` and `~/.lldbinit` files
-to automatically load the dave module at runtime. If the module is not accessible
-then you will be inform.
+to automatically load the dave module at runtime. 
+When starting the debugger you should see the following message indicating DAVE is loaded:
+```
+INFO : [dave] Successfully loaded
+```
+If the module is not accessible then you will be informed by the following message:
+```
+INFO : [dave] module not found. Commands will not be available
+```
+
+If you do not see any of these messages, dave is not binded to your 
+debugger. See the following section for how to bind dave to your debugger.
 
 ### The `dave` command line tool
 After installation (and reloading your .bashrc/.zshrc file), you should have access to
@@ -247,16 +257,16 @@ Some settings will require you to enter manually the value you'd like for the se
 ### The `Views` tab
 ![Views](.pictures/views.png)
 
-On `1.` are the audio views of your audio data. One plot for each channel, for
+In the red section are the audio views of your audio data. One plot for each channel, for
 each entity currently in scope.
 
-On `2.` are the actions switches/buttons :
- - `Freeze` enable/disable the *Freeze* setting of the entity
- - `Concat` enable/disable the *Concatenate* setting of the entity
- - `Save` : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
-
-On `3.` are the matplotlib controls. These allow you to navigate and zoom within
-the plots. The save button saves the figures, and not the data.
+On the green section are side panels with quick infos and action about the views:  
+ - On the top you have the name of the entity.  
+ - Below are some information abuot the entity
+ - Then comes the switchs/buttons:
+    - `Freeze` enable/disable the *Freeze* setting of the entity
+    - `Concat` enable/disable the *Concatenate* setting of the entity
+    - `Save to disc` : opens up a window to save the current shown data to disc (supported format are `.npy` files and WAV signed integers, depending on the data)
 
 ### The `Settings` tab
 ![Settings](.pictures/settings.png)
@@ -269,10 +279,9 @@ drop-down list. When editing through a text entry, your input will only be valid
 and used after pressing the `<Enter>` key.
 
 #### Global settings
-![Global settings](.pictures/settings_global.png)
+<!-- ![Global settings](.pictures/settings_global.png) -->
 
 From left-to-right :
-- Appearance settings : select from dark, light or system
 - Default samplerate : the default samplerate to use for each container
 
 #### Entity settings

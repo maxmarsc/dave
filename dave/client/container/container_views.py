@@ -254,14 +254,6 @@ class SpectrogramView(ContainerView):
             img.setImage(Sxx_db.T, levels=[np.min(Sxx_db), np.max(Sxx_db)])
 
             # Create transform to map array indices to real time/frequency values
-            # Logger().warning(
-            #     "t: len: {}\tt[0]: {}\tt[-1] {}".format(len(t), t[0], t[-1])
-            # )
-            # Logger().warning(
-            #     "f: len: {}\tf[0]: {}\tf[-1] {}".format(len(f), f[0], f[-1])
-            # )
-            # block_size = data.shape[0] / samplerate
-            # Logger().warning(f"block_size: {block_size}")
             tr = QTransform()
             tr.translate(0, 0)  # Start at first time/freq values
             tr.scale(
