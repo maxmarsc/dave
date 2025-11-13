@@ -245,17 +245,19 @@ class JuceSVFFilterOld(IIR):
         self._value = dbg_value
         datatype = SampleType.parse(re_match.group(1))
         super().__init__(dbg_value, name, datatype)
-        self.__inner_coeffs = JuceSVFCoefficientsOld(
-            dbg_value.attr("parameters").attr("referencedObject")[0],
-            name + ".parameters",
-        )
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
+    def __inner_coeffs(self) -> JuceSVFCoefficientsOld:
+        return JuceSVFCoefficientsOld(
+            self._value.attr("parameters").attr("referencedObject")[0],
+            self.name + ".parameters",
+        )
+
     def read_from_debugger(self) -> RawIir.SVFTPTCoeffs:
-        return self.__inner_coeffs.read_from_debugger()
+        return self.__inner_coeffs().read_from_debugger()
 
 
 class JuceSVFFilter(IIR):

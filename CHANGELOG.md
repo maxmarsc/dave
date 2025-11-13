@@ -5,6 +5,8 @@
 ## Changed
 ## Fixed
 - A bug when a 2D entity previously out of scope would not appear
+- A bug when trying to read uninitalized reference. These are now skipped
+- A bug when trying to read a previous out of scope IIR entity
 
 # v0.11.1
 ## Fixed

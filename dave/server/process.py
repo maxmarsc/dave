@@ -134,10 +134,7 @@ class DaveProcess(metaclass=SingletonMeta):
                     update = entity.as_raw().as_update()
                     self.__dbgr_con.send(update)
                 except DebuggerMemoryError as e:
-                    Logger().error(
-                        f"Failed to read entity {id}:{entity.name}. Might be deallocated or unitialized. It will be considered out of scope."
-                    )
-                    Logger().debug(f"Failed with {e.args[0]}")
+                    self.__log_out_of_scope(entity, e)
                     self.__dbgr_con.send(RawEntity.OutScopeUpdate(id))
 
     def add_to_model(self, entities: List[Entity]):
@@ -150,16 +147,20 @@ class DaveProcess(metaclass=SingletonMeta):
                 # Try to read the memory and create a RawEntity to send to the client
                 entity_list.append(entity.as_raw())
             except DebuggerMemoryError as e:
-                Logger().error(
-                    f"Failed to read entity {entity.name}. Might be out of scope or unitialized."
-                )
-                Logger().debug(f"Failed with {e.args[0]}")
+                self.__log_out_of_scope(entity, e)
                 # Send a RawEntity with no samples instead, we will send the samples
                 # once the Entity is in scope and readable
                 entity_list.append(entity.as_empty_raw())
 
         # Send the new entities to the client
         self.__dbgr_con.send(RawEntityList(entity_list))
+
+    @staticmethod
+    def __log_out_of_scope(entity: Entity, error: Exception):
+        Logger().error(
+            f"Failed to read entity {entity.id}:{entity.name}. Might be deallocated or unitialized. It will be considered out of scope."
+        )
+        Logger().error(f"Failed with {error.args[0]}")
 
     def __identify_entity(self, id: str) -> int:
         try:
