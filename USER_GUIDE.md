@@ -279,7 +279,6 @@ drop-down list. When editing through a text entry, your input will only be valid
 and used after pressing the `<Enter>` key.
 
 #### Global settings
-<!-- ![Global settings](.pictures/settings_global.png) -->
 
 From left-to-right :
 - Default samplerate : the default samplerate to use for each container
@@ -291,7 +290,7 @@ For each entity in scope you can see a frame with settings for this entity.
 
 From left-to-right :
 
-##### `Container` Data layout selection
+##### Data layout selection [*Only for Containers*]
 The type of layout are :
 - real 1D : monophonic pcm samples
 - real 2D : multichannel pcm samples
@@ -312,7 +311,7 @@ available views might changes as well.
 First the number of channels of the entity. Editable if the container is 1D
 but you forced a 2D layout.
 
-###### `Container` channel section 
+###### Channel section [*Only for Containers*]
 Then the interleaved switch. Editable if the container is 1D
 but you forced a 2D layout. Some containers might be interleaved by nature, this
 will reflect it.
@@ -374,12 +373,16 @@ Available on **real** (1D/2D) data layout.
 ![Spectrogram](.pictures/spectrogram.png)
 
 The Spectrogram view computes and plot the spectrogram of the signal. It uses
-[matplotlib's specgram implementation](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.specgram.html)
+[scipy's signal.spectrogram implementation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.spectrogram.html)
 
 Available settings :
 - nfft : `[16: 4096]` default to `256`
 - overlap : `[0.01: 0.99]` default to `0.5`
-- window type : `hanning`, `blackman` or `none`
+- window type : `hann`, `boxcar`, `blackman` or `hamming`
+- colormap : `magma` or `viridis`
+
+On the right of the figure you can edit the dB scale by moving the top/bottom sliders 
+of the scale.
 
 **Note :** If for some reason the computation of the spectrogram is not possible
 (ex: divide by zero), the concerned channel will be left blanked like in the pictures.
