@@ -225,27 +225,43 @@ Show help for any subcommand. If no subcommand is provided it displays a short
 help message which redirects to this page
 
 ## Data update settings
-This settings affect how an update of entity's data affect the rendering.
+These settings affect how an update of entity's data affect the rendering.
+
+First let's explain how DAVE update its data:
+ 1. When you type `dave show` it will show you the container as it is in the debugger in the current state.
+ 2. Whenever the context changes (step over, new breakpoint, up-down in the stack - broken in VSCode/CLion), the 
+ debugger will send to the GUI the latest data of every container "in scope" (name + address) that you already showed, unless you have deleted it from the GUI.
+
+Depending on the Freeze/Concatenate here is how it differs:
+ - In the regular case, the old data is replaced by the latest data
+ - In `concat` mode, the latest data is concatenated to the old data
+ - In `freeze` mode, the frozen data is always shown next to the latest data
+
+Freeze and concat are compatible. The frozen data is always shown and never changed, 
+and the latest data is concatenated to the old data. Old data and frozen data can be the same.
+
+See below for more details about each feature.
 
 ### Freeze
-When enabling "freeze" on a entity, the current data (at the time of the 
-change of setting) of this entity is kept in memory to be plotted at each update
-alongside the new data
-
 Depending on the view type, it behaves differently :
 - If the view type support multiple plots on the same figure (Waveform, Curve ...),
 both frozen and new data are plot on the same figure
 - If the view type does not supports multiple plots on the same figure (Spectrogram)
 then a subfigure is created for the frozen data
 
-When disabling the frozen setting, the frozen data is deleted.
+When disabling the  `frozen` setting, the frozen data is deleted.
 
 ### Concatenate
 *Not all type of entities are compatible with the concatenate feature*
-When enabling "concat" on a container, nothing happens yet. When new data comes in,
-it is concatenated, channel-wise, to the old data, left-to-right
 
-When disabling the "concat" setting, the old data is deleted.
+When enabling `concat` on a container, nothing happens yet. When new data comes in,
+it is concatenated, channel-wise, to the old data, left-to-right.
+
+`concat` **does not put your data on a watchlist**, it would be too slow. So if you don't 
+stop on a point where the data is modified, you might miss an iteration of your data. 
+**That is the user responsibility.**
+
+When disabling the `concat` setting, the old data is deleted.
 
 ## GUI window
 DAVE uses a GUI to show you audio content from your debugger. The GUI consists
