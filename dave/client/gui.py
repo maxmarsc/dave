@@ -48,6 +48,7 @@ class DaveGUI(QMainWindow):
         # Store connection and settings
         self.__refresh_time_ms = 100
         self.__conn = connection
+        self.__first_entity_received = False
 
         # GUI settings
         self.__models: Dict[int, EntityModel] = dict()
@@ -140,8 +141,9 @@ class DaveGUI(QMainWindow):
         # Check for new entities or model update
         self._poll_queue()
 
-        # Check if we should close the window
-        self.__check_for_close_condition()
+        if self.__first_entity_received:
+            # Check if we should close the window
+            self.__check_for_close_condition()
 
     def _on_deletion_signal(self, model_id: int):
         # Remove from in_scope models first
@@ -179,6 +181,7 @@ class DaveGUI(QMainWindow):
                     self.__models[msg.id].concat = not self.__models[msg.id].concat
                 elif isinstance(msg, RawEntityList):
                     Logger().debug(f"Received new entities")
+                    self.__first_entity_received = True
                     new_in_scope: List[EntityModel] = list()
                     for raw_entity in msg.raw_entities:
                         new_entity = ModelFactory().build(raw_entity)
@@ -210,6 +213,7 @@ class DaveGUI(QMainWindow):
             except EOFError:
                 Logger().debug("Received EOF from debugger process, will shutdown")
                 self.close()
+                return False
 
     def __check_for_close_condition(self):
         if len(self.__models) == 0:

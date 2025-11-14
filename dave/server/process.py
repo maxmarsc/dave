@@ -157,10 +157,10 @@ class DaveProcess(metaclass=SingletonMeta):
 
     @staticmethod
     def __log_out_of_scope(entity: Entity, error: Exception):
-        Logger().error(
+        Logger().warning(
             f"Failed to read entity {entity.id}:{entity.name}. Might be deallocated or unitialized. It will be considered out of scope."
         )
-        Logger().error(f"Failed with {error.args[0]}")
+        Logger().warning(f"Failed with {error.args[0]}")
 
     def __identify_entity(self, id: str) -> int:
         try:

@@ -15,6 +15,8 @@
 - Missing documentation for the Poles/Zeros view in the User's Guide
 - A bug when using `dave inspect` #19
 - A bug when using the help flag `-h` in both lldb and gdb
+- A bug where the GUI would close before any entity was received
+- A bug where the GUI would never close on EOF
 
 # v0.11.1
 ## Fixed
