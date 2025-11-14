@@ -1,9 +1,9 @@
 # Manually installing DAVE
 
-This is a guide on how to install DAVE manually for those of you who don't sure
+This is a guide on how to install DAVE manually for those of you who don't trust
 an installation bash script (can't blame you) or like to play with things.
 
-*This guide should be up to date with the automatic installation procedure, but*
+*This guide should be up-to-date with the automatic installation procedure, but*
 *when in doubt check the [installation script](./dave/assets/dave_install.sh)*
 
 ## Requirements
@@ -12,6 +12,7 @@ with the `venv` module.
 
 In the next BASH snippets we will refer to this python executable as `PYTHON`
 
+## Installation
 ### 1. Create the DAVE folder and venv
 In order for DAVE to:
 1. Have its code isolated from the rest of your system
@@ -50,4 +51,17 @@ dave bind lldb
 
 # both
 dave bind
+```
+
+## Manual uninstallation
+Wanna get rid of DAVE manually ? Sure
+
+First unbind from your debugger
+```bash
+dave unbind
+```
+
+Then just delete DAVE's folder
+```bash
+rm -rf ~/.dave
 ```
