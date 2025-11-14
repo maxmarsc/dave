@@ -105,7 +105,9 @@ bash -c "$(wget https://raw.githubusercontent.com/maxmarsc/dave/refs/heads/main/
 It will install the python dave modules, the debuggers bindings, and the `dave`
 cli tool to help manage your dave installation.
 
-*Python* : Python support is limited and requires a different installation method, see the section below
+You don't trust the script ? Check the [Manual Installation Guide](./MANUAL_INSTALLATION.md)
+
+*Python* : Python support is limited, deprecated and requires a different installation method, see the section below
 
 ---
 
