@@ -33,10 +33,12 @@ class DaveCustomContainerPtr(Container1D):
         sample_type, _ = self.parse_typename(typename)
         super().__init__(dbg_value, name, sample_type)
 
+    @property
+    def __inner(self) -> c_cpp.Pointer1D:
         # Use the preexisting 1D pointer container type
-        self.__inner = c_cpp.Pointer1D(
-            dbg_value.attr("ptr_"),
-            name + ".ptr_",
+        return c_cpp.Pointer1D(
+            self._value.attr("ptr_"),
+            self.name + ".ptr_",
             [
                 self.size,
             ],
@@ -101,9 +103,11 @@ class DaveCustomContainerPtrPtr(Container2D):
         sample_type, *_ = self._parse_typename(typename)
         super().__init__(dbg_value, name, sample_type)
 
+    @property
+    def __inner(self) -> c_cpp.Pointer2D:
         # Use the preexisting 2D pointer pointer container type
-        self.__inner = c_cpp.Pointer2D(
-            dbg_value.attr("ptr_"), name + ".ptr_", self.shape()
+        return c_cpp.Pointer2D(
+            self._value.attr("ptr_"), self.name + ".ptr_", self.shape()
         )
 
     # Required for all containers
@@ -168,8 +172,10 @@ class DaveCustomInterleavedContainerVec(Container2D):
         sample_type, *_ = self._parse_typename(typename)
         super().__init__(dbg_value, name, sample_type, interleaved=True)
 
+    @property
+    def __inner(self) -> c_cpp.StdArray1D:
         # Use the preexisting 1D vector container type
-        self.__inner = c_cpp.StdVector1D(dbg_value.attr("vec_"), name + ".vec_")
+        return c_cpp.StdVector1D(self._value.attr("vec_"), self.name + ".vec_")
 
     # Required for all containers
     @classmethod
@@ -232,10 +238,12 @@ class DaveCustomContainerVecRef(Container2D):
         sample_type, *_ = self._parse_typename(typename)
         super().__init__(dbg_value, name, sample_type)
 
+    @property
+    def __inner(self) -> c_cpp.StdVector1D:
         # Use the preexisting 1D vector container type
-        self.__inner = c_cpp.StdVector1D(
-            dbg_value.attr("vec_ref_"),
-            name + ".vec_ref_",
+        return c_cpp.StdVector1D(
+            self._value.attr("vec_ref_"),
+            self.name + ".vec_ref_",
         )
 
     # Required for all containers

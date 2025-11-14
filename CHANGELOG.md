@@ -20,6 +20,7 @@
 - Various bugs with CHOC classes
 - A bug with interleaved sparklines
 - A bug with pretty printers on unititialized variables
+- Various bugs in custom containers examples
 
 # v0.11.1
 ## Fixed
