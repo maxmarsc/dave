@@ -78,6 +78,10 @@ class GdbValue(AbstractValue):
 
     @staticmethod
     def readmemory(addr: int, bytesize: int) -> bytearray:
+        if bytesize < 0 or bytesize > 4 * (1024**3):
+            raise DebuggerMemoryError(
+                f"Failed to read {bytesize} bytes from 0x{addr:X}"
+            )
         inferior = gdb.selected_inferior()
         try:
             return bytearray(inferior.read_memory(addr, bytesize))

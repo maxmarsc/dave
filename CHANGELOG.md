@@ -11,12 +11,15 @@
 ## Fixed
 - A bug when a 2D entity previously out of scope would not appear
 - A bug when trying to read uninitialized reference. These are now skipped
-- A bug when trying to read a previous out of scope IIR entity
+- A bug when trying to read a previously out of scope IIR entity
 - Missing documentation for the Poles/Zeros view in the User's Guide
 - A bug when using `dave inspect` #19
 - A bug when using the help flag `-h` in both lldb and gdb
 - A bug where the GUI would close before any entity was received
 - A bug where the GUI would never close on EOF
+- Various bugs with CHOC classes
+- A bug with interleaved sparklines
+- A bug with pretty printers on unititialized variables
 
 # v0.11.1
 ## Fixed

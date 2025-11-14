@@ -120,6 +120,10 @@ class LldbValue(AbstractValue):
 
     @staticmethod
     def readmemory(addr: int, bytesize: int) -> bytearray:
+        if bytesize < 0 or bytesize > 4 * (1024**3):
+            raise DebuggerMemoryError(
+                f"Failed to read {bytesize} bytes from 0x{addr:X}"
+            )
         # assert LldbValue.__debugger is not None
         process = (
             LldbValue.debugger().GetSelectedTarget().GetProcess()

@@ -21,36 +21,24 @@ class ChocMonoView(Container1D):
     def size(self) -> int:
         assert isinstance(self._value, AbstractValue)
 
-        try:
-            return int(self._value.attr("size").attr("numFrames"))
-        except:
-            raise RuntimeError(
-                f"Failed to retrieve size of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported version"
-            )
+        return int(self._value.attr("size").attr("numFrames"))
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
         return re.compile(cls.__REGEX)
 
     @classmethod
-    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, None]:
         re_match = cls.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"ChocMonoView could not parse {typename} as a valid type")
 
-        return SampleType.parse(re_match.group(1), None)
+        return (SampleType.parse(re_match.group(1)), None)
 
     def __data_ptr(self) -> int:
         assert isinstance(self._value, AbstractValue)
 
-        try:
-            return int(self._value.attr("data").attr("data"))
-        except:
-            raise RuntimeError(
-                f"Failed to retrieve size of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported version"
-            )
+        return int(self._value.attr("data").attr("data"))
 
     def read_from_debugger(self) -> bytearray:
         assert isinstance(self._value, AbstractValue)
@@ -67,7 +55,7 @@ class ChocMonoBuffer(Container1D):
 
     def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
         typename = dbg_value.typename()
-        sample_type = self.parse_typename(typename)
+        sample_type, _ = self.parse_typename(typename)
         super().__init__(dbg_value, name, sample_type)
 
         self.__view = ChocMonoView(dbg_value.attr("view"), name=name + ".view")
@@ -81,7 +69,7 @@ class ChocMonoBuffer(Container1D):
         return re.compile(cls.__REGEX)
 
     @classmethod
-    def parse_typename(cls, typename: str) -> Tuple[SampleType, int]:
+    def parse_typename(cls, typename: str) -> Tuple[SampleType, None]:
         re_match = cls.typename_matcher().match(typename)
         if re_match is None:
             raise TypeError(f"ChocMonoView could not parse {typename} as a valid type")
@@ -123,15 +111,9 @@ class ChocChannelArrayView(Container2D):
     def __channel_data_ptr(self, channel: int) -> int:
         assert isinstance(self._value, AbstractValue)
 
-        try:
-            offset = int(self._value.attr("data").attr("offset"))
-            ptr = int(self._value.attr("data").attr("channels")[channel])
-            return ptr + self.sample_type.byte_size() * offset
-        except:
-            raise RuntimeError(
-                f"Failed to retrieve size of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported version"
-            )
+        offset = int(self._value.attr("data").attr("offset"))
+        ptr = int(self._value.attr("data").attr("channels")[channel])
+        return ptr + self.sample_type.byte_size() * offset
 
     @property
     def num_channels(self) -> int:
@@ -182,6 +164,8 @@ class ChocChannelArrayBuffer(Container2D):
                 f"Could not parse {typename} as a valid choc::buffer::AllocatedBuffer type"
             )
 
+        return (SampleType.parse(re_match.group(1)), None, None)
+
     def shape(self) -> Tuple[int, int]:
         return self.__view.shape()
 
@@ -210,16 +194,12 @@ class ChocInterleavedView(Container2D):
                 f"Could not parse {typename} as a valid choc::buffer::BufferView type"
             )
 
+        return (SampleType.parse(re_match.group(1)), None, None)
+
     def __data_ptr(self) -> int:
         assert isinstance(self._value, AbstractValue)
 
-        try:
-            return int(self._value.attr("data").attr("data"))
-        except:
-            raise RuntimeError(
-                f"Failed to retrieve size of {self._value.typename()}. "
-                "Consider disabling optimization or use a supported version"
-            )
+        return int(self._value.attr("data").attr("data"))
 
     @property
     def num_channels(self) -> int:
@@ -261,6 +241,8 @@ class ChocInterleavedBuffer(Container2D):
             raise TypeError(
                 f"Could not parse {typename} as a valid choc::buffer::AllocatedBuffer type"
             )
+
+        return (SampleType.parse(re_match.group(1)), None, None)
 
     def shape(self) -> Tuple[int, int]:
         return self.__view.shape()

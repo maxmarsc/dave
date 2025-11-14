@@ -9,7 +9,7 @@ import cmath
 from dave.common.sample_type import SampleType
 from dave.common.raw_container import RawContainer
 
-from .debuggers.value import AbstractValue
+from .debuggers.value import AbstractValue, DebuggerMemoryError
 from .entity import Entity
 
 
@@ -31,7 +31,10 @@ class Container(Entity):
         shape = self.shape()
         channels, samples = shape if not self.__interleaved else shape[::-1]
 
-        samples_bytes = self.read_from_debugger()
+        try:
+            samples_bytes = self.read_from_debugger()
+        except DebuggerMemoryError:
+            return "Failed to read internals, might be deallocated or unitialized\n"
         byte_size = self.sample_type.byte_size()
         fmt = self.sample_type.struct_name()
 
@@ -50,8 +53,11 @@ class Container(Entity):
     def compute_sparklines(self) -> List[str]:
         assert not self.sample_type.is_complex()
         shape = self.shape()
-        channels, num_samples = shape if not self.__interleaved else shape[::-1]
-        samples_bytes = self.read_from_debugger()
+        channels, block_size = shape if not self.__interleaved else shape[::-1]
+        try:
+            samples_bytes = self.read_from_debugger()
+        except DebuggerMemoryError:
+            return []
         byte_size = self.sample_type.byte_size()
         fmt = self.sample_type.struct_name()
 
@@ -63,24 +69,24 @@ class Container(Entity):
                     struct.unpack(
                         fmt,
                         samples_bytes[
-                            (num_samples * i + channel)
-                            * byte_size : (num_samples * i + channel + 1)
+                            (channels * i + channel)
+                            * byte_size : (channels * i + channel + 1)
                             * byte_size
                         ],
                     )[0]
-                    for i in range(num_samples)
+                    for i in range(block_size)
                 ]
             else:
                 channel_samples = [
                     struct.unpack(
                         fmt,
                         samples_bytes[
-                            (num_samples * channel + i)
-                            * byte_size : (num_samples * channel + i + 1)
+                            (block_size * channel + i)
+                            * byte_size : (block_size * channel + i + 1)
                             * byte_size
                         ],
                     )[0]
-                    for i in range(num_samples)
+                    for i in range(block_size)
                 ]
 
             waveform = "_⎽⎼—⎻⎺‾"
