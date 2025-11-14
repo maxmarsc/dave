@@ -27,23 +27,24 @@ class CArrayAny2D(Container2D):
 
     __REGEX = rf"^(?:const\s+)?([^[\]]*)\s*\[(\d+)\]$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
+    def __init__(self, dbg_value: AbstractValue, name: str, dims=[]):
         typename = dbg_value.typename()
         sample_type, self.__size, _ = self._parse_typename(typename)
-
-        self.__nested_containers = [
-            EntityFactory().build_simple(
-                dbg_value[i],
-                dbg_value[i].typename(),
-                "",
-                _,
-            )
-            for i in range(self.__size)
-        ]
+        self.__nested_dim = dims
         super().__init__(dbg_value, name, sample_type)
 
+        # Try to build the nested containers
+        assert self.__nested_containers is not None
+
+    @property
+    def __nested_containers(self) -> List[Container1D]:
+        return self._nested_containers(self._value, self.__size, self.__nested_dim)
+
     def shape(self) -> Tuple[int, int]:
-        return (self.__size, self.__nested_containers[0].size)
+        return (
+            self.__size,
+            self.__nested_containers[0].size,
+        )
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
@@ -145,32 +146,20 @@ class Pointer2D(Container2D):
 
         self._value = dbg_value
         self.__dims = dims
-        self.__update_nested()
         super().__init__(dbg_value, name, sample_type)
 
-    def shape(self) -> Tuple[int, int]:
-        self.__update_nested()
-        return (self.__size, self.__nested_containers[0].size)
+        # Try to build the nested containers
+        assert self.__nested_containers is not None
 
-    def __update_nested(self):
-        self.__nested_containers = [
-            EntityFactory().build_simple(
-                self._value[i],
-                self._value[i].typename(),
-                "",
-                self.__dims[1:],
-            )
-            for i in range(self.__dims[0])
-        ]  # type: List[Container1D]
-        if self.__dims[0] > 0:
-            nested_size = self.__nested_containers[0].size
-            if any(
-                nested_container.size != nested_size
-                for nested_container in self.__nested_containers
-            ):
-                raise TypeError(
-                    "Pointer2D only supported nested container of the same size"
-                )
+    @property
+    def __nested_containers(self) -> List[Container1D]:
+        return self._nested_containers(self._value, self.__dims[0], self.__dims[1:])
+
+    def shape(self) -> Tuple[int, int]:
+        return (
+            self.__size,
+            self.__nested_containers[0].size,
+        )
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
@@ -207,11 +196,11 @@ class Pointer2D(Container2D):
         return (sample_type, dims[0], nested_size)
 
     def read_from_debugger(self) -> bytearray:
-        if self.__size <= 0 or self.__nested_containers[0].size <= 0:
+        nested_containers = self.__nested_containers
+        if self.__size <= 0 or nested_containers[0].size <= 0:
             raise DebuggerMemoryError("A dimension is <= 0")
-        self.__update_nested()
         return b"".join(
-            [container.read_from_debugger() for container in self.__nested_containers]
+            [container.read_from_debugger() for container in nested_containers]
         )
 
     @staticmethod
@@ -226,20 +215,21 @@ class Pointer2D(Container2D):
 class StdArray2D(Container2D):
     __REGEX = rf"^(?:const\s+)?std::(?:\_\_1\:\:)?array<(.*),\s*(\d+)[a-z]*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
+    def __init__(self, dbg_value: AbstractValue, name: str, dims=[]):
         typename = dbg_value.typename()
         sample_type, self.__size, _ = self._parse_typename(typename)
         self._value = dbg_value
-        self.__nested_containers = [
-            EntityFactory().build_simple(
-                self.__data_ptr_value()[i],
-                self.__data_ptr_value()[i].typename(),
-                "",
-                _,
-            )
-            for i in range(self.__size)
-        ]  # type: List[Container1D]
+        self.__nested_dim = dims
         super().__init__(dbg_value, name, sample_type)
+
+        # Try to build the nested containers
+        assert self.__nested_containers is not None
+
+    @property
+    def __nested_containers(self) -> List[Container1D]:
+        return self._nested_containers(
+            self.__data_ptr_value(), self.__size, self.__nested_dim
+        )
 
     def shape(self) -> Tuple[int, int]:
         return (self.__size, self.__nested_containers[0].size)
@@ -309,40 +299,30 @@ class StdVector2D(Container2D):
         sample_type, *_ = self._parse_typename(typename)
         self._value = dbg_value
         self.__vec = StdVector(dbg_value)
-        self.__dims = dims
-        self.__update_nested()
+        self.__nested_dim = dims
         super().__init__(dbg_value, name, sample_type)
+
+        # Try to build the nested containers
+        assert self.__nested_containers is not None
 
     @property
     def size(self) -> int:
         return self.__vec.size
 
-    def __update_nested(self):
-        self.__nested_containers = [
-            EntityFactory().build_simple(
-                self.__data_ptr_value()[i],
-                self.__data_ptr_value()[i].typename(),
-                "",
-                self.__dims,
-            )
-            for i in range(self.size)
-        ]  # type: List[Container1D]
-        if self.size > 0:
-            nested_size = self.__nested_containers[0].size
-            if any(
-                nested_container.size != nested_size
-                for nested_container in self.__nested_containers
-            ):
-                raise TypeError(
-                    "StdVector2D only supported nested container of the same size"
-                )
+    @property
+    def __nested_containers(self) -> List[Container1D]:
+        return self._nested_containers(
+            self.__data_ptr_value(), self.size, self.__nested_dim
+        )
 
     def __data_ptr_value(self) -> AbstractValue:
         return self.__vec.data_ptr_value()
 
     def shape(self) -> Tuple[int, int]:
-        self.__update_nested()
-        return (self.size, self.__nested_containers[0].size)
+        return (
+            self.size,
+            self.__nested_containers[0].size,
+        )
 
     @classmethod
     def typename_matcher(cls) -> Callable[[str], bool]:
@@ -377,7 +357,6 @@ class StdVector2D(Container2D):
         return False
 
     def read_from_debugger(self) -> bytearray:
-        self.__update_nested()
         if self.size <= 0:
             raise DebuggerMemoryError("std::vector size is <= 0")
         return b"".join(
@@ -396,45 +375,35 @@ class StdVector2D(Container2D):
 class StdSpan2D(Container2D):
     __REGEX = rf"^(?:const\s+)?(?:std|gsl)::(?:\_\_1\:\:)?span<(?:const)?\s*(.*)\s*(?:const)?,\s*(\d+)[a-z]*>\s*$"
 
-    def __init__(self, dbg_value: AbstractValue, name: str, _=[]):
+    def __init__(self, dbg_value: AbstractValue, name: str, dims=[]):
         typename = dbg_value.typename()
         sample_type, size, _ = self._parse_typename(typename)
         self.__span = StdSpan(dbg_value, size)
         self._value = dbg_value
-        self.__dims = _
-        self.__update_nested()
+        self.__nested_dim = dims
         super().__init__(dbg_value, name, sample_type)
+
+        # Try to build the nested containers
+        assert self.__nested_containers is not None
 
     @property
     def size(self) -> int:
         return self.__span.size
 
-    def __update_nested(self):
-        self.__nested_containers = [
-            EntityFactory().build_simple(
-                self.__data_ptr_value()[i],
-                self.__data_ptr_value()[i].typename(),
-                "",
-                self.__dims,
-            )
-            for i in range(self.size)
-        ]  # type: List[Container1D]
-        if self.size > 0:
-            nested_size = self.__nested_containers[0].size
-            if any(
-                nested_container.size != nested_size
-                for nested_container in self.__nested_containers
-            ):
-                raise TypeError(
-                    "StdSpan2D only supported nested container of the same size"
-                )
+    @property
+    def __nested_containers(self) -> List[Container1D]:
+        return self._nested_containers(
+            self.__data_ptr_value(), self.size, self.__nested_dim
+        )
 
     def __data_ptr_value(self) -> AbstractValue:
         return self.__span.data_ptr_value()
 
     def shape(self) -> Tuple[int, int]:
-        self.__update_nested()
-        return (self.size, self.__nested_containers[0].size)
+        return (
+            self.size,
+            self.__nested_containers[0].size,
+        )
 
     @classmethod
     def typename_matcher(cls) -> re.Pattern:
@@ -462,7 +431,6 @@ class StdSpan2D(Container2D):
         return (sample_type, int(re_match.group(2)), nested_size)
 
     def read_from_debugger(self) -> bytearray:
-        self.__update_nested()
         if self.size <= 0:
             raise DebuggerMemoryError("std::span size is <= 0")
         return b"".join(
