@@ -3,6 +3,7 @@
 - Added an editable colorbar to spectrogram view
 - Added `magma` colormap for colorblind friendly spectrogram view
 - Views colors adapt to the color theme
+- A manual installation guide
 ## Changed
 - User can no longer choose the color theme. It will stick to the system user theme
 - No longer requires binary `Tk` libs to be installed on the system
