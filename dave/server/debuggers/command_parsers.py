@@ -1,7 +1,8 @@
 from __future__ import annotations
-from argparse import ArgumentParser, Namespace, ArgumentError
+from argparse import SUPPRESS, Action, ArgumentParser, Namespace, ArgumentError
 from abc import ABC, abstractmethod
 import types
+import traceback
 
 from dave.common.logger import Logger
 from typing import Union, override
@@ -11,15 +12,40 @@ class ParsingError(Exception):
     pass
 
 
+class HelpException(Exception):
+    pass
+
+
+class NonExitingHelpAction(Action):
+    def __init__(self, option_strings, dest=SUPPRESS, default=SUPPRESS, help=None):
+        super().__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help,
+        )
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.print_help()
+        raise HelpException()
+
+
 class DaveArgumentParser(ArgumentParser, ABC):
     """
     Custom workaround class, see https://github.com/python/cpython/issues/103498
     """
 
     def __init__(self, subprog: str, **kwargs):
+        kwargs["add_help"] = False
         super().__init__(prog=f"dave {subprog}", **kwargs)
-        # override method error
-        self.error = types.MethodType(DaveArgumentParser.__non_exiting_error, self)
+
+        self.add_argument(
+            "-h",
+            "--help",
+            action=NonExitingHelpAction,
+            help="show this help message and returns",
+        )
 
     @property
     def subprog(self) -> str:
@@ -30,7 +56,8 @@ class DaveArgumentParser(ArgumentParser, ABC):
         # Delete the \n at the end
         return self.format_usage()[:-1]
 
-    def __non_exiting_error(self, message):
+    @override
+    def error(self, message):
         raise ParsingError(message)
 
 

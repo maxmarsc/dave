@@ -13,6 +13,8 @@
 - A bug when trying to read uninitialized reference. These are now skipped
 - A bug when trying to read a previous out of scope IIR entity
 - Missing documentation for the Poles/Zeros view in the User's Guide
+- A bug when using `dave inspect` #19
+- A bug when using the help flag `-h` in both lldb and gdb
 
 # v0.11.1
 ## Fixed

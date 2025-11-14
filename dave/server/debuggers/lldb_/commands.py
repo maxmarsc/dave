@@ -5,6 +5,7 @@ import shlex
 from ...process import DaveProcess
 from ...entity_factory import EntityFactory, EntityBuildError
 from dave.server.debuggers.command_parsers import (
+    HelpException,
     ParsingError,
     ShowCommandParser,
     DeleteCommandParser,
@@ -133,6 +134,8 @@ class ShowCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
+        except HelpException as e:
+            return
 
         if len(parsed.dims) > 2:
             result.SetError("--dims supports up to two dimensions")
@@ -216,6 +219,8 @@ class InspectCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
+        except HelpException as e:
+            return
 
         # Check for running process
         if not exe_ctx.GetProcess().IsValid():
@@ -228,9 +233,9 @@ class InspectCommand:
             result.SetError("No valid frame to evaluate variable.")
             return
 
-        lldb_value = LldbValue.find_variable(args.VARIABLE_ID, frame)
+        lldb_value = LldbValue.find_variable(args.VARIABLE, frame)
         if lldb_value is None:
-            result.SetError(f"Variable '{args.VARIABLE_ID}' not found.")
+            result.SetError(f"Variable '{args.VARIABLE}' not found.")
             return
 
         Logger().info(lldb_value.typename())
@@ -254,6 +259,8 @@ class HelpCommand:
             args = self.__parser.parse_args(shlex.split(command))
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
+            return
+        except HelpException as e:
             return
 
         match args.SUBCOMMAND:
@@ -305,6 +312,8 @@ class DeleteCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
+        except HelpException as e:
+            return
 
         # Check for running process
         if not exe_ctx.GetProcess().IsValid():
@@ -342,6 +351,8 @@ class FreezeCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
+        except HelpException as e:
+            return
 
         # Check for running process
         if not exe_ctx.GetProcess().IsValid():
@@ -378,6 +389,8 @@ class ConcatCommand:
             args = self.__parser.parse_args(shlex.split(command))
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
+            return
+        except HelpException as e:
             return
 
         # Check for running process

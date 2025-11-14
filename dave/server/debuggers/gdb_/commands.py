@@ -8,6 +8,7 @@ import time
 from dave.common.singleton import SingletonMeta
 from dave.server.process import DaveProcess
 from dave.server.debuggers.command_parsers import (
+    HelpException,
     ParsingError,
     ShowCommandParser,
     DeleteCommandParser,
@@ -149,6 +150,8 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{SHOW_PARSER.usage_property}"
             raise gdb.GdbError(message)
+        except HelpException as e:
+            return
 
         if len(parsed.dims) > 2:
             raise gdb.GdbError("--dims supports up to two dimensions")
@@ -202,6 +205,8 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{DELETE_PARSER.usage_property}"
             raise gdb.GdbError(message)
+        except HelpException as e:
+            return
 
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
@@ -215,6 +220,8 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{FREEZE_PARSER.usage_property}"
             raise gdb.GdbError(message)
+        except HelpException as e:
+            return
 
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
@@ -230,6 +237,8 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{CONCAT_PARSER.usage_property}"
             raise gdb.GdbError(message)
+        except HelpException as e:
+            return
 
         if not DaveProcess().is_alive():
             raise gdb.GdbError("Dave is not started")
@@ -246,8 +255,10 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{INSPECT_PARSER.usage_property}"
             raise gdb.GdbError(message)
+        except HelpException as e:
+            return
 
-        var_name = parsed.VARIABLE_ID
+        var_name = parsed.VARIABLE
         try:
             var = gdb.parse_and_eval(var_name)
             if var.is_optimized_out:
@@ -263,6 +274,8 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{INSPECT_PARSER.usage_property}"
             raise gdb.GdbError(message)
+        except HelpException as e:
+            return
 
         match parsed.SUBCOMMAND:
             case None:
