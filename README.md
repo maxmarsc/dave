@@ -23,9 +23,6 @@ it with nasty macros or fancy libs, just start your debugger !
   [...]
 }
 ```
-<!-- <p align="center">
-    <img src=".pictures/pretty_printers.png">
-</p> -->
 
 DAVE supports plotting for different types of audio "entities" that might live in
 your program's memory :

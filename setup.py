@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "0.11.1"
+VERSION = "0.12.0"
 
 with open("README.md", encoding="utf-8") as fh:
     pypi_header = """
@@ -11,9 +11,9 @@ should rather use the install script as show in the "Project Setup" section.
 
 """
     long_description = pypi_header + fh.read()
-    long_description.replace(
-        'src=".pictures/phase.png"',
-        f"unavailable picture",
+    long_description = long_description.replace(
+        ".pictures/",
+        f"https://raw.githubusercontent.com/maxmarsc/dave/v{VERSION}/.pictures/",
     )
 
 setup(
