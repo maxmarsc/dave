@@ -13,7 +13,7 @@ should rather use the install script as show in the "Project Setup" section.
     long_description = pypi_header + fh.read()
     long_description = long_description.replace(
         ".pictures/",
-        f"https://raw.githubusercontent.com/maxmarsc/dave/v{VERSION}/.pictures/",
+        f"https://media.githubusercontent.com/media/maxmarsc/dave/v{VERSION}/.pictures/",
     )
 
 setup(
