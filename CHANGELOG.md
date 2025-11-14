@@ -1,5 +1,10 @@
 # `main`
 ## Added
+## Changed
+## Fixed
+
+# v0.12.0
+## Added
 - Added an editable colorbar to spectrogram view
 - Added `magma` colormap for colorblind friendly spectrogram view
 - Views colors adapt to the color theme
