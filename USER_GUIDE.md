@@ -413,6 +413,12 @@ The magnitude view plot the magnitude/frequency response of the filter
 
 The magnitude view plot the magnitude/frequency response of the filter
 
+### IIR Filter: Poles/Zeros view
+
+![IIR Poles & Zeros](.pictures/poles_zeros.png)
+
+This view plots the complex poles and zeros of the filter on the unit circle
+
 ## Supported Entities
 For now DAVE support samples as `float`, `double`, `std::complex` and C's `complex`
 

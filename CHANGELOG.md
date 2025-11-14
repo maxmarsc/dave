@@ -12,6 +12,7 @@
 - A bug when a 2D entity previously out of scope would not appear
 - A bug when trying to read uninitialized reference. These are now skipped
 - A bug when trying to read a previous out of scope IIR entity
+- Missing documentation for the Poles/Zeros view in the User's Guide
 
 # v0.11.1
 ## Fixed
