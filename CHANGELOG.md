@@ -2,10 +2,14 @@
 ## Added
 - Added an editable colorbar to spectrogram view
 - Added `magma` colormap for colorblind friendly spectrogram view
+- Views colors adapt to the color theme
 ## Changed
+- User can no longer choose the color theme. It will stick to the system user theme
+- No longer requires binary `Tk` libs to be installed on the system
+- Switched to Pyside6 (Qt), no longer uses Tkinter/CustomTkinter
 ## Fixed
 - A bug when a 2D entity previously out of scope would not appear
-- A bug when trying to read uninitalized reference. These are now skipped
+- A bug when trying to read uninitialized reference. These are now skipped
 - A bug when trying to read a previous out of scope IIR entity
 
 # v0.11.1
