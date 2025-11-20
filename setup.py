@@ -26,7 +26,12 @@ setup(
     description="base module for the DAVE debugger extension",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=["PySide6==6.9.0", "scipy==1.15.2", "pyqtgraph==0.13.7"],
+    install_requires=[
+        "PySide6==6.9.0",
+        "scipy==1.15.2",
+        "pyqtgraph==0.13.7",
+        "darkdetect==0.8.0",
+    ],
     license="GPLV3",
     classifiers=[
         "Development Status :: 3 - Alpha",

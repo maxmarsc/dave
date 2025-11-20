@@ -376,7 +376,7 @@ Available on **real** (1D/2D) data layout.
 ![PSD](.pictures/psd.png)
 
 The PSD view computes and plot the power spectral density of the signal. It uses
-[matplotlib's PSD implementation](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.psd.html)
+[Scipy's PSD implementation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html)
 
 Available settings :
 - nfft : `[16: 4096]` default to `256`

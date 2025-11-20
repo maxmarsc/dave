@@ -3,16 +3,15 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, List, Set, Tuple, Union
 
-from matplotlib.axes import Axes
 import numpy as np
 import pyqtgraph as pg
 
 from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QFrame
 
 from dave.common.raw_entity import RawEntity
 
 from .entity_view import EntityView
-from .entity_settings_frame import EntitySettingsFrame
 from .entity_side_panel_info import EntitySidePanelInfo
 
 
@@ -65,7 +64,7 @@ class EntityModel(QObject):
 
     @staticmethod
     @abstractmethod
-    def settings_frame_class() -> type[EntitySettingsFrame]:
+    def settings_frame_class() -> type[QFrame]:
         pass
 
     @staticmethod

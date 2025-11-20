@@ -3,15 +3,14 @@ from pathlib import Path
 from typing import Any, List, Tuple, Union, override
 import warnings
 
-# from matplotlib.axes import Axes
-import pyqtgraph as pg
 import numpy as np
+
+from PySide6.QtWidgets import QFrame
 
 from dave.client.entity.model_factory import ModelFactory
 from dave.common.raw_iir import RawIir
 
 from dave.client.entity.entity_model import EntityModel
-from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 
 from .raw_to_numpy import InternalNpy, raw_to_npy
@@ -36,7 +35,7 @@ class IirModel(EntityModel):
         return RawIir.supports_concat()
 
     @staticmethod
-    def settings_frame_class() -> type[EntitySettingsFrame]:
+    def settings_frame_class() -> type[QFrame]:
         from .iir_settings_frame import IirSettingsFrame
 
         return IirSettingsFrame

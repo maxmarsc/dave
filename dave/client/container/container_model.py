@@ -3,19 +3,13 @@ from pathlib import Path
 from typing import Any, List, Tuple, Union, override
 import warnings
 
-# from matplotlib.axes import Axes
-
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QFrame
 
-import pyqtgraph as pg
-
-# from dave.common.data_layout import RawContainer.Layout
 from dave.common.logger import Logger
 from dave.common.raw_container import RawContainer
 
 from dave.client.entity.entity_model import EntityModel
-from dave.client.entity.model_factory import ModelFactory
-from dave.client.entity.entity_settings_frame import EntitySettingsFrame
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 from .raw_to_numpy import (
     convert_container_data_to_layout,
@@ -35,8 +29,6 @@ from .container_views import (
 
 from dataclasses import dataclass
 import numpy as np
-
-import tkinter as tk
 import wave
 
 
@@ -71,7 +63,7 @@ class ContainerModel(EntityModel):
             return [MagnitudeView, PhaseView]
 
     @staticmethod
-    def settings_frame_class() -> type[EntitySettingsFrame]:
+    def settings_frame_class() -> type[QFrame]:
         from .container_settings_frames import ContainerSettingsFrame
 
         return ContainerSettingsFrame

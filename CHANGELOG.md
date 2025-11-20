@@ -3,6 +3,10 @@
 ## Changed
 ## Fixed
 
+# v0.12.1
+## Fixed
+- Dave would crash instantly failing to import leftovers of matplotlib/tkinter
+
 # v0.12.0
 ## Added
 - Added an editable colorbar to spectrogram view
