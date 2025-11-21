@@ -3,6 +3,7 @@ import dave.common.server_type as st
 # First import vanilla dave support
 if st.SERVER_TYPE in (st.ServerType.GDB, st.ServerType.LLDB):
     from .c_cpp import *
+    from .rust import *
 elif st.SERVER_TYPE == st.ServerType.PYTHON:
     from .python import *
 else:

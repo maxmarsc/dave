@@ -262,9 +262,12 @@ The following subcommands are supported:
         try:
             var = gdb.parse_and_eval(var_name)
             if var.is_optimized_out:
-                print(f"Variable '{var_name}' is optimized out.")
+                Logger().error(f"Variable '{var_name}' is optimized out.")
             else:
-                print("Type: {}".format(gdb.types.get_basic_type(var.type).name))
+                frame = gdb.selected_frame()
+                gdb_value = GdbValue(var, "", GdbValue.language_from_frame(frame))
+                Logger().info(f"Type: {gdb_value.typename()}")
+                Logger().info(f"Lang: {gdb_value.language().name}")
         except (gdb.error, RuntimeError) as e:
             print(f"Error accessing variable '{var_name}': {str(e)}")
 

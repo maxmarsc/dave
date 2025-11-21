@@ -1,52 +1,90 @@
+from collections import defaultdict
 import re
-from typing import Any, List, Dict, Set, Union
+from typing import Any, DefaultDict, List, Dict, Set, Union
 
 from dave.common.logger import Logger
 
 from dave.common.singleton import SingletonMeta
 from .entity import Entity, EntityBuildError
-from .container import Container, Container1D, Container2D
 from .debuggers.value import AbstractValue
+from .language_type import LanguageType
 
 
 class EntityFactory(metaclass=SingletonMeta):
     def __init__(self) -> None:
-        self.__simple_entity_classes: Set[type[Entity]] = set()
-        self.__nested_entity_classes: Set[type[Entity]] = set()
+        self.__simple_entity_classes: DefaultDict[LanguageType, Set[type[Entity]]] = (
+            defaultdict(set)
+        )
+        self.__nested_entity_classes: DefaultDict[LanguageType, Set[type[Entity]]] = (
+            defaultdict(set)
+        )
 
     def get_entities_cls_set(self) -> Set[type[Entity]]:
-        return self.__simple_entity_classes | self.__nested_entity_classes
+        full_set: Set[type[Entity]] = set()
+        for simple_lang_set in self.__simple_entity_classes.values():
+            full_set = full_set | simple_lang_set
+        for nested_lang_set in self.__nested_entity_classes.values():
+            full_set = full_set | nested_lang_set
+        return full_set
 
-    def register(self, cls):
+    def register(self, cls: type[Entity], lang: LanguageType):
         """
-        Every new entity class should register itself to be available
-        at debugger runtime.
+        Register a new entity class for a given software language.
+
+        Every Entity class must be registered to be available at debug
+
+        Parameters
+        ----------
+        cls : type[Entity]
+            The entity class to register. Can be simple or nested
+        lang : LanguageType
+            The corresponding language for the given entity. If the language
+            is set to LanguageType.C it will be register for both C and C++ languages
+
+        Raises
+        ------
+        EntityBuildError
+            If the entity class was already registered
         """
         assert issubclass(cls, Entity)
+        assert lang != LanguageType.UNSUPPORTED
+        langs = (
+            [LanguageType.C, LanguageType.CPP]
+            if lang == LanguageType.C
+            else [
+                lang,
+            ]
+        )
         try:
             if not cls.is_nested():
-                if cls in self.__simple_entity_classes:
-                    raise KeyError
-                self.__simple_entity_classes.add(cls)
+                # print(f"REGISTER: {lang}:{cls}")
+                for lang in langs:
+                    # print(f"REGISTER: {self.__simple_entity_classes[lang]}")
+                    if cls in self.__simple_entity_classes[lang]:
+                        raise KeyError(lang.name)
+                    self.__simple_entity_classes[lang].add(cls)
             else:
-                if cls in self.__nested_entity_classes:
-                    raise KeyError
-                self.__nested_entity_classes.add(cls)
-        except KeyError:
+                for lang in langs:
+                    if cls in self.__nested_entity_classes[lang]:
+                        raise KeyError(lang.name)
+                    self.__nested_entity_classes[lang].add(cls)
+        except KeyError as e:
             raise EntityBuildError(
-                f"Error : {cls} was already registered in the container factory"
+                f"Error : {cls} was already registered in the container factory: {e}"
             )
 
     def check_valid_simple(self, typename: str) -> Union[type[Entity], None]:
         """
         Returns true if the given typename matches a registered simple entity class
         """
-        for simple_entity_cls in self.__simple_entity_classes:
-            pattern = simple_entity_cls.typename_matcher()
-            if (
-                isinstance(pattern, re.Pattern) and pattern.match(typename) is not None
-            ) or (callable(pattern) and pattern(typename)):
-                return simple_entity_cls
+        for simple_entity_set in self.__simple_entity_classes.values():
+            for simple_entity_cls in simple_entity_set:
+                pattern = simple_entity_cls.typename_matcher()
+                if (
+                    isinstance(pattern, re.Pattern)
+                    and pattern.match(typename) is not None
+                ) or (callable(pattern) and pattern(typename)):
+                    return simple_entity_cls
 
         return None
 
@@ -74,15 +112,16 @@ class EntityFactory(metaclass=SingletonMeta):
 
         Returns
         -------
-        Container1D
-            A valid Container1D subclass instance pointing to the debugger memory
+        Entity
+            A valid Entity subclass instance pointing to the debugger memory
 
         Raises
         ------
         ContainerError
             If no registered class matched the typename
         """
-        for simple_entity_cls in self.__simple_entity_classes:
+        assert dbg_value.language() != LanguageType.UNSUPPORTED
+        for simple_entity_cls in self.__simple_entity_classes[dbg_value.language()]:
             new_container = self.__build_if_match(
                 simple_entity_cls, dbg_value, typename, varname, dims
             )
@@ -125,6 +164,7 @@ class EntityFactory(metaclass=SingletonMeta):
         EntityBuildError
             If no registered class matched the typename
         """
+        assert dbg_value.language() != LanguageType.UNSUPPORTED
         Logger().debug(f"Building {varname} from type |{typename}|")
 
         # First we check if it is a simple (not nested) class
@@ -137,7 +177,7 @@ class EntityFactory(metaclass=SingletonMeta):
             raise EntityBuildError(f"Failed to build {typename} with {e}")
 
         # Then we check for nested entity classes
-        for nested_entity in self.__nested_entity_classes:
+        for nested_entity in self.__nested_entity_classes[dbg_value.language()]:
             new_entity = self.__build_if_match(
                 nested_entity, dbg_value, typename, varname, dims
             )
@@ -150,7 +190,7 @@ class EntityFactory(metaclass=SingletonMeta):
 
     def __build_if_match(
         self,
-        entity_cls: Entity,
+        entity_cls: type[Entity],
         dbg_value: Any,
         typename: str,
         varname: str,

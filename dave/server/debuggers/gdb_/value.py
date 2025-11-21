@@ -1,13 +1,32 @@
 from __future__ import annotations
 from typing import List, Union
 from ..value import AbstractValue, DebuggerMemoryError
+from ...language_type import LanguageType
 import gdb  # type: ignore
 
 
 class GdbValue(AbstractValue):
-    def __init__(self, gdb_value: gdb.Value, varname: str) -> None:
+    def __init__(
+        self, gdb_value: gdb.Value, varname: str, language: LanguageType
+    ) -> None:
         self.__value = gdb_value
         self.__varname = varname
+        self.__language = language
+
+    @staticmethod
+    def language_from_frame(frame: gdb.Frame) -> LanguageType:
+        match frame.language():
+            case "c":
+                return LanguageType.C
+            case "c++":
+                return LanguageType.CPP
+            case "rust":
+                return LanguageType.RUST
+            case _:
+                return LanguageType.UNSUPPORTED
+
+    def language(self):
+        return self.__language
 
     def typename(self) -> str:
         return str(gdb.types.get_basic_type(self.__value.type).strip_typedefs())
@@ -20,7 +39,9 @@ class GdbValue(AbstractValue):
 
     def attr(self, name: str) -> GdbValue:
         try:
-            return GdbValue(self.__value[name], f"{self.__varname}.{name}")
+            return GdbValue(
+                self.__value[name], f"{self.__varname}.{name}", self.__language
+            )
         except gdb.MemoryError as e:
             raise DebuggerMemoryError(e.args)
         except gdb.error as e:
@@ -62,7 +83,9 @@ class GdbValue(AbstractValue):
         """
         assert isinstance(key, int)
         try:
-            return GdbValue(self.__value[key], f"{self.__varname}[{key}]")
+            return GdbValue(
+                self.__value[key], f"{self.__varname}[{key}]", self.__language
+            )
         except gdb.MemoryError as e:
             raise DebuggerMemoryError(e.args)
 
@@ -96,13 +119,16 @@ class GdbValue(AbstractValue):
     ) -> Union[GdbValue, None]:
         if where is None:
             try:
-                return GdbValue(gdb.parse_and_eval(varname), varname)
+                language = GdbValue.language_from_frame(gdb.selected_frame())
+                return GdbValue(gdb.parse_and_eval(varname), varname, language)
             except gdb.GdbError:
                 return None
 
         assert isinstance(where, gdb.Frame)
         try:
-            return GdbValue(where.read_var(varname), varname)
+            return GdbValue(
+                where.read_var(varname), varname, GdbValue.language_from_frame(where)
+            )
         except gdb.GdbError:
             return None
 
@@ -110,6 +136,7 @@ class GdbValue(AbstractValue):
     def find_all_variables(where: Union[gdb.Frame, None] = None) -> List[GdbValue]:
         if where is None:
             where = gdb.selected_frame()
+        language = GdbValue.language_from_frame(where)
 
         found = []
         block = where.block()
@@ -120,7 +147,7 @@ class GdbValue(AbstractValue):
                 if symbol.is_variable or symbol.is_argument:
                     try:
                         value = where.read_var(symbol.name)
-                        found.append(GdbValue(value, symbol.name))
+                        found.append(GdbValue(value, symbol.name, language))
                     except gdb.GdbError:
                         continue
 

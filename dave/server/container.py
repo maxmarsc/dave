@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 import re
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Type, Union
 import struct
 import cmath
 
@@ -294,7 +294,9 @@ class Container2D(Container):
         pass
 
     @classmethod
-    def _nested_containers(cls, subscriptor, size: int, dims: List[int]):
+    def _nested_containers(
+        cls, subscriptor: Sequence[AbstractValue], size: int, dims: List[int]
+    ):
         from .entity_factory import EntityFactory
 
         assert cls.is_nested()

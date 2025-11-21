@@ -32,31 +32,35 @@ your program's memory :
 Currently supported audio containers (both in `float` and `double`) are :
 
 __1D (mono) containers__:
-- `std::array`
-- `std::vector`
-- `std::span`
-- [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
-- `C array`
-- `pointer`
-- `choc::buffer::MonoView`
-- `choc::buffer::MonoVBuffer`
+- C++ `std::array`
+- C++ `std::vector`
+- C++ `std::span`
+- C++ [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
+- C `array`
+- C/C++ `pointer`
+- C++ `choc::buffer::MonoView`
+- C++ `choc::buffer::MonoVBuffer`
+- Rust `array`
+- Rust `slice`
+- Rust `Vec`
 
 __2D (multichannel) containers__:
 - Any nesting of C/C++ standards 1D containers
-- `juce::AudioBuffer`
-- `juce::dsp::AudioBlock`
-- `choc::buffer::InterleavedView`
-- `choc::buffer::InterleavedBuffer`
-- `choc::buffer::ChannelArrayView`
-- `choc::buffer::ChannelArrayBuffer`
-- `hart::AudioBuffer`
+- Any nesting of Rust standards 1D containers
+- C++ `juce::AudioBuffer`
+- C++ `juce::dsp::AudioBlock`
+- C++ `choc::buffer::InterleavedView`
+- C++ `choc::buffer::InterleavedBuffer`
+- C++ `choc::buffer::ChannelArrayView`
+- C++ `choc::buffer::ChannelArrayBuffer`
+- C++ `hart::AudioBuffer`
 
 Currently supported IIR filter/coefficients are :
-- `juce::dsp::IIR::Filter`
-- `juce::dsp::IIR:Coefficients`
-- `juce::dsp::StateVariableTPTFilter`
-- `juce::dsp::StateVariableFilter::Filter`
-- `juce::dsp::StateVariableFilter::Parameters`
+- C++ `juce::dsp::IIR::Filter`
+- C++ `juce::dsp::IIR:Coefficients`
+- C++ `juce::dsp::StateVariableTPTFilter`
+- C++ `juce::dsp::StateVariableFilter::Filter`
+- C++ `juce::dsp::StateVariableFilter::Parameters`
 
 **You can also add supports for your own entity classes**
 

@@ -11,16 +11,31 @@ class SampleType(Enum):
 
     @staticmethod
     def regex() -> str:
-        return r"(float|double|complex\s+float|complex\s+double|std::complex<float>|std::complex<double>)"
+        return r"(float|double|complex\s+float|complex\s+double|std::complex<float>|std::complex<double>|f32|f64|num_complex::Complex<float>|num_complex::Complex<double>|num_complex::Complex<f32>|num_complex::Complex<f64>)"
 
     @staticmethod
     def parse(name: str) -> SampleType:
-        if name == "std::complex<float>":
-            return SampleType("complex float")
-        elif name == "std::complex<double>":
-            return SampleType("complex double")
-        else:
-            return SampleType(name)
+        match name:
+            case (
+                "std::complex<float>"
+                | "complex float"
+                | "num_complex::Complex<float>"
+                | "num_complex::Complex<f32>"
+            ):
+                return SampleType.CPX_F
+            case (
+                "std::complex<double>"
+                | "complex double"
+                | "num_complex::Complex<double>"
+                | "num_complex::Complex<f64>"
+            ):
+                return SampleType.CPX_D
+            case "float" | "f32":
+                return SampleType.FLOAT
+            case "double" | "f64":
+                return SampleType.DOUBLE
+            case _:
+                return SampleType(name)
 
     def byte_size(self) -> int:
         return {

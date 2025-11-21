@@ -5,6 +5,7 @@ from typing import Callable, Union
 
 from dave.common.raw_entity import RawEntity
 from dave.common.sample_type import SampleType
+from dave.server.language_type import LanguageType
 
 from .debuggers.value import AbstractValue
 
@@ -66,7 +67,7 @@ class Entity(ABC):
         pass
 
     @classmethod
-    def register(cls):
+    def register(cls, lang: LanguageType):
         """
         Register this entity class in DAVE
 
@@ -76,7 +77,7 @@ class Entity(ABC):
         """
         from .entity_factory import EntityFactory
 
-        EntityFactory().register(cls)
+        EntityFactory().register(cls, lang)
 
     @staticmethod
     @abstractmethod

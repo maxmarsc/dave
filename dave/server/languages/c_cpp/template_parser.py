@@ -10,6 +10,46 @@ def find_all(to_parse: str, to_find: str) -> List[int]:
 
 
 def parse_template(typename: str) -> List[str]:
+    """
+    Parse a C++/Rust instantiated template class or struct.
+
+    This function parses the template name and parameters. Parameters themselves
+    could be templates.
+
+    This function only works on instantiated template typenames as returned by the
+    debugger.
+    ```
+    std::array<float, 16ul>                     # C++ OK
+    alloc::vec::Vec<f32, alloc::alloc::Global>  # Rust OK
+    ```
+
+    It won't work on templated function call or templated struct definition as you
+    could see them in your code:
+    ```
+    Vec::<i32>::new()                           # Rust NOT OK
+    struct Foo<T, const N: usize>               # Rust NOT OK
+    ```
+
+    (you shouldn't encounter this, it's just to prevent a use of this function
+    in the bad context)
+
+    Parameters
+    ----------
+    typename : str
+        The templated typename to parse
+
+    Returns
+    -------
+    List[str]
+        A list containing all the types in the template. The first value is the
+        name of the templated class itself. The following values are, in order,
+        the template parameters.
+
+    Raises
+    ------
+    ValueError
+        If it fails to parse the template
+    """
     starts = find_all(typename, "<")
     ends = find_all(typename, ">")
     if len(starts) != len(ends):

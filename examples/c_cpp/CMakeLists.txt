@@ -1,3 +1,7 @@
+cmake_minimum_required(VERSION 3.16)
+
+project(dave_examples VERSION 0.0.1)
+
 ################################################################################
 ###                             dependencies
 ################################################################################
@@ -25,6 +29,11 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(GSL)
 
+FetchContent_Declare(
+        choc_project
+        GIT_REPOSITORY https://github.com/Tracktion/choc.git
+        GIT_TAG 68a63dd73d709ecb45b3fe31c3fa903323ad10fa)
+FetchContent_MakeAvailable(choc_project)
 
 set(HART_BUILD_TESTS OFF)
 FetchContent_Declare(
@@ -94,10 +103,11 @@ target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)
 ###                               CHOC
 ################################################################################
 add_executable(
-  choc
+  choc_example
   ${CMAKE_CURRENT_SOURCE_DIR}/choc.cpp
 )
-set_target_properties(choc PROPERTIES CXX_STANDARD 17)
+set_target_properties(choc_example PROPERTIES CXX_STANDARD 17)
+target_link_libraries(choc_example PUBLIC choc::choc)
 
 ################################################################################
 ###                               HART

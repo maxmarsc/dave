@@ -441,43 +441,47 @@ For now DAVE support samples as `float`, `double`, `std::complex` and C's `compl
 Currently supported audio containers are :
 
 __1D (mono) containers__:
-- `std::array`
-- `std::vector`
-- `std::span`
-- [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
-- `C array`
-- `pointer`
-- `choc::buffer::MonoView`
-- `choc::buffer::MonoVBuffer`
-
+- C++ `std::array`
+- C++ `std::vector`
+- C++ `std::span`
+- C++ [Microsoft's `gsl::span`](https://github.com/microsoft/GSL/blob/main/include/gsl/span) 
+- C `array`
+- C/C++ `pointer`
+- C++ `choc::buffer::MonoView`
+- C++ `choc::buffer::MonoVBuffer`
+- Rust `array`
+- Rust `slice`
+- Rust `Vec`
 
 __2D (multichannel) containers__:
 - Any nesting of C/C++ standards 1D containers
-- `juce::AudioBuffer`
-- `juce::dsp::AudioBlock`
-- `choc::buffer::InterleavedView`
-- `choc::buffer::InterleavedBuffer`
-- `choc::buffer::ChannelArrayView`
-- `choc::buffer::ChannelArrayBuffer`
+- Any nesting of Rust standards 1D containers
+- C++ `juce::AudioBuffer`
+- C++ `juce::dsp::AudioBlock`
+- C++ `choc::buffer::InterleavedView`
+- C++ `choc::buffer::InterleavedBuffer`
+- C++ `choc::buffer::ChannelArrayView`
+- C++ `choc::buffer::ChannelArrayBuffer`
+- C++ `hart::AudioBuffer`
 
 Currently supported IIR filter/coefficients are :
-- `juce::dsp::IIR::Filter`
-- `juce::dsp::IIR:Coefficients`
-- `juce::dsp::StateVariableTPTFilter`
-- `juce::dsp::StateVariableFilter::Filter`
-- `juce::dsp::StateVariableFilter::Parameters`
+- C++ `juce::dsp::IIR::Filter`
+- C++ `juce::dsp::IIR:Coefficients`
+- C++ `juce::dsp::StateVariableTPTFilter`
+- C++ `juce::dsp::StateVariableFilter::Filter`
+- C++ `juce::dsp::StateVariableFilter::Parameters`
 
 Currently supported OS are Linux and MacOS. Both GNU and LLVM stdlib
 implementation are supported.
 
 ### Custom entities
-You can add support for custom containers using a bit of python scripting.
+You can add support for custom entities using a bit of python scripting.
 
 To proceed you need to:
 1. Use the `dave inspect` debugger command to identify the name of the types you want to support
 2. Create a `~/.dave/custom` folder. It should contains all your custom code
 3. Add a new `Entity` python subclass for each entity you want to support (see below)
-4. Register the container class using `EntityFactory().register()`
+4. Register the container class using `EntityFactory().register(LanguageType.<YOUR_LANGUAGE>)`
 5. Import your container in the `~/.dave/custom/__init__.py` file 
 
 #### Examples

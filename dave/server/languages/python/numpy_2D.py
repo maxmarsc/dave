@@ -60,4 +60,4 @@ class NumpyArray(Container2D):
         return False
 
 
-NumpyArray.register()
+# NumpyArray.register()

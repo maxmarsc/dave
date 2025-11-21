@@ -1,5 +1,6 @@
 # `main`
 ## Added
+- Basic rust support: slice, array, vector both 1D and 2D
 ## Changed
 ## Fixed
 

@@ -7,6 +7,7 @@ from dave.common.logger import Logger
 from dave.server.container import SampleType, Container1D, Container2D
 from dave.server.entity_factory import EntityFactory
 from dave.server.debuggers.value import AbstractValue
+from dave.server.language_type import LanguageType
 from dave.server.languages import c_cpp
 
 
@@ -78,7 +79,7 @@ class DaveCustomContainerPtr(Container1D):
 
 
 # Required for 1D container
-DaveCustomContainerPtr.register()
+DaveCustomContainerPtr.register(LanguageType.CPP)
 
 
 ################################################################################
@@ -147,7 +148,7 @@ class DaveCustomContainerPtrPtr(Container2D):
 
 
 # Required for all containers
-DaveCustomContainerPtrPtr.register()
+DaveCustomContainerPtrPtr.register(LanguageType.C)
 
 
 ################################################################################
@@ -214,7 +215,7 @@ class DaveCustomInterleavedContainerVec(Container2D):
 
 
 # Required for all containers
-DaveCustomInterleavedContainerVec.register()
+DaveCustomInterleavedContainerVec.register(LanguageType.CPP)
 
 
 ################################################################################
@@ -282,4 +283,4 @@ class DaveCustomContainerVecRef(Container2D):
 
 
 # Required for all containers
-DaveCustomContainerVecRef.register()
+DaveCustomContainerVecRef.register(LanguageType.CPP)

@@ -3,9 +3,12 @@ from __future__ import annotations
 import re
 from typing import Tuple
 
+from dave.server.language_type import LanguageType
+
 from ...container import SampleType, Container2D
 from ...debuggers.value import AbstractValue
 from dave.server.languages import c_cpp
+
 
 class HartAudioBuffer(Container2D):
     __REGEX = rf"^(?:const\s+)?hart::AudioBuffer<{SampleType.regex()}>\s*$"
@@ -38,7 +41,7 @@ class HartAudioBuffer(Container2D):
         try:
             return (
                 int(self._value.attr("m_numChannels")),
-                int(self._value.attr("m_numFrames"))
+                int(self._value.attr("m_numFrames")),
             )
         except:
             raise RuntimeError(f"Failed to retrieve shape of {self._value.typename()}")
@@ -46,4 +49,5 @@ class HartAudioBuffer(Container2D):
     def read_from_debugger(self) -> bytearray:
         return self.__inner.read_from_debugger()
 
-HartAudioBuffer.register()
+
+HartAudioBuffer.register(LanguageType.CPP)

@@ -83,7 +83,7 @@ def dave_printer(valobj: gdb.Value):
         except TypeError:
             pass
 
-    gdb_value = GdbValue(valobj, "")
+    gdb_value = GdbValue(valobj, "", GdbValue.language_from_frame(gdb.selected_frame()))
     try:
         container = EntityFactory().build(gdb_value, gdb_value.typename(), "")
         if container.formatter_compatible():

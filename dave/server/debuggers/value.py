@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, List, Union
 
+from ..language_type import LanguageType
+
 
 class Endianness(Enum):
     LITTLE = "<"
@@ -21,6 +23,10 @@ class DebuggerMemoryError(Exception):
 
 
 class AbstractValue(ABC):
+    @abstractmethod
+    def language(self) -> LanguageType:
+        pass
+
     @abstractmethod
     def typename(self) -> str:
         pass

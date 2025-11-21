@@ -7,6 +7,7 @@ from typing import Callable, List, Tuple
 
 from dave.common.logger import Logger
 from dave.common.raw_iir import RawIir
+from dave.server.language_type import LanguageType
 from ...container import SampleType, Container2D
 from ...iir import IIR
 from ...debuggers.value import AbstractValue, DebuggerMemoryError
@@ -296,10 +297,10 @@ class JuceSVFFilter(IIR):
         return RawIir.SVFTPTCoeffs(g, r, ftype)
 
 
-JuceAudioBuffer.register()
-JuceAudioBlock.register()
-JuceIIRCoefficients.register()
-JuceIIRFilter.register()
-JuceSVFCoefficientsOld.register()
-JuceSVFFilterOld.register()
-JuceSVFFilter.register()
+JuceAudioBuffer.register(LanguageType.CPP)
+JuceAudioBlock.register(LanguageType.CPP)
+JuceIIRCoefficients.register(LanguageType.CPP)
+JuceIIRFilter.register(LanguageType.CPP)
+JuceSVFCoefficientsOld.register(LanguageType.CPP)
+JuceSVFFilterOld.register(LanguageType.CPP)
+JuceSVFFilter.register(LanguageType.CPP)

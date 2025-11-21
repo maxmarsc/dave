@@ -4,6 +4,7 @@ import re
 from typing import List, Tuple
 
 from dave.common.logger import Logger
+from dave.server.language_type import LanguageType
 
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
@@ -203,8 +204,8 @@ class StdSpan1D(Container1D):
         return False
 
 
-CArray1D.register()
-StdArray1D.register()
-StdVector1D.register()
-StdSpan1D.register()
-Pointer1D.register()
+CArray1D.register(LanguageType.C)
+Pointer1D.register(LanguageType.C)
+StdArray1D.register(LanguageType.CPP)
+StdVector1D.register(LanguageType.CPP)
+StdSpan1D.register(LanguageType.CPP)

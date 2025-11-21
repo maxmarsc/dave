@@ -5,6 +5,7 @@ from typing import Callable, List, Tuple
 
 
 from dave.common.logger import Logger
+from dave.server.language_type import LanguageType
 from ...container import SampleType, Container2D, Container1D
 from ...debuggers.value import AbstractValue
 
@@ -251,9 +252,9 @@ class ChocInterleavedBuffer(Container2D):
         return self.__view.read_from_debugger()
 
 
-ChocMonoView.register()
-ChocMonoBuffer.register()
-ChocChannelArrayView.register()
-ChocChannelArrayBuffer.register()
-ChocInterleavedView.register()
-ChocInterleavedBuffer.register()
+ChocMonoView.register(LanguageType.CPP)
+ChocMonoBuffer.register(LanguageType.CPP)
+ChocChannelArrayView.register(LanguageType.CPP)
+ChocChannelArrayBuffer.register(LanguageType.CPP)
+ChocInterleavedView.register(LanguageType.CPP)
+ChocInterleavedBuffer.register(LanguageType.CPP)

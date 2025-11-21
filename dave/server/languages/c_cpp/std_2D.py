@@ -7,6 +7,7 @@ from typing import Callable, List, Optional, Tuple
 from pathlib import Path
 
 from dave.common.logger import Logger
+from dave.server.language_type import LanguageType
 
 # import gdb  # type: ignore
 # import gdb.types  # type: ignore
@@ -446,9 +447,9 @@ class StdSpan2D(Container2D):
         return True
 
 
-CArrayAny2D.register()
-CarrayCarray2D.register()
-Pointer2D.register()
-StdArray2D.register()
-StdVector2D.register()
-StdSpan2D.register()
+CArrayAny2D.register(LanguageType.C)
+Pointer2D.register(LanguageType.C)
+CarrayCarray2D.register(LanguageType.C)
+StdArray2D.register(LanguageType.CPP)
+StdVector2D.register(LanguageType.CPP)
+StdSpan2D.register(LanguageType.CPP)

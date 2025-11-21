@@ -3,6 +3,7 @@ from typing import List, Union
 
 from dave.common.logger import Logger
 from ..value import AbstractValue, DebuggerMemoryError
+from ...language_type import LanguageType
 import lldb
 import os
 import threading
@@ -20,14 +21,23 @@ class LldbValue(AbstractValue):
     __debugger_tid = -1
 
     def __init__(self, lldb_value: lldb.SBValue, varname: str):
-        if lldb_value.type.IsReferenceType():
-            lldb_value = lldb_value.Dereference()  # type: lldb.SBValue
-        if not lldb_value.IsValid():
-            raise RuntimeError("Invalid lldb SBValue")
-        self.__value = lldb_value  # type: lldb.SBValue
-        self.__varname = varname
+        # Init static if needed
         if LldbValue.__debugger is None:
             LldbValue.__init_debugger_objects()
+
+        # Remove reference from type, not needed
+        if lldb_value.type.IsReferenceType():
+            lldb_value: lldb.SBValue = lldb_value.Dereference()
+        if not lldb_value.IsValid():
+            raise RuntimeError("Invalid lldb SBValue")
+        self.__value: lldb.SBValue = lldb_value
+        self.__varname = varname
+
+        # Retrieve language
+        frame: lldb.SBFrame = self.__value.GetFrame()
+        cu: lldb.SBCompileUnit = frame.GetCompileUnit()
+        lang = cu.GetLanguage()
+        self.__language = LldbValue.__language_from_frame(lldb_value.GetFrame())
 
     @staticmethod
     def __init_debugger_objects():
@@ -40,6 +50,36 @@ class LldbValue(AbstractValue):
             return lldb.debugger
         assert LldbValue.__debugger is not None
         return LldbValue.__debugger
+
+    def language(self):
+        return self.__language
+
+    @staticmethod
+    def __language_from_frame(frame: lldb.SBFrame) -> LanguageType:
+        cu: lldb.SBCompileUnit = frame.GetCompileUnit()
+        lang = cu.GetLanguage()
+
+        match lang:
+            case (
+                lldb.eLanguageTypeC
+                | lldb.eLanguageTypeC11
+                | lldb.eLanguageTypeC17
+                | lldb.eLanguageTypeC89
+                | lldb.eLanguageTypeC99
+            ):
+                return LanguageType.C
+            case (
+                lldb.eLanguageTypeC_plus_plus
+                | lldb.eLanguageTypeC_plus_plus_03
+                | lldb.eLanguageTypeC_plus_plus_11
+                | lldb.eLanguageTypeC_plus_plus_17
+                | lldb.eLanguageTypeC_plus_plus_20
+            ):
+                return LanguageType.CPP
+            case lldb.eLanguageTypeRust:
+                return LanguageType.RUST
+            case _:
+                return LanguageType.UNSUPPORTED
 
     def typename(self) -> str:
         return self.__value.type.GetCanonicalType().name

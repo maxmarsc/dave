@@ -15,6 +15,18 @@ You should be good to go ! Now when starting your debugger, it should use the
 python files in your git folder and not the use installed by the `dave_install.sh`
 script.
 
+## Examples compilation
+### C/C++
+```bash
+cmake -B build -S examples/c_cpp
+```
+
+### Rust
+```bash
+cargo build --manifest-path examples/rust/Cargo.toml
+```
+
+
 ## common/server/client
 Both LLDB and GDB uses a python intepreter to provide a python API. Depending
 on your system, there's almost no garranties given on the used python interpreter.

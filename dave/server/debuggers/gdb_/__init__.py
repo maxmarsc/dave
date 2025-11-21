@@ -23,6 +23,10 @@ gdb.write("INFO : [dave] Successfully loaded\n")
 if os.environ.get("DAVE_DEBUG_SERVER") == "1":
     try:
         import debugpy
+        import shutil
+
+        python_path = shutil.which("python3")
+        debugpy.configure(python=python_path)
 
         gdb.write("Waiting for debugger to attach on port 5678...")
         debugpy.listen(("localhost", 5678))
