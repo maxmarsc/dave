@@ -2,6 +2,9 @@
 ## Added
 ## Changed
 ## Fixed
+
+# v0.12.2
+## Fixed
 - Fixed #22 by adding a fallback `override` decator for Python < 3.12
 
 # v0.12.1
