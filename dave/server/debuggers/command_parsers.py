@@ -5,7 +5,11 @@ import types
 import traceback
 
 from dave.common.logger import Logger
-from typing import Union, override
+
+try:
+    from typing import override
+except:
+    from dave.common.override import override
 
 
 class ParsingError(Exception):

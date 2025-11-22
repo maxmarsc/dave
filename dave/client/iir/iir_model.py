@@ -1,6 +1,11 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, List, Tuple, Union, override
+from typing import List, Tuple
+
+try:
+    from typing import override
+except:
+    from dave.common.override import override
 import warnings
 
 import numpy as np

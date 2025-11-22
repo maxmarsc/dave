@@ -15,7 +15,12 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QObject, QEvent
 from PySide6.QtGui import QFont
-from typing import Dict, List, Tuple, Union, override
+from typing import Dict, List, Tuple, Union
+
+try:
+    from typing import override
+except:
+    from dave.common.override import override
 
 from dave.common.logger import Logger
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, List, Tuple, Union, override
+from typing import Any, List, Tuple, Union
 import warnings
 
 from PySide6.QtCore import Signal
@@ -154,14 +154,12 @@ class ContainerModel(EntityModel):
             return False
 
     # ==========================================================================
-    @override
     def _live_render_data(self) -> np.ndarray:
         """
         Returns the live data as it should be drawn
         """
         return self.__compute_render_array(self._data)
 
-    @override
     def _frozen_render_data(self) -> np.ndarray:
         assert self._frozen_data is not None
         return self.__compute_render_array(self._frozen_data)

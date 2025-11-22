@@ -11,7 +11,11 @@ from PySide6.QtGui import QIcon, QCloseEvent
 
 from typing import Dict, List
 from multiprocessing.connection import Connection
-from typing import override
+
+try:
+    from typing import override
+except:
+    from dave.common.override import override
 
 from dave.common.logger import Logger
 from dave.common.raw_entity import RawEntity, RawEntityList
