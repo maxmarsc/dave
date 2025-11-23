@@ -26,6 +26,16 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(GSL)
 
 
+set(HART_BUILD_TESTS OFF)
+FetchContent_Declare(
+  HART
+  GIT_REPOSITORY "https://github.com/daleonov/HART.git"
+  GIT_TAG 0.1.0
+  GIT_SHALLOW ON
+)
+
+FetchContent_MakeAvailable(HART)
+
 ################################################################################
 ###                             stdlib
 ################################################################################
@@ -88,6 +98,17 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/choc.cpp
 )
 set_target_properties(choc PROPERTIES CXX_STANDARD 17)
+
+################################################################################
+###                               HART
+################################################################################
+
+add_executable(
+  hart
+  ${CMAKE_CURRENT_SOURCE_DIR}/hart.cpp
+)
+set_target_properties(hart PROPERTIES CXX_STANDARD 11)
+target_link_libraries(hart PRIVATE HART::HART)
 
 ################################################################################
 ###                          Custom containers example
