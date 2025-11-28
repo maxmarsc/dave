@@ -114,7 +114,11 @@ class LldbValue(AbstractValue):
 
         # Try to reparse the varname
         new_value = LldbValue.find_variable(self.__varname)
-        if new_value.__value.IsValid() and new_value.__value.addr == self.__value.addr:
+        if (
+            new_value is not None
+            and new_value.__value.IsValid()
+            and new_value.__value.addr == self.__value.addr
+        ):
             return True
         return False
 
