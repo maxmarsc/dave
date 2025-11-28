@@ -1,5 +1,6 @@
 # `main`
 ## Added
+- [[daleonov](https://github.com/daleonov)] Support for `hart::AudioBuffer`, see: [HART](https://github.com/daleonov/HART) 
 ## Changed
 ## Fixed
 

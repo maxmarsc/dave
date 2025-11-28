@@ -49,6 +49,7 @@ __2D (multichannel) containers__:
 - `choc::buffer::InterleavedBuffer`
 - `choc::buffer::ChannelArrayView`
 - `choc::buffer::ChannelArrayBuffer`
+- `hart::AudioBuffer`
 
 Currently supported IIR filter/coefficients are :
 - `juce::dsp::IIR::Filter`
