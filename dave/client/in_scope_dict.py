@@ -29,7 +29,7 @@ class InScopeSet(QObject):
         signal: List[int] = list()
         for model in models:
             assert model.id in self.__set
-            assert model.in_scope
+            assert not model.in_scope
             self.__set.remove(model.id)
             signal.append(model.id)
         self.scope_signal.emit(signal, False)
