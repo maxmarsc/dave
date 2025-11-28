@@ -3,6 +3,10 @@
 ## Changed
 ## Fixed
 
+# v0.13.1
+## Fixed
+- Fixed a bug where you could not delete an entity
+
 # v0.13.0
 ## Added
 - [[daleonov](https://github.com/daleonov)] Support for `hart::AudioBuffer`, see: [HART](https://github.com/daleonov/HART) 
