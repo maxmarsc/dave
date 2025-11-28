@@ -152,6 +152,7 @@ class DaveGUI(QMainWindow):
     def _on_deletion_signal(self, model_id: int):
         # Remove from in_scope models first
         if self.__in_scope_models.has(model_id):
+            self.__models[model_id].mark_as_out_of_scope()
             self.__in_scope_models.remove(
                 [
                     self.__models[model_id],
