@@ -3,6 +3,7 @@
 - [[daleonov](https://github.com/daleonov)] Support for `hart::AudioBuffer`, see: [HART](https://github.com/daleonov/HART) 
 ## Changed
 ## Fixed
+- Various bugs when a variable would go out of scope (#23 #24)
 
 # v0.12.2
 ## Fixed
