@@ -1,0 +1,2 @@
+NAN_COLOR = "#b41f1f"
+INF_COLOR = "#ff8800"

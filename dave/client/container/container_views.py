@@ -11,6 +11,8 @@ from dave.common.logger import Logger
 
 from ..entity.entity_view import EntityView, hex_to_rgb_tuple
 
+from .colors import NAN_COLOR, INF_COLOR
+
 
 # ===========================================================================
 class ContainerView(EntityView):
@@ -72,7 +74,7 @@ class WaveformView(ContainerView):
                     line = pg.InfiniteLine(
                         pos=t,
                         angle=90,
-                        pen=pg.mkPen("r", style=pg.QtCore.Qt.PenStyle.DotLine),
+                        pen=pg.mkPen(NAN_COLOR, style=pg.QtCore.Qt.PenStyle.DotLine),
                     )
                     plot_widget.plotItem.addItem(line)
 
@@ -83,7 +85,7 @@ class WaveformView(ContainerView):
                     line = pg.InfiniteLine(
                         pos=t,
                         angle=90,
-                        pen=pg.mkPen("g", style=pg.QtCore.Qt.PenStyle.DotLine),
+                        pen=pg.mkPen(INF_COLOR, style=pg.QtCore.Qt.PenStyle.DotLine),
                     )
                     plot_widget.plotItem.addItem(line)
 

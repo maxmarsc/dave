@@ -1,8 +1,10 @@
 # `main`
 ## Added
 - Basic rust support: slice, array, vector both 1D and 2D
+- Improved NaN/Infs readability by adding consistent color coding
 ## Changed
 ## Fixed
+- NaN/Infs values were never updated
 
 # v0.13.1
 ## Fixed

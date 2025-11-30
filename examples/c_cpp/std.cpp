@@ -89,11 +89,11 @@ int main() {
 
   // Test some NaN/inf values
   vector[0]           = std::numeric_limits<float>::infinity();
-  vector[1]           = -std::numeric_limits<float>::infinity();
-  vector[2]           = std::numeric_limits<float>::quiet_NaN();
+  vector[20]           = -std::numeric_limits<float>::infinity();
+  vector[40]           = std::numeric_limits<float>::quiet_NaN();
   carray_vector[1][0] = std::numeric_limits<float>::infinity();
-  carray_vector[1][1] = -std::numeric_limits<float>::infinity();
-  carray_vector[1][2] = std::numeric_limits<float>::quiet_NaN();
+  carray_vector[1][20] = -std::numeric_limits<float>::infinity();
+  carray_vector[1][40] = std::numeric_limits<float>::quiet_NaN();
 
   return 0;
 }

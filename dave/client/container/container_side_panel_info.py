@@ -7,6 +7,8 @@ from .container_model import ContainerModel
 
 from dave.client.entity.entity_side_panel_info import EntitySidePanelInfo
 
+from .colors import NAN_COLOR, INF_COLOR
+
 
 class ContainerSidePanelInfo(EntitySidePanelInfo):
     """
@@ -36,7 +38,7 @@ class ContainerSidePanelInfo(EntitySidePanelInfo):
 
         # Create value label
         self.__values_label = QLabel(
-            f"NaN: {self.__container.nan} Inf: {self.__container.inf}"
+            self.__nan_inf_html(self.__container.nan, self.__container.inf)
         )
 
         # Adjust layout
@@ -52,8 +54,15 @@ class ContainerSidePanelInfo(EntitySidePanelInfo):
     def __on_channels_signal(self, channels: int):
         self.__channels_label.setText(f"channels: {channels}")
 
+    @staticmethod
+    def __nan_inf_html(nans: int, infs: int) -> str:
+        return (
+            f'<span style="color: {NAN_COLOR};">NaN: {nans}</span> '
+            + f'<span style="color: {INF_COLOR};">Inf: {infs}</span>'
+        )
+
     def __on_data_signal(self, *_):
         self.__sample_label.setText(f"samples: {self.__container.samples}")
         self.__values_label.setText(
-            f"NaN: {self.__container.nan} Inf: {self.__container.inf}"
+            self.__nan_inf_html(self.__container.nan, self.__container.inf)
         )
