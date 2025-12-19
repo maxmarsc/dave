@@ -87,6 +87,11 @@ target_compile_definitions(
   juce
   PUBLIC JUCE_USE_CURL=0
 )
+target_compile_options(
+  juce
+  PRIVATE
+  -Wno-deprecated-declarations
+)
 
 ################################################################################
 ###                               Microsoft's GSL
