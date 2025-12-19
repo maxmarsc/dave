@@ -36,13 +36,13 @@ int main() {
   spec.numChannels      = kChannels;
   //============================================================================
 
-  auto lp_so_coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(
+  [[maybe_unused]] auto lp_so_coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(
       kSampleRate, kCutoff, kQ);
-  auto& lp_so_coeffs_r = *lp_so_coeffs.get();
+  [[maybe_unused]] auto& lp_so_coeffs_r = *lp_so_coeffs.get();
   auto lp_fo_coeffs =
       juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(kSampleRate,
                                                                  kCutoff);
-  auto& lp_fo_coeffs_r = *lp_fo_coeffs.get();
+  [[maybe_unused]] auto& lp_fo_coeffs_r = *lp_fo_coeffs.get();
   auto lp_so_filter    = juce::dsp::IIR::Filter<float>(lp_so_coeffs);
   auto lp_fo_filter    = juce::dsp::IIR::Filter<float>(lp_fo_coeffs);
 
@@ -57,7 +57,7 @@ int main() {
   /* Old (deprecated) JUCE implementation*/
   auto old_svf_filter = juce::dsp::StateVariableFilter::Filter<float>();
   old_svf_filter.prepare(spec);
-  auto& old_svf_coeffs = *old_svf_filter.parameters;
+  [[maybe_unused]] auto& old_svf_coeffs = *old_svf_filter.parameters;
   old_svf_filter.parameters->setCutOffFrequency(kSampleRate, kCutoff);
   old_svf_filter.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
