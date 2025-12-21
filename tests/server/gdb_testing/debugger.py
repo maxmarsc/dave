@@ -38,7 +38,7 @@ class GdbDebugger(DebuggerAbstraction):
         # finally:
         # gdb.execute("set logging enabled off", to_string=True, from_tty=True)
 
-    def con(_):
+    def continue_(_):
         # gdb.execute("set logging enabled on", to_string=True, from_tty=True)
 
         # try:
