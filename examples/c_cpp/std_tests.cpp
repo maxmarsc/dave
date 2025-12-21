@@ -54,7 +54,44 @@ void array() {
   // break here
 }
 
+void cArray() {
+  // break here
+  float array_f[3]                 = {0.F, 0.F, 0.F};
+  std::complex<float> array_c[3]   = {kCpxZeroF, kCpxZeroF, kCpxZeroF};
+  double array_d[3]                = {0., 0., 0.};
+  std::complex<double> array_cd[3] = {kCpxZeroD, kCpxZeroD, kCpxZeroD};
+
+  // break here
+  array_f[0]  = 1.F;
+  array_d[0]  = 1.;
+  array_c[0]  = kCpxOneF;
+  array_cd[0] = kCpxOneD;
+
+  // break here
+  array_f[1]  = -1.F;
+  array_d[1]  = -1.;
+  array_c[1]  = kCpxMinusOneF;
+  array_cd[1] = kCpxMinusOneD;
+
+  // break here
+  array_f[0]  = kNanF;
+  array_f[1]  = kPInfF;
+  array_f[2]  = kNInfF;
+  array_d[0]  = kNanD;
+  array_d[1]  = kPInfD;
+  array_d[2]  = kNInfD;
+  array_c[0]  = std::complex(kNanF, 0.F);
+  array_c[1]  = std::complex(kPInfF, 0.F);
+  array_c[2]  = std::complex(kNInfF, 0.F);
+  array_cd[0] = std::complex(kNanD, 0.);
+  array_cd[1] = std::complex(kPInfD, 0.);
+  array_cd[2] = std::complex(kNInfD, 0.);
+
+  // break here
+}
+
 int main() {
   array();
+  cArray();
   return 0;
 }
