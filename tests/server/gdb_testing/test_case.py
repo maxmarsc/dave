@@ -27,6 +27,10 @@ class GdbTestCase(TestCaseBase):
         # Load the binary
         gdb.execute(f"file {self.BINARY}", to_string=True)
 
+        from mocked import MockClient
+
+        MockClient().reset()
+
     def tearDown(self):
         # Kill any leftover running threads
         if gdb.selected_inferior().threads():

@@ -1,6 +1,6 @@
 from multiprocessing.connection import Connection
 import subprocess
-from typing import Any
+from typing import Any, List
 import os
 from unittest.mock import MagicMock, patch
 
@@ -14,20 +14,20 @@ def patch_client_popen(test_method):
     """
 
     def side_effect(*args, **kwargs):
-        # 1. Intercept the FD
+        # Intercept the FD
         pass_fds = kwargs.get("pass_fds", [])
         if pass_fds:
             fd = pass_fds[0]
-            # 2. Hand it to our Singleton Client
+            # Hand it to our Singleton Client
             MockClient().connect_from_fd(fd)
 
-        # 3. Create a fake Process object
+        # Create a fake Process object
         # We use MagicMock for simplicity, but you can use the __new__ trick if you prefer
-        mock_process = MagicMock(spec=subprocess.Popen)
+        mock_process = MagicMock()
         mock_process.pid = 1234
         mock_process.returncode = None
 
-        # 4. Wire the .wait() call to our custom logic
+        # Wire the .wait() call to our custom logic
         mock_process.wait.side_effect = MockClient().wait
         mock_process.poll.side_effect = MockClient().poll
 
@@ -41,38 +41,30 @@ def patch_client_popen(test_method):
 class MockClient(metaclass=SingletonMeta):
     def __init__(self) -> None:
         self.__connection: Connection = None
-        self.__received = list()
         self.reset()
 
     def reset(self):
         if self.__connection:
             self.__connection.close()
             self.__connection = None
-        self.__received.clear()
 
     def connect_from_fd(self, fd: int):
         """Called by the Popen patch to establish the connection."""
         # Duplicate the FD so we own this copy
         self.__connection = Connection(os.dup(fd))
-        self.__received.clear()
 
     def send_from_client(self, msg):
         if self.__connection is None:
             raise RuntimeError("Sending on a non-connected mock client")
         self.__connection.send(msg)
 
-    def receive_from_server(self, timeout=0.1) -> Any:
+    def receive_from_server(self, timeout=0.01) -> List[Any]:
         if self.__connection is None:
             raise RuntimeError("Try to receive on a non-connected mock client")
-        if self.__connection.poll(timeout):
-            return self.__connection.recv()
-        return None
-
-    def __flush_and_pop_last(self) -> Any:
-        last_msg = None
-        while self.__connection.poll(0.1):
-            last_msg = self.__connection.recv()
-        return last_msg
+        received = list()
+        while self.__connection.poll(timeout):
+            received.append(self.__connection.recv())
+        return received
 
     def wait(self):
         """
@@ -83,7 +75,8 @@ class MockClient(metaclass=SingletonMeta):
         if self.__connection is None:
             return 0
 
-        if self.__flush_and_pop_last() != DaveProcess.Message.STOP:
+        received = self.receive_from_server(0.01)
+        if not received or received[-1] != DaveProcess.Message.STOP:
             raise RuntimeError("Called Popen.wait without sending a STOP message")
 
         self.reset()
