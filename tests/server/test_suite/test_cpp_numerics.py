@@ -28,10 +28,10 @@ class TestCppNumerics(TestCaseBase.TYPE):
     @patch_client_popen
     def test_nan_infs(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:66")
-        self.debugger().set_breakpoint("std_tests.cpp:79")
+        self.debugger().set_breakpoint("std_tests.cpp:71")
+        self.debugger().set_breakpoint("std_tests.cpp:84")
 
-        ################## std_tests.cpp:27 - All zeros ##################
+        ################## std_tests.cpp:71 - All zeros ##################
         self.debugger().run()
         self.debugger().execute("dave show array_f")
         self.debugger().execute("dave show array_c")
@@ -77,7 +77,7 @@ class TestCppNumerics(TestCaseBase.TYPE):
         self.assertEqual(raw_array_cd.default_layout, RawContainer.Layout.CPX_1D)
         self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_array_cd)
 
-        ################## std_tests.cpp:36 - (NaN, +inf, -inf) ##################
+        ################## std_tests.cpp:84 - (NaN, +inf, -inf) ##################
         self.debugger().continue_()
         received = MockClient().receive_from_server()
         self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
