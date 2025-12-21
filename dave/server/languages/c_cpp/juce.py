@@ -157,7 +157,7 @@ class JuceIIRCoefficients(IIR):
     def read_from_debugger(self) -> RawIir.SOSCoeffs:
         byte_size = self.sample_type.byte_size() * self.num_coeffs
         byte_array = self._value.readmemory(self.data_ptr, byte_size)
-        fmt = "".join([self.sample_type.struct_name() for _ in range(self.num_coeffs)])
+        fmt = "".join([self.sample_type.struct_fmt() for _ in range(self.num_coeffs)])
         coeffs = struct.unpack(fmt, byte_array)
         if self.num_coeffs == 3:
             return RawIir.SOSCoeffs(

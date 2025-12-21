@@ -36,7 +36,7 @@ class Container(Entity):
         except DebuggerMemoryError:
             return "Failed to read internals, might be deallocated or unitialized\n"
         byte_size = self.sample_type.byte_size()
-        fmt = self.sample_type.struct_name()
+        fmt = self.sample_type.struct_fmt()
 
         if self.sample_type.is_complex():
             return f"{channels} channels {samples} samples (complex data)"
@@ -59,7 +59,7 @@ class Container(Entity):
         except DebuggerMemoryError:
             return []
         byte_size = self.sample_type.byte_size()
-        fmt = self.sample_type.struct_name()
+        fmt = self.sample_type.struct_fmt()
 
         sparklines = []
 

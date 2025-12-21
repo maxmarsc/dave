@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(dave_examples VERSION 0.0.1)
 
+option(DAVE_BUILD_TESTS OFF)
+
 ################################################################################
 ###                             dependencies
 ################################################################################
@@ -54,6 +56,14 @@ add_executable(std
 
 set_target_properties(std PROPERTIES CXX_STANDARD 20)
 
+if (DAVE_BUILD_TESTS)
+add_executable(std_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/std_tests.cpp
+)
+
+set_target_properties(std_tests PROPERTIES CXX_STANDARD 20)
+endif()
+
 ################################################################################
 ###                             scope
 ################################################################################
@@ -91,6 +101,7 @@ target_compile_options(
   juce
   PRIVATE
   -Wno-deprecated-declarations
+  -Wno-unknown-pragmas
 )
 
 ################################################################################
