@@ -24,6 +24,11 @@ void array() {
   std::array<double, 3> array_d                = {0., 0., 0.};
   std::array<std::complex<double>, 3> array_cd = {kCpxZeroD, kCpxZeroD,
                                                   kCpxZeroD};
+  auto span_f                                  = std::span(array_f);
+  auto span_c                                  = std::span(array_c);
+  auto span_d                                  = std::span(array_d);
+  auto span_cd                                 = std::span(array_cd);
+
   // break here
   array_f[0]  = 1.F;
   array_d[0]  = 1.;

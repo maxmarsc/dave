@@ -28,8 +28,8 @@ class TestCppStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_array(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:27")
-        self.debugger().set_breakpoint("std_tests.cpp:36")
+        self.debugger().set_breakpoint("std_tests.cpp:32")
+        self.debugger().set_breakpoint("std_tests.cpp:41")
 
         ################## std_tests.cpp:27 - All zeros ##################
         self.debugger().run()
@@ -109,10 +109,91 @@ class TestCppStd(TestCaseBase.TYPE):
         )
 
     @patch_client_popen
+    def test_span_static(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoint("std_tests.cpp:32")
+        self.debugger().set_breakpoint("std_tests.cpp:41")
+
+        ################## std_tests.cpp:32 - All zeros ##################
+        self.debugger().run()
+        self.debugger().execute("dave show span_f")
+        self.debugger().execute("dave show span_c")
+        self.debugger().execute("dave show span_d")
+        self.debugger().execute("dave show span_cd")
+
+        received = MockClient().receive_from_server()
+        self.assertIsListOf(received, 4, RawEntityList)
+
+        # array_f
+        self.assertEqual(len(received[0].raw_entities), 1)
+        self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+        raw_span_f: RawContainer = received[0].raw_entities[0]
+        self.assertArrayInvariants(raw_span_f)
+        self.assertTupleEqual(raw_span_f.original_shape, (1, 3))
+        self.assertEqual(raw_span_f.sample_type, SampleType.FLOAT)
+        self.assertEqual(raw_span_f.default_layout, RawContainer.Layout.REAL_1D)
+        self.assertContainerContent((0.0, 0.0, 0.0), raw_span_f)
+
+        # array_c
+        self.assertEqual(len(received[1].raw_entities), 1)
+        self.assertIsInstance(received[1].raw_entities[0], RawContainer)
+        raw_span_c: RawContainer = received[1].raw_entities[0]
+        self.assertArrayInvariants(raw_span_c)
+        self.assertTupleEqual(raw_span_c.original_shape, (1, 3))
+        self.assertEqual(raw_span_c.sample_type, SampleType.CPX_F)
+        self.assertEqual(raw_span_c.default_layout, RawContainer.Layout.CPX_1D)
+        self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_span_c)
+
+        # array_d
+        self.assertEqual(len(received[2].raw_entities), 1)
+        self.assertIsInstance(received[2].raw_entities[0], RawContainer)
+        raw_span_d: RawContainer = received[2].raw_entities[0]
+        self.assertArrayInvariants(raw_span_d)
+        self.assertTupleEqual(raw_span_d.original_shape, (1, 3))
+        self.assertEqual(raw_span_d.sample_type, SampleType.DOUBLE)
+        self.assertEqual(raw_span_d.default_layout, RawContainer.Layout.REAL_1D)
+        self.assertContainerContent((0.0, 0.0, 0.0), raw_span_d)
+
+        # array_cd
+        self.assertEqual(len(received[3].raw_entities), 1)
+        self.assertIsInstance(received[3].raw_entities[0], RawContainer)
+        raw_span_cd: RawContainer = received[3].raw_entities[0]
+        self.assertArrayInvariants(raw_span_cd)
+        self.assertTupleEqual(raw_span_cd.original_shape, (1, 3))
+        self.assertEqual(raw_span_cd.sample_type, SampleType.CPX_D)
+        self.assertEqual(raw_span_cd.default_layout, RawContainer.Layout.CPX_1D)
+        self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_span_cd)
+
+        ################## std_tests.cpp:36 - (1, -1, 0) ##################
+        self.debugger().continue_()
+        received = MockClient().receive_from_server()
+        self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
+
+        # array_f
+        self.assertEqual(received[0].id, raw_span_f.id)
+        self.assertTupleEqual(received[0].shape, raw_span_f.original_shape)
+        self.assertContainerContent((1.0, -1.0, 0.0), raw_span_f, received[0])
+
+        # array_c
+        self.assertEqual(received[1].id, raw_span_c.id)
+        self.assertTupleEqual(received[1].shape, raw_span_c.original_shape)
+        self.assertContainerContent((1 + 1j, -1 - 1j, 0 + 0j), raw_span_c, received[1])
+
+        # array_f
+        self.assertEqual(received[2].id, raw_span_d.id)
+        self.assertTupleEqual(received[2].shape, raw_span_d.original_shape)
+        self.assertContainerContent((1.0, -1.0, 0.0), raw_span_d, received[2])
+
+        # array_c
+        self.assertEqual(received[3].id, raw_span_cd.id)
+        self.assertTupleEqual(received[3].shape, raw_span_cd.original_shape)
+        self.assertContainerContent((1 + 1j, -1 - 1j, 0 + 0j), raw_span_cd, received[3])
+
+    @patch_client_popen
     def test_c_array(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:46")
-        self.debugger().set_breakpoint("std_tests.cpp:55")
+        self.debugger().set_breakpoint("std_tests.cpp:51")
+        self.debugger().set_breakpoint("std_tests.cpp:60")
 
         ################## std_tests.cpp:46 - All zeros ##################
         self.debugger().run()
