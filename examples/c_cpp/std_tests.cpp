@@ -24,33 +24,15 @@ void array() {
   std::array<double, 3> array_d                = {0., 0., 0.};
   std::array<std::complex<double>, 3> array_cd = {kCpxZeroD, kCpxZeroD,
                                                   kCpxZeroD};
-
   // break here
   array_f[0]  = 1.F;
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
   array_cd[0] = kCpxOneD;
-
-  // break here
   array_f[1]  = -1.F;
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
-
-  // break here
-  array_f[0]  = kNanF;
-  array_f[1]  = kPInfF;
-  array_f[2]  = kNInfF;
-  array_d[0]  = kNanD;
-  array_d[1]  = kPInfD;
-  array_d[2]  = kNInfD;
-  array_c[0]  = std::complex(kNanF, 0.F);
-  array_c[1]  = std::complex(kPInfF, 0.F);
-  array_c[2]  = std::complex(kNInfF, 0.F);
-  array_cd[0] = std::complex(kNanD, 0.);
-  array_cd[1] = std::complex(kPInfD, 0.);
-  array_cd[2] = std::complex(kNInfD, 0.);
-
   // break here
 }
 
@@ -66,32 +48,40 @@ void cArray() {
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
   array_cd[0] = kCpxOneD;
-
-  // break here
   array_f[1]  = -1.F;
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
+  // break here
+}
+
+void numericValues() {
+  std::array<float, 3> array_f                 = {0.F, 0.F, 0.F};
+  std::array<std::complex<float>, 3> array_c   = {kCpxZeroF, kCpxZeroF,
+                                                  kCpxZeroF};
+  std::array<double, 3> array_d                = {0., 0., 0.};
+  std::array<std::complex<double>, 3> array_cd = {kCpxZeroD, kCpxZeroD,
+                                                  kCpxZeroD};
 
   // break here
   array_f[0]  = kNanF;
-  array_f[1]  = kPInfF;
-  array_f[2]  = kNInfF;
   array_d[0]  = kNanD;
-  array_d[1]  = kPInfD;
-  array_d[2]  = kNInfD;
   array_c[0]  = std::complex(kNanF, 0.F);
-  array_c[1]  = std::complex(kPInfF, 0.F);
-  array_c[2]  = std::complex(kNInfF, 0.F);
   array_cd[0] = std::complex(kNanD, 0.);
+  array_f[1]  = kPInfF;
+  array_d[1]  = kPInfD;
+  array_c[1]  = std::complex(kPInfF, 0.F);
   array_cd[1] = std::complex(kPInfD, 0.);
-  array_cd[2] = std::complex(kNInfD, 0.);
-
+  array_f[2]  = kNInfF;
+  array_d[2]  = kNInfD;
+  array_c[2]  = std::complex(kNInfF, 0.F);
+  array_cd[2] = std::complex(kNInfD, 0.0);
   // break here
 }
 
 int main() {
   array();
   cArray();
+  numericValues();
   return 0;
 }
