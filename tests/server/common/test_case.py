@@ -4,6 +4,7 @@ from typing import Any, List, Tuple, Union
 import unittest
 import struct
 from abc import ABC, abstractmethod
+import cmath
 
 from common.debugger import DebuggerAbstraction
 
@@ -57,3 +58,8 @@ class TestCaseBase(unittest.TestCase, ABC):
             )
 
         self.assertTupleEqual(expected, samples)
+
+    def assertTupleEqual(self, tuple1: Tuple[Any], tuple2: Tuple[Any]):
+        tuple1 = tuple("NaN" if cmath.isnan(val) else val for val in tuple1)
+        tuple2 = tuple("NaN" if cmath.isnan(val) else val for val in tuple2)
+        super().assertTupleEqual(tuple1, tuple2)
