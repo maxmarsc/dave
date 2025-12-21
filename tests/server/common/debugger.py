@@ -11,7 +11,7 @@ class DebuggerAbstraction(ABC):
         pass
 
     @abstractmethod
-    def con(self):
+    def continue_(self):
         pass
 
     @abstractmethod

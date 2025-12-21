@@ -1,7 +1,8 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Tuple, Union
 import unittest
+import struct
 from abc import ABC, abstractmethod
 
 from common.debugger import DebuggerAbstraction
@@ -35,11 +36,24 @@ class TestCaseBase(unittest.TestCase, ABC):
         for suspect in suspects:
             self.assertIsInstance(suspect, cls)
 
-    # @staticmethod
-    # def type() -> type[TestCaseBase]:
-    #     return TestCaseBase.TYPE
-    # global TEST_CASE_BASE
-    # return TEST_CASE_BASE
+    def assertContainerContent(
+        self, expected: Tuple[Any], raw_container, container_update=None
+    ):
+        if container_update:
+            total_samples = container_update.shape[0] * container_update.shape[1]
+            array = container_update.data
+        else:
+            total_samples = (
+                raw_container.original_shape[0] * raw_container.original_shape[1]
+            )
+            array = raw_container.data
+        fmt = "".join(
+            raw_container.sample_type.struct_fmt() for _ in range(total_samples)
+        )
+        samples = struct.unpack(fmt, array)
+        if raw_container.sample_type.is_complex():
+            samples = tuple(
+                complex(samples[n], samples[n + 1]) for n in range(0, len(samples), 2)
+            )
 
-
-# TEST_CASE_BASE: type[TestCaseBase] = None
+        self.assertTupleEqual(expected, samples)
