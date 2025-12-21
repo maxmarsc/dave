@@ -1,5 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
+from typing import Any, List
 import unittest
 from abc import ABC, abstractmethod
 
@@ -28,7 +29,11 @@ class TestCaseBase(unittest.TestCase, ABC):
     @classmethod
     def declare_as_base_test_class(cls):
         TestCaseBase.TYPE = cls
-        # TEST_CASE_BASE = cls
+
+    def assertIsListOf(self, suspects: List[Any], size: int, cls: type[Any]):
+        self.assertEqual(len(suspects), size)
+        for suspect in suspects:
+            self.assertIsInstance(suspect, cls)
 
     # @staticmethod
     # def type() -> type[TestCaseBase]:

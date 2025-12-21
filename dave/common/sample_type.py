@@ -50,7 +50,7 @@ class SampleType(Enum):
             return True
         return False
 
-    def struct_name(self) -> str:
+    def struct_fmt(self) -> str:
         return {
             SampleType.FLOAT: "f",
             SampleType.DOUBLE: "d",

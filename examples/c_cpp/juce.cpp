@@ -3,6 +3,8 @@
 #include <cmath>
 #include <complex>
 
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 constexpr auto kBlockSize  = 256;
 constexpr auto kChannels   = 2;
 constexpr auto kSampleRate = 44100.0;
@@ -36,15 +38,16 @@ int main() {
   spec.numChannels      = kChannels;
   //============================================================================
 
-  [[maybe_unused]] auto lp_so_coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(
-      kSampleRate, kCutoff, kQ);
+  [[maybe_unused]] auto lp_so_coeffs =
+      juce::dsp::IIR::Coefficients<float>::makeLowPass(kSampleRate, kCutoff,
+                                                       kQ);
   [[maybe_unused]] auto& lp_so_coeffs_r = *lp_so_coeffs.get();
   auto lp_fo_coeffs =
       juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(kSampleRate,
                                                                  kCutoff);
   [[maybe_unused]] auto& lp_fo_coeffs_r = *lp_fo_coeffs.get();
-  auto lp_so_filter    = juce::dsp::IIR::Filter<float>(lp_so_coeffs);
-  auto lp_fo_filter    = juce::dsp::IIR::Filter<float>(lp_fo_coeffs);
+  auto lp_so_filter = juce::dsp::IIR::Filter<float>(lp_so_coeffs);
+  auto lp_fo_filter = juce::dsp::IIR::Filter<float>(lp_fo_coeffs);
 
   // Create the filter and set its coefficients
   juce::dsp::IIR::Filter<float> filter;
