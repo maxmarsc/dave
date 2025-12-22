@@ -13,6 +13,10 @@ class DebuggerAbstraction(ABC):
     def set_breakpoints_at_tags(self, function: str, tags: List[int]):
         pass
 
+    @abstractmethod
+    def get_current_line(self) -> str:
+        pass
+
     @staticmethod
     def _find_tags(
         filepath: str, function_name: str, start_line: int, tags: List[int]
@@ -29,7 +33,8 @@ class DebuggerAbstraction(ABC):
                     while lines.__next__().find(pattern) == -1:
                         crt_line += 1
                     # we found it
-                    tags_lines.append(f"{filepath}:{crt_line+1}")
+                    tags_lines.append(f"{filepath}:{crt_line}")
+                    crt_line += 1
                 except StopIteration:
                     raise RuntimeError(
                         f"Could not find tag {function_name}{tag} in {filepath}"
