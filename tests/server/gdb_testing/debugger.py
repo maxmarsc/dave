@@ -31,6 +31,10 @@ class GdbDebugger(DebuggerAbstraction):
     def set_breakpoint(_, location: str):
         gdb.execute(f"b {location}", to_string=True)
 
+    def get_current_line(self) -> str:
+        loc = gdb.decode_line()[1][0]
+        return f"{loc.symtab.filename}:{loc.line}"
+
     def set_breakpoints_at_tags(self, function: str, tags: List[int]):
         unparsed, parsed = gdb.decode_line(function)
         if unparsed:
