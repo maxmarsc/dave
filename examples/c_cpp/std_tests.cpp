@@ -17,7 +17,7 @@
 
 //==============================================================================
 void arrayAndStaticSpan() {
-  // break here
+  /// arrayAndStaticSpan::0
   std::array<float, 3> array_f                 = {0.F, 0.F, 0.F};
   std::array<std::complex<float>, 3> array_c   = {kCpxZeroF, kCpxZeroF,
                                                   kCpxZeroF};
@@ -29,7 +29,7 @@ void arrayAndStaticSpan() {
   auto span_d                                  = std::span(array_d);
   auto span_cd                                 = std::span(array_cd);
 
-  // break here
+  /// arrayAndStaticSpan::1
   array_f[0]  = 1.F;
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
@@ -38,17 +38,17 @@ void arrayAndStaticSpan() {
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
-  // break here
+  /// arrayAndStaticSpan::2
 }
 
 void cArray() {
-  // break here
+  /// cArray::0
   float array_f[3]                 = {0.F, 0.F, 0.F};
   std::complex<float> array_c[3]   = {kCpxZeroF, kCpxZeroF, kCpxZeroF};
   double array_d[3]                = {0., 0., 0.};
   std::complex<double> array_cd[3] = {kCpxZeroD, kCpxZeroD, kCpxZeroD};
 
-  // break here
+  /// cArray::1
   array_f[0]  = 1.F;
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
@@ -57,10 +57,11 @@ void cArray() {
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
-  // break here
+  /// cArray::2
 }
 
 void numericValues() {
+  /// numericValues::0
   std::array<float, 3> array_f                 = {0.F, 0.F, 0.F};
   std::array<std::complex<float>, 3> array_c   = {kCpxZeroF, kCpxZeroF,
                                                   kCpxZeroF};
@@ -68,7 +69,7 @@ void numericValues() {
   std::array<std::complex<double>, 3> array_cd = {kCpxZeroD, kCpxZeroD,
                                                   kCpxZeroD};
 
-  // break here
+  /// numericValues::1
   array_f[0]  = kNanF;
   array_d[0]  = kNanD;
   array_c[0]  = std::complex(kNanF, 0.F);
@@ -81,11 +82,11 @@ void numericValues() {
   array_d[2]  = kNInfD;
   array_c[2]  = std::complex(kNInfF, 0.F);
   array_cd[2] = std::complex(kNInfD, 0.0);
-  // break here
+  /// numericValues::2
 }
 
 void vectorAndDynSpan() {
-  // break here
+  /// vectorAndDynSpan::0
   auto vector_f  = std::vector(3, 0.F);
   auto vector_c  = std::vector(3, kCpxZeroF);
   auto vector_d  = std::vector(3, 0.);
@@ -95,7 +96,7 @@ void vectorAndDynSpan() {
   auto span_d    = std::span(vector_d);
   auto span_cd   = std::span(vector_cd);
 
-  // break here
+  /// vectorAndDynSpan::1
   vector_f[0]  = 1.F;
   vector_d[0]  = 1.;
   vector_c[0]  = kCpxOneF;
@@ -104,7 +105,7 @@ void vectorAndDynSpan() {
   vector_d[1]  = -1.;
   vector_c[1]  = kCpxMinusOneF;
   vector_cd[1] = kCpxMinusOneD;
-  // break here
+  /// vectorAndDynSpan::2
   vector_f.resize(2);
   vector_c.resize(2);
   vector_d.resize(2);
@@ -113,16 +114,16 @@ void vectorAndDynSpan() {
   span_c  = std::span(vector_c);
   span_d  = std::span(vector_d);
   span_cd = std::span(vector_cd);
-  // break here
-  vector_f.resize(2);
-  vector_c.resize(2);
-  vector_d.resize(2);
-  vector_cd.resize(2);
+  /// vectorAndDynSpan::3
+  vector_f.resize(4);
+  vector_c.resize(4);
+  vector_d.resize(4);
+  vector_cd.resize(4);
   span_f  = std::span(vector_f);
   span_c  = std::span(vector_c);
   span_d  = std::span(vector_d);
   span_cd = std::span(vector_cd);
-  // break here
+  /// vectorAndDynSpan::4
 }
 
 int main() {
