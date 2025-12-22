@@ -72,6 +72,7 @@ class LldbValue(AbstractValue):
                 lldb.eLanguageTypeC_plus_plus
                 | lldb.eLanguageTypeC_plus_plus_03
                 | lldb.eLanguageTypeC_plus_plus_11
+                | lldb.eLanguageTypeC_plus_plus_14
                 | lldb.eLanguageTypeC_plus_plus_17
                 | lldb.eLanguageTypeC_plus_plus_20
             ):
