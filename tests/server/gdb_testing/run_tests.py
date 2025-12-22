@@ -38,15 +38,6 @@ def main():
 
     # Then bind TEST_CASE_BASE to GdbTestCase
     GdbTestCase.declare_as_base_test_class()
-    # global TEST_CASE_BASE
-    # TEST_CASE_BASE = GdbTestCase
-    # gdb.execute("set pagination off")
-    # gdb.execute("set logging file /dev/null", to_string=True)
-    # gdb.execute("set logging redirect on", to_string=True)
-    # gdb.execute("set logging enabled on")
-
-    # # Suppress the message printed when a new thread is started
-    # gdb.execute("set print thread-events off")
 
     # Then import and run the tests
     from test_suite import run
