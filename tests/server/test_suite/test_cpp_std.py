@@ -28,10 +28,9 @@ class TestCppStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_array(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:32")
-        self.debugger().set_breakpoint("std_tests.cpp:41")
+        self.debugger().set_breakpoints_at_tags("arrayAndStaticSpan", [1, 2])
 
-        ################## std_tests.cpp:27 - All zeros ##################
+        ################## arrayAndStaticSpan::1 - All zeros ##################
         self.debugger().run()
         self.debugger().execute("dave show array_f")
         self.debugger().execute("dave show array_c")
@@ -81,7 +80,7 @@ class TestCppStd(TestCaseBase.TYPE):
         self.assertEqual(raw_array_cd.default_layout, RawContainer.Layout.CPX_1D)
         self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_array_cd)
 
-        ################## std_tests.cpp:36 - (1, -1, 0) ##################
+        ################## arrayAndStaticSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
         received = MockClient().receive_from_server()
         self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
@@ -111,10 +110,9 @@ class TestCppStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_span_static(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:32")
-        self.debugger().set_breakpoint("std_tests.cpp:41")
+        self.debugger().set_breakpoints_at_tags("arrayAndStaticSpan", [1, 2])
 
-        ################## std_tests.cpp:32 - All zeros ##################
+        ################## arrayAndStaticSpan::1 - All zeros ##################
         self.debugger().run()
         self.debugger().execute("dave show span_f")
         self.debugger().execute("dave show span_c")
@@ -164,7 +162,7 @@ class TestCppStd(TestCaseBase.TYPE):
         self.assertEqual(raw_span_cd.default_layout, RawContainer.Layout.CPX_1D)
         self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_span_cd)
 
-        ################## std_tests.cpp:36 - (1, -1, 0) ##################
+        ################## arrayAndStaticSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
         received = MockClient().receive_from_server()
         self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
@@ -192,10 +190,9 @@ class TestCppStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_c_array(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:51")
-        self.debugger().set_breakpoint("std_tests.cpp:60")
+        self.debugger().set_breakpoints_at_tags("cArray", [1, 2])
 
-        ################## std_tests.cpp:46 - All zeros ##################
+        ################## cArray::1 - All zeros ##################
         self.debugger().run()
         self.debugger().execute("dave show array_f")
         self.debugger().execute("dave show array_c")
@@ -245,7 +242,7 @@ class TestCppStd(TestCaseBase.TYPE):
         self.assertEqual(raw_array_cd.default_layout, RawContainer.Layout.CPX_1D)
         self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_array_cd)
 
-        ################## std_tests.cpp:55 - (1, -1, 0) ##################
+        ################## cArray::2 - (1, -1, 0) ##################
         self.debugger().continue_()
         received = MockClient().receive_from_server()
         self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
@@ -275,12 +272,9 @@ class TestCppStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_vector(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoint("std_tests.cpp:98")
-        self.debugger().set_breakpoint("std_tests.cpp:107")
-        self.debugger().set_breakpoint("std_tests.cpp:116")
-        self.debugger().set_breakpoint("std_tests.cpp:125")
+        self.debugger().set_breakpoints_at_tags("vectorAndDynSpan", [1, 2, 3, 4])
 
-        ################## std_tests.cpp:99 - All zeros ##################
+        ################## vectorAndDynSpan::1 - All zeros ##################
         self.debugger().run()
         self.debugger().execute("dave show vector_f")
         self.debugger().execute("dave show vector_c")
@@ -330,31 +324,85 @@ class TestCppStd(TestCaseBase.TYPE):
         self.assertEqual(raw_vector_cd.default_layout, RawContainer.Layout.CPX_1D)
         self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_vector_cd)
 
-        ################## std_tests.cpp:107 - (1, -1, 0) ##################
+        ################## vectorAndDynSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
         received = MockClient().receive_from_server()
         self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
-        # array_f
+        # vector_f
         self.assertEqual(received[0].id, raw_vector_f.id)
         self.assertTupleEqual(received[0].shape, raw_vector_f.original_shape)
         self.assertContainerContent((1.0, -1.0, 0.0), raw_vector_f, received[0])
 
-        # array_c
+        # vector_c
         self.assertEqual(received[1].id, raw_vector_c.id)
         self.assertTupleEqual(received[1].shape, raw_vector_c.original_shape)
         self.assertContainerContent(
             (1 + 1j, -1 - 1j, 0 + 0j), raw_vector_c, received[1]
         )
 
-        # array_f
+        # vector_f
         self.assertEqual(received[2].id, raw_vector_d.id)
         self.assertTupleEqual(received[2].shape, raw_vector_d.original_shape)
         self.assertContainerContent((1.0, -1.0, 0.0), raw_vector_d, received[2])
 
-        # array_c
+        # vector_c
         self.assertEqual(received[3].id, raw_vector_cd.id)
         self.assertTupleEqual(received[3].shape, raw_vector_cd.original_shape)
         self.assertContainerContent(
             (1 + 1j, -1 - 1j, 0 + 0j), raw_vector_cd, received[3]
+        )
+
+        ################## vectorAndDynSpan::3 - (1, -1) ##################
+        self.debugger().continue_()
+        received = MockClient().receive_from_server()
+        self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
+
+        # vector_f
+        self.assertEqual(received[0].id, raw_vector_f.id)
+        self.assertTupleEqual(received[0].shape, (1, 2))
+        self.assertContainerContent((1.0, -1.0), raw_vector_f, received[0])
+
+        # vector_c
+        self.assertEqual(received[1].id, raw_vector_c.id)
+        self.assertTupleEqual(received[1].shape, (1, 2))
+        self.assertContainerContent((1 + 1j, -1 - 1j), raw_vector_c, received[1])
+
+        # vector_f
+        self.assertEqual(received[2].id, raw_vector_d.id)
+        self.assertTupleEqual(received[2].shape, (1, 2))
+        self.assertContainerContent((1.0, -1.0), raw_vector_d, received[2])
+
+        # vector_c
+        self.assertEqual(received[3].id, raw_vector_cd.id)
+        self.assertTupleEqual(received[3].shape, (1, 2))
+        self.assertContainerContent((1 + 1j, -1 - 1j), raw_vector_cd, received[3])
+
+        ################## vectorAndDynSpan::3 - (1, -1, 0, 0) ##################
+        self.debugger().continue_()
+        received = MockClient().receive_from_server()
+        self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
+
+        # vector_f
+        self.assertEqual(received[0].id, raw_vector_f.id)
+        self.assertTupleEqual(received[0].shape, (1, 4))
+        self.assertContainerContent((1.0, -1.0, 0.0, 0.0), raw_vector_f, received[0])
+
+        # vector_c
+        self.assertEqual(received[1].id, raw_vector_c.id)
+        self.assertTupleEqual(received[1].shape, (1, 4))
+        self.assertContainerContent(
+            (1 + 1j, -1 - 1j, 0j, 0j), raw_vector_c, received[1]
+        )
+
+        # vector_f
+        self.assertEqual(received[2].id, raw_vector_d.id)
+        self.assertTupleEqual(received[2].shape, (1, 4))
+        self.assertContainerContent((1.0, -1.0, 0.0, 0.0), raw_vector_d, received[2])
+
+        # vector_c
+        self.assertEqual(received[3].id, raw_vector_cd.id)
+        self.assertTupleEqual(received[3].shape, (1, 4))
+        self.assertContainerContent(
+            (1 + 1j, -1 - 1j, 0j, 0j), raw_vector_cd, received[3]
         )

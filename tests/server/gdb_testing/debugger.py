@@ -1,3 +1,5 @@
+from collections import deque
+from typing import List
 import gdb  # type: ignore
 
 from common.debugger import DebuggerAbstraction
@@ -29,23 +31,26 @@ class GdbDebugger(DebuggerAbstraction):
     def set_breakpoint(_, location: str):
         gdb.execute(f"b {location}", to_string=True)
 
-    def run(_):
-        # gdb.execute("set logging enabled on", to_string=True, from_tty=True)
+    def set_breakpoints_at_tags(self, function: str, tags: List[int]):
+        unparsed, parsed = gdb.decode_line(function)
+        if unparsed:
+            raise RuntimeError(f"Could not find function {function}")
 
-        # try:
+        tags.sort()
+        loc: gdb.Symtab_and_line = parsed[0]
+        filename = loc.symtab.fullname()
+
+        tags_lines = self._find_tags(filename, function, loc.line, tags)
+        for tag_line in tags_lines:
+            self.set_breakpoint(tag_line)
+
+    def run(_):
         with gdb_stdout_silence():
             gdb.execute("run", to_string=True)
-        # finally:
-        # gdb.execute("set logging enabled off", to_string=True, from_tty=True)
 
     def continue_(_):
-        # gdb.execute("set logging enabled on", to_string=True, from_tty=True)
-
-        # try:
         with gdb_stdout_silence():
             gdb.execute("continue", to_string=True)
-        # finally:
-        # gdb.execute("set logging enabled off", to_string=True, from_tty=True)
 
     def execute(_, command) -> str:
         return gdb.execute(command, to_string=True)
