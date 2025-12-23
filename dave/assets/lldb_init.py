@@ -80,6 +80,8 @@ try:
         interpreter: lldb.SBCommandInterpreter = debugger.GetCommandInterpreter()
         res = lldb.SBCommandReturnObject()
         interpreter.HandleCommand(f"target stop-hook add -P {__name__}.StopHook", res)
+        if not res.Succeeded():
+            raise RuntimeError("Failed to set LLDB stop hook")
 
         # Event handler to handle process stop
         event_handler = LLDBEventHandler(debugger)
@@ -102,7 +104,7 @@ try:
 
         Logger().info("[dave] Successfully loaded")
 
-except ModuleNotFoundError as e:
+except (ModuleNotFoundError, RuntimeError) as e:
     import os, sys
 
     LOGLEVEL = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
