@@ -3,6 +3,7 @@ from pathlib import Path
 import lldb
 
 from common import TestCaseBase
+from common.debugger import stdout_silence
 from lldb_testing.debugger import LldbDebugger
 
 
@@ -37,13 +38,14 @@ class LldbTestCase(TestCaseBase):
     def tearDown(self):
         target: lldb.SBTarget = self.__sbdebugger.GetSelectedTarget()
         if target.IsValid():
-            # Kill the process if stil running
-            process: lldb.SBProcess = target.GetProcess()
-            if process.IsValid() and process.GetState() != lldb.eStateExited:
-                process.Kill()
+            with stdout_silence():
+                # Kill the process if still running
+                process: lldb.SBProcess = target.GetProcess()
+                if process.IsValid() and process.GetState() != lldb.eStateExited:
+                    process.Kill()
 
-            # Delete the target, it should remove its breakpoints automatically
-            self.__sbdebugger.DeleteTarget(target)
+                # Delete the target, it should remove its breakpoints automatically
+                self.__sbdebugger.DeleteTarget(target)
 
         # Unset the debugger abstraction
         self.debugger().unset()

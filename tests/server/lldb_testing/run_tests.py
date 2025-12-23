@@ -38,6 +38,7 @@ def main():
 
     # Then bind TEST_CASE_BASE to GdbTestCase
     LldbTestCase.declare_as_base_test_class()
+    lldb.debugger.SetAsync(False)
 
     # Then import and run the tests
     from test_suite import run
