@@ -5,6 +5,8 @@ import site
 from pathlib import Path
 import gdb  # type: ignore
 
+os.environ["DAVE_LOGLEVEL"] = "CRITICAL"
+
 tests_root = Path(__file__).resolve().parent.parent
 if tests_root not in sys.path:
     site.addsitedir(tests_root)
