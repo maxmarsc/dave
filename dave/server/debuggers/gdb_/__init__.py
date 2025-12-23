@@ -17,7 +17,7 @@ gdb.events.exited.connect(exit_handler)
 gdb.events.stop.connect(stop_handler)
 gdb.pretty_printers.append(dave_printer)
 
-gdb.write("INFO : [dave] Successfully loaded\n")
+Logger().info("[dave] Successfully loaded")
 
 # If the flag is set, wait for the python debugger to connect
 if os.environ.get("DAVE_DEBUG_SERVER") == "1":
