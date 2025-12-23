@@ -76,8 +76,10 @@ try:
             f"command script add -c {__name__}.HelpCommand dave help"
         )
 
-        # Register stop event hook
-        debugger.HandleCommand(f"target stop-hook add -P {__name__}.StopHook")
+        # Register stop event hook, silently
+        interpreter: lldb.SBCommandInterpreter = debugger.GetCommandInterpreter()
+        res = lldb.SBCommandReturnObject()
+        interpreter.HandleCommand(f"target stop-hook add -P {__name__}.StopHook", res)
 
         # Event handler to handle process stop
         event_handler = LLDBEventHandler(debugger)
