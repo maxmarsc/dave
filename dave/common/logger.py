@@ -16,7 +16,9 @@ class Logger(
 
     def __init__(self):
         logging.basicConfig(format="%(levelname)s: %(message)s")
-        self.__level = os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
+        self.__level = logging.getLevelName(
+            os.environ.get("DAVE_LOGLEVEL", "INFO").upper()
+        )
         if st.SERVER_TYPE != st.ServerType.GDB:
             try:
                 import lldb
@@ -47,27 +49,29 @@ class Logger(
         self.__logger.setLevel(self.__level)
 
     def info(self, message: str):
-        if self.__logger is None:
-            message = f"INFO: {message}"
-            if st.SERVER_TYPE == st.ServerType.GDB:
-                Logger.__internal_gdb_log(message)
+        if self.__level <= logging.INFO:
+            if self.__logger is None:
+                message = f"INFO: {message}"
+                if st.SERVER_TYPE == st.ServerType.GDB:
+                    Logger.__internal_gdb_log(message)
+                else:
+                    Logger.__internal_lldb_log(message)
             else:
-                Logger.__internal_lldb_log(message)
-        else:
-            self.__logger.info(message)
+                self.__logger.info(message)
 
     def warning(self, message: str):
-        if self.__logger is None:
-            message = f"WARNING: {message}"
-            if st.SERVER_TYPE == st.ServerType.GDB:
-                Logger.__internal_gdb_log(message)
+        if self.__level <= logging.WARNING:
+            if self.__logger is None:
+                message = f"WARNING: {message}"
+                if st.SERVER_TYPE == st.ServerType.GDB:
+                    Logger.__internal_gdb_log(message)
+                else:
+                    Logger.__internal_lldb_log(message)
             else:
-                Logger.__internal_lldb_log(message)
-        else:
-            self.__logger.warning(message)
+                self.__logger.warning(message)
 
     def debug(self, message: str):
-        if self.__level == "DEBUG":
+        if self.__level <= logging.DEBUG:
             if self.__logger is None:
                 message = f"DEBUG: {message}"
                 if st.SERVER_TYPE == st.ServerType.GDB:
@@ -78,11 +82,12 @@ class Logger(
                 self.__logger.debug(message)
 
     def error(self, message: str):
-        if self.__logger is None:
-            message = f"ERROR: {message}"
-            if st.SERVER_TYPE == st.ServerType.GDB:
-                Logger.__internal_gdb_log(message)
+        if self.__level <= logging.ERROR:
+            if self.__logger is None:
+                message = f"ERROR: {message}"
+                if st.SERVER_TYPE == st.ServerType.GDB:
+                    Logger.__internal_gdb_log(message)
+                else:
+                    Logger.__internal_lldb_log(message)
             else:
-                Logger.__internal_lldb_log(message)
-        else:
-            self.__logger.error(message)
+                self.__logger.error(message)
