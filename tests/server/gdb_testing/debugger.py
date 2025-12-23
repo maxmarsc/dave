@@ -1,29 +1,7 @@
 from typing import List
 import gdb  # type: ignore
 
-from common.debugger import DebuggerAbstraction
-
-import os
-import sys
-from contextlib import contextmanager
-
-
-@contextmanager
-def gdb_stdout_silence():
-    # Save a copy of the actual terminal output (FD 1)
-    stdout_fd = 1
-    saved_stdout_fd = os.dup(stdout_fd)
-
-    try:
-        # Redirect FD 1 to /dev/null
-        # This affects the ENTIRE process, including GDB's C code
-        with open(os.devnull, "w") as devnull:
-            os.dup2(devnull.fileno(), stdout_fd)
-            yield
-    finally:
-        # Restore the original terminal output to FD 1
-        os.dup2(saved_stdout_fd, stdout_fd)
-        os.close(saved_stdout_fd)
+from common.debugger import DebuggerAbstraction, stdout_silence
 
 
 class GdbDebugger(DebuggerAbstraction):
@@ -48,11 +26,11 @@ class GdbDebugger(DebuggerAbstraction):
             self.set_breakpoint(tag_line)
 
     def run(_):
-        with gdb_stdout_silence():
+        with stdout_silence():
             gdb.execute("run", to_string=True)
 
     def continue_(_):
-        with gdb_stdout_silence():
+        with stdout_silence():
             gdb.execute("continue", to_string=True)
 
     def execute(_, command) -> str:

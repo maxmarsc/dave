@@ -1,7 +1,27 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
+import os
 from typing import List, Deque
 from itertools import islice
 from collections import deque
+
+
+@contextmanager
+def stdout_silence():
+    # Save a copy of the actual terminal output (FD 1)
+    stdout_fd = 1
+    saved_stdout_fd = os.dup(stdout_fd)
+
+    try:
+        # Redirect FD 1 to /dev/null
+        # This affects the ENTIRE process, including GDB's C code
+        with open(os.devnull, "w") as devnull:
+            os.dup2(devnull.fileno(), stdout_fd)
+            yield
+    finally:
+        # Restore the original terminal output to FD 1
+        os.dup2(saved_stdout_fd, stdout_fd)
+        os.close(saved_stdout_fd)
 
 
 class DebuggerAbstraction(ABC):
