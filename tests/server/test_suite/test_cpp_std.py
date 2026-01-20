@@ -32,7 +32,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## arrayAndStaticSpan::1 - All zeros ##################
         self.debugger().run()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show array_f")
             self.debugger().execute("dave show array_c")
             self.debugger().execute("dave show array_d")
@@ -83,7 +83,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## arrayAndStaticSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -118,7 +118,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## arrayAndStaticSpan::1 - All zeros ##################
         self.debugger().run()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show span_f")
             self.debugger().execute("dave show span_c")
             self.debugger().execute("dave show span_d")
@@ -169,7 +169,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## arrayAndStaticSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -204,7 +204,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## cArray::1 - All zeros ##################
         self.debugger().run()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show array_f")
             self.debugger().execute("dave show array_c")
             self.debugger().execute("dave show array_d")
@@ -255,7 +255,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## cArray::2 - (1, -1, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -290,7 +290,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::1 - All zeros ##################
         self.debugger().run()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show vector_f")
             self.debugger().execute("dave show vector_c")
             self.debugger().execute("dave show vector_d")
@@ -341,7 +341,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -371,7 +371,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::3 - (1, -1) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -397,7 +397,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::3 - (1, -1, 0, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -436,7 +436,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::1 - All zeros ##################
         self.debugger().run()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show span_f")
             self.debugger().execute("dave show span_c")
             self.debugger().execute("dave show span_d")
@@ -487,7 +487,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::2 - (1, -1, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -517,7 +517,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::3 - (1, -1) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
@@ -543,7 +543,7 @@ class TestCppStd(TestCaseBase.TYPE):
 
         ################## vectorAndDynSpan::4 - (1, -1, 0, 0) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 

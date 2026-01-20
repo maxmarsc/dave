@@ -1,12 +1,17 @@
 from __future__ import annotations
+import contextlib
 from pathlib import Path
 from typing import Any, List, Tuple, Union
 import unittest
+from unittest.case import _OrderedChainMap, _SubTest, _ShouldStop, _subtest_msg_sentinel
 import struct
 from abc import ABC, abstractmethod
 import cmath
 
 from common.debugger import DebuggerAbstraction
+
+
+__unittest = True  # Make sure custom test functions does not show up in the stack trace
 
 
 class TestCaseBase(unittest.TestCase, ABC):
@@ -31,6 +36,36 @@ class TestCaseBase(unittest.TestCase, ABC):
     @classmethod
     def declare_as_base_test_class(cls):
         TestCaseBase.TYPE = cls
+
+    @contextlib.contextmanager
+    def failFastSubTestAtLocation(self, msg=_subtest_msg_sentinel, **params):
+        """
+        A custom re-implementation of Subtest which always failfast and set the
+        current file line in the context message
+        """
+        params["line"] = self.debugger().get_current_line()
+        if self._outcome is None or not self._outcome.result_supports_subtests:
+            yield
+            return
+        parent = self._subtest
+        if parent is None:
+            params_map = _OrderedChainMap(params)
+        else:
+            params_map = parent.params.new_child(params)
+        self._subtest = _SubTest(self, msg, params_map)
+        try:
+            with self._outcome.testPartExecutor(self._subtest, subTest=True):
+                yield
+            if not self._outcome.success:
+                result = self._outcome.result
+                if result is not None:
+                    raise _ShouldStop
+            elif self._outcome.expectedFailure:
+                # If the test is expecting a failure, we really want to
+                # stop now and register the expected failure.
+                raise _ShouldStop
+        finally:
+            self._subtest = parent
 
     def assertIsListOf(self, suspects: List[Any], size: int, cls: type[Any]):
         self.assertEqual(len(suspects), size)

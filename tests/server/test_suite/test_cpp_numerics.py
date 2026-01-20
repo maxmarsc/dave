@@ -32,7 +32,7 @@ class TestCppNumerics(TestCaseBase.TYPE):
 
         ################## numericValues::1 - All zeros ##################
         self.debugger().run()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show array_f")
             self.debugger().execute("dave show array_c")
             self.debugger().execute("dave show array_d")
@@ -79,7 +79,7 @@ class TestCppNumerics(TestCaseBase.TYPE):
 
         ################## numericValues::2 - (NaN, +inf, -inf) ##################
         self.debugger().continue_()
-        with self.subTest(location=self.debugger().get_current_line()):
+        with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
             self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
 
