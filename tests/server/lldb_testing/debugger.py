@@ -7,9 +7,11 @@ import lldb
 from common.debugger import DebuggerAbstraction
 
 
-def child_generator(value: lldb.SBValue):
-    num_children = value.GetNumChildren()
-    for child_idx in range(num_children):
+def synthetic_child_generator(value: lldb.SBValue):
+    num_synthetic_children = (
+        value.GetNonSyntheticValue().GetNumChildren() - value.GetNumChildren()
+    )
+    for child_idx in range(num_synthetic_children):
         yield value.GetChildAtIndex(child_idx)
 
 
@@ -64,8 +66,10 @@ class LldbDebugger(DebuggerAbstraction):
         except:
             raise RuntimeError(f"Failed to find and eval {variable_name}")
 
-        children = [(child.name, child.summary) for child in child_generator(val)]
-        return (val.summary, children)
+        synthetic_children = [
+            (child.name, child.summary) for child in synthetic_child_generator(val)
+        ]
+        return (val.summary, synthetic_children)
 
     def set_breakpoints_at_tags(self, function: str, tags: List[str]):
         # Resolve function to find the file and start line

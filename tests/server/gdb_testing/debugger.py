@@ -12,15 +12,25 @@ class GdbDebugger(DebuggerAbstraction):
         loc = gdb.decode_line()[1][0]
         return f"{loc.symtab.filename}:{loc.line}"
 
-    def get_variable_printer(self, variable_name: str) -> Tuple[str, List[Tuple[str, str]]]:
+    def get_variable_printer(
+        self, variable_name: str
+    ) -> Tuple[str, List[Tuple[str, str]]]:
         try:
             val = gdb.parse_and_eval(variable_name)
         except:
             raise RuntimeError(f"Failed to find and eval {variable_name}")
+        real_type = val.type.strip_typedefs()
+        real_type_fields = {
+            f.name for f in real_type.fields() if hasattr(f, "name") and f.name
+        }
 
         visualizer = gdb.default_visualizer(val)
-        children = [(name, str(value)) for (name, value) in visualizer.children()]
-        return (visualizer.to_string(), children)
+        synthetic_children: List[Tuple[str, str]] = list()
+        for name, value in visualizer.children():
+            if name not in real_type_fields:
+                synthetic_children.append((name, str(value)))
+        # children = [(name, str(value)) for (name, value) in visualizer.children()]
+        return (visualizer.to_string(), synthetic_children)
 
     def set_breakpoints_at_tags(self, function: str, tags: List[int]):
         unparsed, parsed = gdb.decode_line(function)
