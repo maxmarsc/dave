@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 import os
-from typing import List, Deque
+from typing import List, Deque, Tuple, Union
 from itertools import islice
 from collections import deque
 
@@ -35,6 +35,15 @@ class DebuggerAbstraction(ABC):
 
     @abstractmethod
     def get_current_line(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_variable_printer(self, variable_name) -> Tuple[str, List[Tuple[str, str]]]:
+        """
+        Get both summary and children names and summaries from a variable name
+
+        Raises a RuntimeError if the variable cannot be parsed
+        """
         pass
 
     @staticmethod

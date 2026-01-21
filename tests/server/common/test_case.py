@@ -98,3 +98,12 @@ class TestCaseBase(unittest.TestCase, ABC):
         tuple1 = tuple("NaN" if cmath.isnan(val) else val for val in tuple1)
         tuple2 = tuple("NaN" if cmath.isnan(val) else val for val in tuple2)
         super().assertTupleEqual(tuple1, tuple2)
+
+    def assertPrettyPrinterEqual(
+        self, variable_name: str, summary: str, children: List[Tuple[str, str]]
+    ):
+        obtained_summary, obtained_children = self.debugger().get_variable_printer(
+            variable_name
+        )
+        self.assertEqual(summary, obtained_summary)
+        self.assertListEqual(children, obtained_children)
