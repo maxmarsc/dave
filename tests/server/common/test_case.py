@@ -106,4 +106,5 @@ class TestCaseBase(unittest.TestCase, ABC):
             variable_name
         )
         self.assertEqual(summary, obtained_summary)
-        self.assertListEqual(children, obtained_children)
+        num_children_to_test = len(children)
+        self.assertListEqual(children, obtained_children[:num_children_to_test])

@@ -12,7 +12,7 @@ class GdbDebugger(DebuggerAbstraction):
         loc = gdb.decode_line()[1][0]
         return f"{loc.symtab.filename}:{loc.line}"
 
-    def get_variable_printer(self, variable_name: str) -> Tuple[str, List[str, str]]:
+    def get_variable_printer(self, variable_name: str) -> Tuple[str, List[Tuple[str, str]]]:
         try:
             val = gdb.parse_and_eval(variable_name)
         except:

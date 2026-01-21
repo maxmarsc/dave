@@ -1,36 +1,10 @@
-#include <array>
 #include <cmath>
-#include <complex>
-#include <span>
 #include <vector>
+
+#include "custom_containers.hpp"
 
 constexpr auto kBlockSize = 4096;
 constexpr auto kChannels  = 2;
-
-// examples of a custom structure
-template <typename T>
-struct DaveCustomContainerPtr final {
-  T* ptr_;
-  int size_;
-};
-
-struct DaveCustomContainerPtrPtr {
-  float** ptr_;
-  int block_size_;
-  int channels_;
-};
-
-struct DaveCustomInterleavedContainerVec {
-  std::vector<float> vec_;
-  int block_size_;
-  int channels_;
-};
-
-struct DaveCustomContainerVecRef {
-  std::vector<float>& vec_ref_;
-  int block_size_;
-  int channels_;
-};
 
 int main() {
   //==============================================================================
