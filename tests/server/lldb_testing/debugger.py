@@ -1,10 +1,16 @@
-from typing import List
+from typing import List, Tuple
 from pathlib import Path
 import os
 
 import lldb
 
 from common.debugger import DebuggerAbstraction
+
+
+def child_generator(value: lldb.SBValue):
+    num_children = value.GetNumChildren()
+    for child_idx in range(num_children):
+        yield value.GetChildAtIndex(child_idx)
 
 
 class LldbDebugger(DebuggerAbstraction):
@@ -41,6 +47,25 @@ class LldbDebugger(DebuggerAbstraction):
             raise RuntimeError("Failed to retrieve current line")
         file_spec: lldb.SBFileSpec = line_entry.GetFileSpec()
         return f"{file_spec.GetFilename()}:{line_entry.GetLine()}"
+
+    def get_variable_printer(
+        self, variable_name: str
+    ) -> Tuple[str, List[Tuple[str, str]]]:
+        try:
+            val: lldb.SBValue = (
+                lldb.debugger.GetSelectedTarget()
+                .GetProcess()
+                .GetSelectedThread()
+                .GetSelectedFrame()
+                .FindVariable(variable_name)
+            )
+            if not val.IsValid():
+                raise Exception()
+        except:
+            raise RuntimeError(f"Failed to find and eval {variable_name}")
+
+        children = [(child.name, child.summary) for child in child_generator(val)]
+        return (val.summary, children)
 
     def set_breakpoints_at_tags(self, function: str, tags: List[str]):
         # Resolve function to find the file and start line

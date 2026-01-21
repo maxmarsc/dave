@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import gdb  # type: ignore
 
 from common.debugger import DebuggerAbstraction, stdout_silence
@@ -11,6 +11,16 @@ class GdbDebugger(DebuggerAbstraction):
     def get_current_line(self) -> str:
         loc = gdb.decode_line()[1][0]
         return f"{loc.symtab.filename}:{loc.line}"
+
+    def get_variable_printer(self, variable_name: str) -> Tuple[str, List[str, str]]:
+        try:
+            val = gdb.parse_and_eval(variable_name)
+        except:
+            raise RuntimeError(f"Failed to find and eval {variable_name}")
+
+        visualizer = gdb.default_visualizer(val)
+        children = [(name, str(value)) for (name, value) in visualizer.children()]
+        return (visualizer.to_string(), children)
 
     def set_breakpoints_at_tags(self, function: str, tags: List[int]):
         unparsed, parsed = gdb.decode_line(function)
