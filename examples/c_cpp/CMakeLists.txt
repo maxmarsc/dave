@@ -84,25 +84,48 @@ add_executable(c_example
 ################################################################################
 ###                               JUCE
 ################################################################################
-add_executable(juce
+add_executable(juce_example
     ${CMAKE_CURRENT_SOURCE_DIR}/juce.cpp
 )
-set_target_properties(juce PROPERTIES CXX_STANDARD 20)
+set_target_properties(juce_example PROPERTIES CXX_STANDARD 20)
 target_link_libraries(
-  juce
+  juce_example
   PUBLIC juce::juce_recommended_config_flags
          juce::juce_recommended_warning_flags juce::juce_dsp
 )
 target_compile_definitions(
-  juce
+  juce_example
   PUBLIC JUCE_USE_CURL=0
 )
 target_compile_options(
-  juce
+  juce_example
   PRIVATE
   -Wno-deprecated-declarations
   -Wno-unknown-pragmas
 )
+
+if (DAVE_BUILD_TESTS)
+add_executable(juce_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/juce_tests.cpp
+)
+
+set_target_properties(juce_tests PROPERTIES CXX_STANDARD 20)
+target_link_libraries(
+  juce_tests
+  PUBLIC juce::juce_recommended_config_flags
+         juce::juce_recommended_warning_flags juce::juce_dsp
+)
+target_compile_definitions(
+  juce_tests
+  PUBLIC JUCE_USE_CURL=0
+)
+target_compile_options(
+  juce_tests
+  PRIVATE
+  -Wno-deprecated-declarations
+  -Wno-unknown-pragmas
+)
+endif()
 
 ################################################################################
 ###                               Microsoft's GSL
@@ -144,3 +167,11 @@ add_executable(
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_containers.cpp
 )
 set_target_properties(custom_containers PROPERTIES CXX_STANDARD 20)
+
+if (DAVE_BUILD_TESTS)
+add_executable(custom_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_tests.cpp
+)
+
+set_target_properties(custom_tests PROPERTIES CXX_STANDARD 20)
+endif()

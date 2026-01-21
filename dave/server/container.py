@@ -90,7 +90,14 @@ class Container(Entity):
                 ]
 
             waveform = "_⎽⎼—⎻⎺‾"
-            maxValue = max(channel_samples)
+            maxValue = max(
+                (
+                    abs(sample)
+                    if not (cmath.isnan(sample) or cmath.isinf(sample))
+                    else 0.0
+                )
+                for sample in channel_samples
+            )
             if maxValue > 0.0:
                 scale = maxValue
             else:
@@ -113,13 +120,17 @@ class Container(Entity):
                     num_zeros = 0
                 # for some reason sys.float_info.epsilon is nowhere near
                 # the rounding error introduced by lldb when importing float values to python
-                if (abs(sample) - 0.00000015) > 1.0:  # out of bounds?
-                    output += "E"
-                elif sample == float("+inf") or sample == float("-inf"):
+                if cmath.isinf(sample):
                     output += "I"
-                elif sample == float("nan"):
+                elif (abs(sample) - 0.00000015) > 1.0:  # out of bounds?
+                    output += "E"
+                elif cmath.isnan(sample):
                     output += "N"
-                elif (i > 0) and ((sample < 0) is not (channel_samples[i - 1] < 0)):
+                elif (
+                    (i > 0)
+                    and not cmath.isnan(channel_samples[i - 1])
+                    and ((sample < 0) is not (channel_samples[i - 1] < 0))
+                ):
                     output += "x"  # zero crossing
                 else:
                     # normalize so we can see detail

@@ -1,7 +1,6 @@
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cmath>
-#include <complex>
 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
