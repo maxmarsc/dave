@@ -2,6 +2,8 @@
 ## Added
 ## Changed
 ## Fixed
+- Various bugs in sparklines with special values (NaN, Infs...)
+- Logging level selection
 
 # v0.14.0
 ## Added
