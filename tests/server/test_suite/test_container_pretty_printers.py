@@ -4,10 +4,6 @@ import struct
 from common import TestCaseBase, C_CPP_BUILD_DIR
 from mocked import MockClient, patch_client_popen
 
-from dave.common.raw_entity import RawEntity, RawEntityList, RawEntityUpdates
-from dave.common.raw_container import RawContainer
-from dave.common.sample_type import SampleType
-
 
 class TestContainerPrettyPrinters(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "custom_tests"

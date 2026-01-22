@@ -26,6 +26,17 @@ static void containerPrettyPrinters() {
   /// containerPrettyPrinters::3
 }
 
+static void daveCommands() {
+  /// daveCommands::0
+  constexpr auto kBlockSize = 3;
+  constexpr auto kChannels  = 2;
+  auto vector               = std::vector<float>(kBlockSize * kChannels);
+  float* ptr_carray[]       = {vector.data(), vector.data() + kBlockSize};
+  auto container = DaveCustomContainerPtrPtr{ptr_carray, kBlockSize, kChannels};
+  auto& container_ref = container;
+  /// daveCommands::1
+}
+
 int main() {
   containerPrettyPrinters();
 

@@ -14,6 +14,10 @@ from common.debugger import DebuggerAbstraction
 __unittest = True  # Make sure custom test functions does not show up in the stack trace
 
 
+def is_numeric(val: object) -> bool:
+    return isinstance(val, int) or isinstance(val, float) or isinstance(val, complex)
+
+
 class TestCaseBase(unittest.TestCase, ABC):
     """
     A custom TestCase class to use for DAVE server's unit tests
@@ -72,6 +76,12 @@ class TestCaseBase(unittest.TestCase, ABC):
         for suspect in suspects:
             self.assertIsInstance(suspect, cls)
 
+    def assertExceptionEquals(self, e1: Exception, e2: Exception):
+        self.assertIsInstance(e1, Exception)
+        self.assertIsInstance(e2, Exception)
+        self.assertEqual(type(e1), type(e2))
+        self.assertTupleEqual(e1.args, e2.args)
+
     def assertContainerContent(
         self, expected: Tuple[Any], raw_container, container_update=None
     ):
@@ -95,8 +105,12 @@ class TestCaseBase(unittest.TestCase, ABC):
         self.assertTupleEqual(expected, samples)
 
     def assertTupleEqual(self, tuple1: Tuple[Any], tuple2: Tuple[Any]):
-        tuple1 = tuple("NaN" if cmath.isnan(val) else val for val in tuple1)
-        tuple2 = tuple("NaN" if cmath.isnan(val) else val for val in tuple2)
+        tuple1 = tuple(
+            "NaN" if is_numeric(val) and cmath.isnan(val) else val for val in tuple1
+        )
+        tuple2 = tuple(
+            "NaN" if is_numeric(val) and cmath.isnan(val) else val for val in tuple2
+        )
         super().assertTupleEqual(tuple1, tuple2)
 
     def assertPrettyPrinterEqual(

@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import gdb  # type: ignore
 
-from common.debugger import DebuggerAbstraction, stdout_silence
+from common.debugger import CommandError, DebuggerAbstraction, stdout_silence
 
 
 class GdbDebugger(DebuggerAbstraction):
@@ -54,4 +54,7 @@ class GdbDebugger(DebuggerAbstraction):
             gdb.execute("continue", to_string=True)
 
     def execute(_, command) -> str:
-        return gdb.execute(command, to_string=True)
+        try:
+            return gdb.execute(command, to_string=True)
+        except gdb.error as e:
+            raise CommandError(f"{e}")
