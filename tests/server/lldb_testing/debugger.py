@@ -4,12 +4,12 @@ import os
 
 import lldb
 
-from common.debugger import DebuggerAbstraction
+from common.debugger import CommandError, DebuggerAbstraction
 
 
 def synthetic_child_generator(value: lldb.SBValue):
     num_synthetic_children = (
-        value.GetNonSyntheticValue().GetNumChildren() - value.GetNumChildren()
+        value.GetNumChildren() - value.GetNonSyntheticValue().GetNumChildren()
     )
     for child_idx in range(num_synthetic_children):
         yield value.GetChildAtIndex(child_idx)
@@ -121,4 +121,4 @@ class LldbDebugger(DebuggerAbstraction):
         if res.Succeeded():
             return res.GetOutput() or ""
         else:
-            raise RuntimeError(f"Lldb command failed with {res.GetError()}")
+            raise CommandError(f"Lldb command failed with {res.GetError()}")

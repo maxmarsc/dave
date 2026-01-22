@@ -1,5 +1,5 @@
 from .test_case import TestCaseBase
-from .debugger import DebuggerAbstraction
+from .debugger import DebuggerAbstraction, CommandError
 
 import os
 from pathlib import Path

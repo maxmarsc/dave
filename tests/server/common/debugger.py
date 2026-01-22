@@ -24,6 +24,10 @@ def stdout_silence():
         os.close(saved_stdout_fd)
 
 
+class CommandError(Exception):
+    pass
+
+
 class DebuggerAbstraction(ABC):
     @abstractmethod
     def set_breakpoint(self, location: str):
