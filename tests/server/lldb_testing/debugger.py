@@ -121,4 +121,6 @@ class LldbDebugger(DebuggerAbstraction):
         if res.Succeeded():
             return res.GetOutput() or ""
         else:
-            raise CommandError(f"Lldb command failed with {res.GetError()}")
+            raise CommandError(
+                f"{res.GetError().removeprefix("error: ").removesuffix("\n")}"
+            )
