@@ -121,3 +121,21 @@ class TestCaseBase(unittest.TestCase, ABC):
         )
         self.assertEqual(summary, obtained_summary)
         self.assertListEqual(children, obtained_children)
+
+    def assertStartsWith(self, to_check: str, prefix: str):
+        try:
+            self.assertTrue(to_check.startswith(prefix))
+            success = True
+        except AssertionError:
+            success = False
+
+        if not success:
+            prefix_len = len(prefix)
+            to_check_fmt_size = prefix_len + 10
+            if len(to_check) > to_check_fmt_size:
+                to_check_fmt = to_check[: prefix_len + 7] + "..."
+            else:
+                to_check_fmt = to_check
+            raise AssertionError(
+                f"\n\t{to_check_fmt[:]}\n does not starts with \n\t{prefix}"
+            )

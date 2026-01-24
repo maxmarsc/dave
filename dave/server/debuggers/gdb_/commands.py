@@ -119,13 +119,20 @@ The following subcommands are supported:
         else:
             return True
 
+    @staticmethod
+    def __check_for_processus():
+        if not GdbCommand.__check_for_running_inferior():
+            raise gdb.GdbError("No processus detected")
+
+    @staticmethod
+    def __check_for_dave():
+        if not DaveProcess().is_alive():
+            raise gdb.GdbError("Dave is not started")
+
     def invoke(self, arg, from_tty):
         args = gdb.string_to_argv(arg)
         if len(args) < 1:
             raise gdb.GdbError(self.__doc__)
-
-        if not GdbCommand.__check_for_running_inferior() and args[0] != "help":
-            raise gdb.GdbError("No processus detected")
 
         subcommand = args[0]
         match subcommand:
@@ -151,7 +158,10 @@ The following subcommands are supported:
             message = f"{e}\n{SHOW_PARSER.usage_property}"
             raise gdb.GdbError(message)
         except HelpException as e:
+            gdb.write(e.msg())
             return
+
+        self.__check_for_processus()
 
         if len(parsed.dims) > 2:
             raise gdb.GdbError("--dims supports up to two dimensions")
@@ -206,10 +216,11 @@ The following subcommands are supported:
             message = f"{e}\n{DELETE_PARSER.usage_property}"
             raise gdb.GdbError(message)
         except HelpException as e:
+            gdb.write(e.msg())
             return
 
-        if not DaveProcess().is_alive():
-            raise gdb.GdbError("Dave is not started")
+        self.__check_for_processus()
+        self.__check_for_dave()
 
         if not DaveProcess().delete(parsed.VARIABLE_ID):
             raise gdb.GdbError(f"{args[0]} is not a valid entity identifier")
@@ -221,10 +232,11 @@ The following subcommands are supported:
             message = f"{e}\n{FREEZE_PARSER.usage_property}"
             raise gdb.GdbError(message)
         except HelpException as e:
+            gdb.write(e.msg())
             return
 
-        if not DaveProcess().is_alive():
-            raise gdb.GdbError("Dave is not started")
+        self.__check_for_processus()
+        self.__check_for_dave()
 
         if not DaveProcess().freeze(parsed.VARIABLE_ID):
             raise gdb.GdbError(
@@ -238,10 +250,11 @@ The following subcommands are supported:
             message = f"{e}\n{CONCAT_PARSER.usage_property}"
             raise gdb.GdbError(message)
         except HelpException as e:
+            gdb.write(e.msg())
             return
 
-        if not DaveProcess().is_alive():
-            raise gdb.GdbError("Dave is not started")
+        self.__check_for_processus()
+        self.__check_for_dave()
 
         if not DaveProcess().concat(parsed.VARIABLE_ID):
             raise gdb.GdbError(
@@ -256,7 +269,10 @@ The following subcommands are supported:
             message = f"{e}\n{INSPECT_PARSER.usage_property}"
             raise gdb.GdbError(message)
         except HelpException as e:
+            gdb.write(e.msg())
             return
+
+        self.__check_for_processus()
 
         var_name = parsed.VARIABLE
         try:
@@ -278,6 +294,7 @@ The following subcommands are supported:
             message = f"{e}\n{INSPECT_PARSER.usage_property}"
             raise gdb.GdbError(message)
         except HelpException as e:
+            gdb.write(e.msg())
             return
 
         match parsed.SUBCOMMAND:

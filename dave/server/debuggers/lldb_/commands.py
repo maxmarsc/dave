@@ -135,6 +135,7 @@ class ShowCommand:
             result.SetError(self.__parser.usage_property)
             return
         except HelpException as e:
+            result.Print(e.msg())
             return
 
         if len(parsed.dims) > 2:
@@ -220,6 +221,7 @@ class InspectCommand:
             result.SetError(self.__parser.usage_property)
             return
         except HelpException as e:
+            result.Print(e.msg())
             return
 
         # Check for running process
@@ -262,6 +264,7 @@ class HelpCommand:
             result.SetError(self.__parser.usage_property)
             return
         except HelpException as e:
+            result.Print(e.msg())
             return
 
         match args.SUBCOMMAND:
@@ -314,6 +317,7 @@ class DeleteCommand:
             result.SetError(self.__parser.usage_property)
             return
         except HelpException as e:
+            result.Print(e.msg())
             return
 
         # Check for running process
@@ -353,6 +357,7 @@ class FreezeCommand:
             result.SetError(self.__parser.usage_property)
             return
         except HelpException as e:
+            result.Print(e.msg())
             return
 
         # Check for running process
@@ -392,6 +397,7 @@ class ConcatCommand:
             result.SetError(self.__parser.usage_property)
             return
         except HelpException as e:
+            result.Print(e.msg())
             return
 
         # Check for running process
