@@ -5,7 +5,7 @@ import shlex
 from ...process import DaveProcess
 from ...entity_factory import EntityFactory, EntityBuildError
 from dave.server.debuggers.command_parsers import (
-    HelpException,
+    HelpNeeded,
     ParsingError,
     ShowCommandParser,
     DeleteCommandParser,
@@ -134,7 +134,7 @@ class ShowCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
-        except HelpException as e:
+        except HelpNeeded as e:
             result.Print(e.msg())
             return
 
@@ -220,7 +220,7 @@ class InspectCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
-        except HelpException as e:
+        except HelpNeeded as e:
             result.Print(e.msg())
             return
 
@@ -263,7 +263,7 @@ class HelpCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
-        except HelpException as e:
+        except HelpNeeded as e:
             result.Print(e.msg())
             return
 
@@ -316,7 +316,7 @@ class DeleteCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
-        except HelpException as e:
+        except HelpNeeded as e:
             result.Print(e.msg())
             return
 
@@ -356,7 +356,7 @@ class FreezeCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
-        except HelpException as e:
+        except HelpNeeded as e:
             result.Print(e.msg())
             return
 
@@ -396,7 +396,7 @@ class ConcatCommand:
         except ParsingError as e:
             result.SetError(self.__parser.usage_property)
             return
-        except HelpException as e:
+        except HelpNeeded as e:
             result.Print(e.msg())
             return
 

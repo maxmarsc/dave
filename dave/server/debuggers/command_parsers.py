@@ -16,7 +16,12 @@ class ParsingError(Exception):
     pass
 
 
-class HelpException(Exception):
+class HelpNeeded(Exception):
+    """
+    HelpNeeded is raises whenever the command parser identify the help message
+    should be displayed to the user
+    """
+
     def msg(self) -> str:
         return self.args[0]
 
@@ -32,7 +37,8 @@ class NonExitingHelpAction(Action):
         )
 
     def __call__(self, parser, namespace, values, option_string=None):
-        raise HelpException(parser.format_help())
+        # We raise and not print to make sure each debugger logs the way they need to
+        raise HelpNeeded(parser.format_help())
 
 
 class DaveArgumentParser(ArgumentParser, ABC):

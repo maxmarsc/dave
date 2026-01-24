@@ -8,7 +8,7 @@ import time
 from dave.common.singleton import SingletonMeta
 from dave.server.process import DaveProcess
 from dave.server.debuggers.command_parsers import (
-    HelpException,
+    HelpNeeded,
     ParsingError,
     ShowCommandParser,
     DeleteCommandParser,
@@ -157,7 +157,7 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{SHOW_PARSER.usage_property}"
             raise gdb.GdbError(message)
-        except HelpException as e:
+        except HelpNeeded as e:
             gdb.write(e.msg())
             return
 
@@ -215,7 +215,7 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{DELETE_PARSER.usage_property}"
             raise gdb.GdbError(message)
-        except HelpException as e:
+        except HelpNeeded as e:
             gdb.write(e.msg())
             return
 
@@ -231,7 +231,7 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{FREEZE_PARSER.usage_property}"
             raise gdb.GdbError(message)
-        except HelpException as e:
+        except HelpNeeded as e:
             gdb.write(e.msg())
             return
 
@@ -249,7 +249,7 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{CONCAT_PARSER.usage_property}"
             raise gdb.GdbError(message)
-        except HelpException as e:
+        except HelpNeeded as e:
             gdb.write(e.msg())
             return
 
@@ -268,7 +268,7 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{INSPECT_PARSER.usage_property}"
             raise gdb.GdbError(message)
-        except HelpException as e:
+        except HelpNeeded as e:
             gdb.write(e.msg())
             return
 
@@ -293,7 +293,7 @@ The following subcommands are supported:
         except ParsingError as e:
             message = f"{e}\n{INSPECT_PARSER.usage_property}"
             raise gdb.GdbError(message)
-        except HelpException as e:
+        except HelpNeeded as e:
             gdb.write(e.msg())
             return
 
