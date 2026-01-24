@@ -24,5 +24,9 @@ class TestContainerPrettyPrinters(TestCaseBase.TYPE):
         self.assertExceptionEquals(cm.exception, NO_PROCESSUS_DETECTED)
 
         # Help
-        # self.assertTrue(self.debugger().execute("dave show -h"))
-        # self.assertTrue(self.debugger().execute("dave show --help"))
+        self.assertStartsWith(
+            self.debugger().execute("dave show -h"), "usage: dave show [-h]"
+        )
+        self.assertStartsWith(
+            self.debugger().execute("dave show --help"), "usage: dave show [-h]"
+        )

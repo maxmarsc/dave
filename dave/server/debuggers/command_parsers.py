@@ -17,7 +17,8 @@ class ParsingError(Exception):
 
 
 class HelpException(Exception):
-    pass
+    def msg(self) -> str:
+        return self.args[0]
 
 
 class NonExitingHelpAction(Action):
@@ -31,8 +32,7 @@ class NonExitingHelpAction(Action):
         )
 
     def __call__(self, parser, namespace, values, option_string=None):
-        parser.print_help()
-        raise HelpException()
+        raise HelpException(parser.format_help())
 
 
 class DaveArgumentParser(ArgumentParser, ABC):
@@ -67,9 +67,7 @@ class DaveArgumentParser(ArgumentParser, ABC):
 
 class ShowCommandParser(DaveArgumentParser):
     def __init__(self):
-        super().__init__(
-            "show", usage="usage: dave show [-h] [--dims DIM1 [DIM2]] [VARIABLE]"
-        )
+        super().__init__("show", usage="dave show [-h] [--dims DIM1 [DIM2]] [VARIABLE]")
         self.add_argument(
             "VARIABLE",
             help="Name of the variable to show on the gui. If not provided dave will show every "
