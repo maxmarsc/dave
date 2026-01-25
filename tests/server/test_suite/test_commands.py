@@ -53,6 +53,28 @@ class TestCommands(TestCaseBase.TYPE):
         self.assertIsCommandErrorWith(cm.exception, "usage: dave show [-h]")
 
     @patch_client_popen
+    def test_show_not_parsable(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # too many args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave show container container_ref")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave show [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave show --leroy-jenkins container")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave show [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave show -z container")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave show [-h]")
+
+    @patch_client_popen
     def test_show_initialized(self, _):
         # Set the breakpoints
         self.debugger().set_breakpoints_at_tags("daveCommands", [1, 2])
@@ -278,6 +300,57 @@ class TestCommands(TestCaseBase.TYPE):
         with self.assertRaises(CommandError) as cm:
             self.debugger().execute("dave inspect -z a")
         self.assertIsCommandErrorWith(cm.exception, "usage: dave inspect [-h]")
+
+    @patch_client_popen
+    def test_inspect_not_parsable(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # too many args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave inspect container container_ref")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave inspect [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave inspect --leroy-jenkins container")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave inspect [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave inspect -z container")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave inspect [-h]")
+
+    @patch_client_popen
+    def test_inspect(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        INSPECT_REGEX = r"Type:\s(.*)\nLang:\sCPP"
+
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # vanilla type
+            self.assertMatchsRegex(
+                self.debugger().execute("dave inspect kBlockSize"),
+                INSPECT_REGEX,
+            )
+
+            # Custom type
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave inspect container"),
+                INSPECT_REGEX,
+            )
+            self.assertIsIn("DaveCustomInterleavedContainerVec", matched.group(1))
+
+            # Reference to custom type
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave inspect container_ref"),
+                INSPECT_REGEX,
+            )
+            self.assertIsIn("DaveCustomInterleavedContainerVec", matched.group(1))
 
     @patch_client_popen
     def test_delete_parsable_no_processus(self, _):

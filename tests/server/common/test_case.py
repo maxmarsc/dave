@@ -7,6 +7,7 @@ from unittest.case import _OrderedChainMap, _SubTest, _ShouldStop, _subtest_msg_
 import struct
 from abc import ABC, abstractmethod
 import cmath
+import re
 
 from common.debugger import CommandError, DebuggerAbstraction
 
@@ -139,6 +140,26 @@ class TestCaseBase(unittest.TestCase, ABC):
             raise AssertionError(
                 f"\n\t{to_check_fmt[:]}\n does not starts with \n\t{prefix}"
             )
+
+    def assertMatchsRegex(self, to_check: str, pattern: str) -> re.Match:
+        ret = re.match(pattern, to_check, re.MULTILINE)
+        try:
+            self.assertIsNotNone(ret)
+            success = True
+        except AssertionError:
+            success = False
+
+        if not success:
+            pattern_len = len(pattern)
+            to_check_fmt_size = pattern_len + 10
+            if len(to_check) > to_check_fmt_size:
+                to_check_fmt = to_check[: pattern_len + 7] + "..."
+            else:
+                to_check_fmt = to_check
+            raise AssertionError(
+                f"\n\t{to_check_fmt[:]}\n does not match with \n\t{pattern}"
+            )
+        return ret
 
     def assertIsCommandErrorWith(self, error: Exception, text: str):
         self.assertIsInstance(error, CommandError)

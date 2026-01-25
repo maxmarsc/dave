@@ -240,8 +240,8 @@ class InspectCommand:
             result.SetError(f"Variable '{args.VARIABLE}' not found.")
             return
 
-        Logger().info(f"Type: {lldb_value.typename()}")
-        Logger().info(f"Lang: {lldb_value.language().name}")
+        result.Print(f"Type: {lldb_value.typename()}\n")
+        result.Print(f"Lang: {lldb_value.language().name}\n")
 
     def get_short_help(self):
         return self.__parser.usage_property
