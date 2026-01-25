@@ -2,7 +2,10 @@ from typing import List, Tuple
 import struct
 
 from common import TestCaseBase, C_CPP_BUILD_DIR, CommandError
+from dave.common.raw_container import RawContainer
 from mocked import MockClient, patch_client_popen
+
+from dave.common.raw_entity import RawEntityList
 
 NO_PROCESSUS_DETECTED = CommandError("No processus detected")
 
@@ -47,6 +50,33 @@ class TestContainerPrettyPrinters(TestCaseBase.TYPE):
         with self.assertRaises(CommandError) as cm:
             self.debugger().execute("dave show -z a")
         self.assertIsCommandErrorWith(cm.exception, "usage: dave show [-h]")
+
+    @patch_client_popen
+    def test_show_initialized(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1, 2])
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show container")
+            self.debugger().execute("dave show container_ref")
+
+            # Check we receive the right amount of containers
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawEntityList)
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+            self.assertIsInstance(received[1].raw_entities[0], RawContainer)
+
+            # check the order of reception
+            self.assertEqual(received[0].raw_entities[0].name, "container")
+            self.assertEqual(received[1].raw_entities[0].name, "container_ref")
+
+            # check the scope
+            self.assertTrue(received[0].raw_entities[0].in_scope)
+            self.assertTrue(received[1].raw_entities[0].in_scope)
 
     @patch_client_popen
     def test_inspect_parsable_no_processus(self, _):
