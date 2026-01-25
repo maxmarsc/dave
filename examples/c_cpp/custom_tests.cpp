@@ -30,12 +30,11 @@ static void daveCommands() {
   /// daveCommands::0
   constexpr auto kBlockSize = 3;
   constexpr auto kChannels  = 2;
-  auto vector               = std::vector<float>(kBlockSize * kChannels);
-  float* ptr_carray[]       = {vector.data(), vector.data() + kBlockSize};
-  auto container = DaveCustomContainerPtrPtr{ptr_carray, kBlockSize, kChannels};
+  auto container            = DaveCustomInterleavedContainerVec{
+      std::vector<float>(kBlockSize * kChannels), kBlockSize, kChannels};
   auto& container_ref = container;
   /// daveCommands::1
-  vector[0] = 1.0;
+  container.vec_[0] = 1.0;
   /// daveCommands::2
 }
 

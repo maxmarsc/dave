@@ -145,3 +145,6 @@ class TestCaseBase(unittest.TestCase, ABC):
         self.assertIsInstance(error.args[0], str)
         error_msg: str = error.args[0]
         self.assertTrue(text in error_msg)
+
+    def assertIsIn(self, instance: Any, collection):
+        self.assertTrue(instance in collection)
