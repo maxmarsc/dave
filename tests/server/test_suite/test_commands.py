@@ -10,7 +10,7 @@ from dave.common.raw_entity import RawEntityList
 NO_PROCESSUS_DETECTED = CommandError("No processus detected")
 
 
-class TestContainerPrettyPrinters(TestCaseBase.TYPE):
+class TestCommands(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "custom_tests"
     BINARY_HASH = "hihou"
 
