@@ -8,7 +8,7 @@ import struct
 from abc import ABC, abstractmethod
 import cmath
 
-from common.debugger import DebuggerAbstraction
+from common.debugger import CommandError, DebuggerAbstraction
 
 
 __unittest = True  # Make sure custom test functions does not show up in the stack trace
@@ -139,3 +139,9 @@ class TestCaseBase(unittest.TestCase, ABC):
             raise AssertionError(
                 f"\n\t{to_check_fmt[:]}\n does not starts with \n\t{prefix}"
             )
+
+    def assertIsCommandErrorWith(self, error: Exception, text: str):
+        self.assertIsInstance(error, CommandError)
+        self.assertIsInstance(error.args[0], str)
+        error_msg: str = error.args[0]
+        self.assertTrue(text in error_msg)

@@ -132,7 +132,7 @@ class ShowCommand:
         try:
             parsed = self.__parser.parse_args(args)
         except ParsingError as e:
-            result.SetError(self.__parser.usage_property)
+            result.SetError(f"{e}\n{self.__parser.usage_property}")
             return
         except HelpNeeded as e:
             result.Print(e.msg())
@@ -218,7 +218,7 @@ class InspectCommand:
         try:
             args = self.__parser.parse_args(shlex.split(command))
         except ParsingError as e:
-            result.SetError(self.__parser.usage_property)
+            result.SetError(f"{e}\n{self.__parser.usage_property}")
             return
         except HelpNeeded as e:
             result.Print(e.msg())
