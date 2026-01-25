@@ -48,11 +48,8 @@ def run() -> TextTestResult:
 
     # Filter (optional)
     if FILTER:
-        print(f"INFO: Filtering tests with pattern: '{FILTER}'")
+        print(f"WARNING: Filtering tests with pattern: '{FILTER}'")
         test_suite = filter_test_suite(full_suite, FILTER)
-
-        if test_suite.countTestCases() == 0:
-            print(f"WARNING: No tests matched filter '{FILTER}'")
     else:
         test_suite = full_suite
 

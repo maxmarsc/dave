@@ -3,6 +3,7 @@ import struct
 
 from common import TestCaseBase, C_CPP_BUILD_DIR, CommandError
 from dave.common.raw_container import RawContainer
+from dave.common.server_type import SERVER_TYPE, ServerType
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList
@@ -70,13 +71,176 @@ class TestCommands(TestCaseBase.TYPE):
             self.assertIsInstance(received[0].raw_entities[0], RawContainer)
             self.assertIsInstance(received[1].raw_entities[0], RawContainer)
 
+            raw_container: RawContainer = received[0].raw_entities[0]
+            raw_container_ref: RawContainer = received[1].raw_entities[0]
+
             # check the order of reception
-            self.assertEqual(received[0].raw_entities[0].name, "container")
-            self.assertEqual(received[1].raw_entities[0].name, "container_ref")
+            self.assertEqual(raw_container.name, "container")
+            self.assertEqual(raw_container_ref.name, "container_ref")
 
             # check the scope
-            self.assertTrue(received[0].raw_entities[0].in_scope)
-            self.assertTrue(received[1].raw_entities[0].in_scope)
+            self.assertTrue(raw_container.in_scope)
+            self.assertTrue(raw_container_ref.in_scope)
+
+        ################## daveCommands::2 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+
+            # Check the ids
+            self.assertEqual(raw_container.id, received[0].id)
+            self.assertEqual(raw_container_ref.id, received[1].id)
+
+    @patch_client_popen
+    def test_show_not_itialized(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("daveCommands", [0, 1])
+
+        ################## daveCommands::0 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show container")
+            self.debugger().execute("dave show container_ref")
+
+            # Check we receive the right amount of containers
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawEntityList)
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+            self.assertIsInstance(received[1].raw_entities[0], RawContainer)
+
+            raw_container: RawContainer = received[0].raw_entities[0]
+            raw_container_ref: RawContainer = received[1].raw_entities[0]
+
+            # check the order of reception
+            self.assertEqual(raw_container.name, "container")
+            self.assertEqual(raw_container_ref.name, "container_ref")
+
+            # check the scope
+            self.assertFalse(raw_container.in_scope)
+            self.assertFalse(raw_container_ref.in_scope)
+
+        ################## daveCommands::1 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+
+            self.assertIsNotNone(SERVER_TYPE)
+            # lldbSBValue are dynamic views of variables, this means it will update
+            # the reference's address once initialized
+            if SERVER_TYPE == ServerType.LLDB:
+                self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+            # gd.Value are snapshots of variables, this means it will NOT update
+            # the reference's address once initialized => It will always be out-of-scope
+            elif SERVER_TYPE == ServerType.GDB:
+                self.assertIsInstance(received[0], RawContainer.InScopeUpdate)
+                self.assertIsInstance(received[1], RawContainer.OutScopeUpdate)
+
+            # Check the ids
+            self.assertEqual(raw_container.id, received[0].id)
+            self.assertEqual(raw_container_ref.id, received[1].id)
+
+    @patch_client_popen
+    def test_show_all_initialized(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1, 2])
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show")
+
+            # Check we receive the right amount of containers
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 1, RawEntityList)
+            self.assertEqual(len(received[0].raw_entities), 2)
+            self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+            self.assertIsInstance(received[0].raw_entities[1], RawContainer)
+
+            NAMES = ("container", "container_ref")
+            raw_first: RawContainer = received[0].raw_entities[0]
+            raw_second: RawContainer = received[0].raw_entities[1]
+
+            # check the names
+            self.assertIsIn(raw_first.name, NAMES)
+            self.assertIsIn(raw_second.name, NAMES)
+            self.assertNotEqual(raw_first.name, raw_second.name)
+
+            # check the IDs
+            self.assertNotEqual(raw_first.id, raw_second.id)
+
+            # check the scope
+            self.assertTrue(raw_first.in_scope)
+            self.assertTrue(raw_second.in_scope)
+
+        ################## daveCommands::2 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+
+            # Check the ids
+            self.assertEqual(raw_first.id, received[0].id)
+            self.assertEqual(raw_second.id, received[1].id)
+
+    @patch_client_popen
+    def test_show_all_not_itialized(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("daveCommands", [0, 1])
+
+        ################## daveCommands::0 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show")
+
+            # Check we receive the right amount of containers
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 1, RawEntityList)
+            self.assertEqual(len(received[0].raw_entities), 2)
+            self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+            self.assertIsInstance(received[0].raw_entities[1], RawContainer)
+
+            NAMES = ("container", "container_ref")
+            raw_first: RawContainer = received[0].raw_entities[0]
+            raw_second: RawContainer = received[0].raw_entities[1]
+
+            # check the names
+            self.assertIsIn(raw_first.name, NAMES)
+            self.assertIsIn(raw_second.name, NAMES)
+            self.assertNotEqual(raw_first.name, raw_second.name)
+
+            # check the IDs
+            self.assertNotEqual(raw_first.id, raw_second.id)
+
+            # check the scope
+            self.assertFalse(raw_first.in_scope)
+            self.assertFalse(raw_second.in_scope)
+
+        # ################## daveCommands::1 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+
+            self.assertIsNotNone(SERVER_TYPE)
+            # lldbSBValue are dynamic views of variables, this means it will update
+            # the reference's address once initialized
+            if SERVER_TYPE == ServerType.LLDB:
+                self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+            # gd.Value are snapshots of variables, this means it will NOT update
+            # the reference's address once initialized => It will always be out-of-scope
+            elif SERVER_TYPE == ServerType.GDB:
+                if raw_second.name == "container_ref":
+                    self.assertIsInstance(received[0], RawContainer.InScopeUpdate)
+                    self.assertIsInstance(received[1], RawContainer.OutScopeUpdate)
+                else:
+                    self.assertIsInstance(received[0], RawContainer.OutScopeUpdate)
+                    self.assertIsInstance(received[1], RawContainer.InScopeUpdate)
+
+            # Check the ids - the order should match
+            self.assertEqual(raw_first.id, received[0].id)
+            self.assertEqual(raw_second.id, received[1].id)
 
     @patch_client_popen
     def test_inspect_parsable_no_processus(self, _):
