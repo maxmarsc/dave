@@ -79,11 +79,21 @@ class TestCommands(TestCaseBase.TYPE):
         # Set the breakpoints
         self.debugger().set_breakpoints_at_tags("daveCommands", [1, 2])
 
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
         ################## daveCommands::1 - Show ##################
         self.debugger().run()
         with self.failFastSubTestAtLocation():
-            self.debugger().execute("dave show container")
-            self.debugger().execute("dave show container_ref")
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            self.assertIsIn("container", matched.group(1))
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            self.assertIsIn("container_ref", matched.group(1))
 
             # Check we receive the right amount of containers
             received = MockClient().receive_from_server()
