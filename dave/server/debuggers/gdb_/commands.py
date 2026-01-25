@@ -190,7 +190,7 @@ The following subcommands are supported:
                 entity = EntityFactory().build(
                     var, var.typename(), var.varname(), parsed.dims
                 )
-                Logger().info(f"Added {var.varname()} with ID {entity.id}")
+                gdb.write(f"Added {var.varname()} with ID {entity.id}\n")
                 new_entities.append(entity)
             except (EntityBuildError, TypeError) as e:
                 if parsed.VARIABLE:
