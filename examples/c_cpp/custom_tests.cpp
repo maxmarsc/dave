@@ -35,10 +35,13 @@ static void daveCommands() {
   auto container = DaveCustomContainerPtrPtr{ptr_carray, kBlockSize, kChannels};
   auto& container_ref = container;
   /// daveCommands::1
+  vector[0] = 1.0;
+  /// daveCommands::2
 }
 
 int main() {
   containerPrettyPrinters();
+  daveCommands();
 
   return 0;
 }
