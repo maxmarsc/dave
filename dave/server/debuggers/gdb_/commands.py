@@ -282,10 +282,10 @@ The following subcommands are supported:
             else:
                 frame = gdb.selected_frame()
                 gdb_value = GdbValue(var, "", GdbValue.language_from_frame(frame))
-                Logger().info(f"Type: {gdb_value.typename()}")
-                Logger().info(f"Lang: {gdb_value.language().name}")
+                gdb.write(f"Type: {gdb_value.typename()}\n")
+                gdb.write(f"Lang: {gdb_value.language().name}\n")
         except (gdb.error, RuntimeError) as e:
-            print(f"Error accessing variable '{var_name}': {str(e)}")
+            raise gdb.GdbError(f"Error accessing variable '{var_name}': {str(e)}")
 
     def __help(self, args):
         try:
