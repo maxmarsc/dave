@@ -36,6 +36,8 @@ static void daveCommands() {
   /// daveCommands::1
   container.vec_[0] = 1.0;
   /// daveCommands::2
+  container.vec_[0] = -1.0;
+  /// daveCommands::3
 }
 
 int main() {

@@ -4,6 +4,7 @@ import struct
 from common import TestCaseBase, C_CPP_BUILD_DIR, CommandError
 from dave.common.raw_container import RawContainer
 from dave.common.server_type import SERVER_TYPE, ServerType
+from dave.server.process import DaveProcess
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList
@@ -323,6 +324,11 @@ class TestCommands(TestCaseBase.TYPE):
                 self.debugger().execute("dave inspect container container_ref")
             self.assertIsCommandErrorWith(cm.exception, "usage: dave inspect [-h]")
 
+            # not enough args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave inspect")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave inspect [-h]")
+
             # invalid long flag
             with self.assertRaises(CommandError) as cm:
                 self.debugger().execute("dave inspect --leroy-jenkins container")
@@ -398,6 +404,163 @@ class TestCommands(TestCaseBase.TYPE):
         with self.assertRaises(CommandError) as cm:
             self.debugger().execute("dave delete -z a")
         self.assertIsCommandErrorWith(cm.exception, "usage: dave delete [-h]")
+
+    @patch_client_popen
+    def test_delete_not_parsable(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # too many args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave delete ID_1 ID_2")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave delete [-h]")
+
+            # not enough args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave delete ID_1 ID_2")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave delete [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave delete --leroy-jenkins ID_1")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave delete [-h]")
+
+            # invalid short flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave delete -z ID_1")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave delete [-h]")
+
+    @patch_client_popen
+    def test_delete_with_id(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1, 2, 3])
+
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # First, show to get the IDs
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            container_id = matched.group(2)
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            container_ref_id = matched.group(2)
+
+            # Clean the received data
+            MockClient().receive_from_server()
+
+            # Now, delete using the IDs
+            self.debugger().execute(f"dave delete {container_id}")
+            self.debugger().execute(f"dave delete {container_ref_id}")
+
+            # Re-add the containers for long time check
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            container_id = matched.group(2)
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            container_ref_id = matched.group(2)
+
+        # consume the delete messages client-side
+        delete_msg = MockClient().receive_from_server()[:2]
+        self.assertIsListOf(delete_msg, 2, DaveProcess.DeleteMessage)
+
+        ################## daveCommands::2 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            # Check we receive the right amount of containers
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+
+            # Now, delete again using the IDs
+            self.debugger().execute(f"dave delete {container_id}")
+            self.debugger().execute(f"dave delete {container_ref_id}")
+
+        # consume the delete messages client-side
+        delete_msg = MockClient().receive_from_server()[:2]
+        self.assertIsListOf(delete_msg, 2, DaveProcess.DeleteMessage)
+
+        ################## daveCommands::3 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            # At this point we shoudln't receive anything
+            received = MockClient().receive_from_server()
+            self.assertEqual(len(received), 0)
+
+    @patch_client_popen
+    def test_delete_with_name(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1, 2, 3])
+
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # First, show
+            self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+
+            # Clean the received data
+            MockClient().receive_from_server()
+
+            # Now, delete using the IDs
+            self.debugger().execute(f"dave delete container")
+            self.debugger().execute(f"dave delete container_ref")
+
+            # Re-add the containers for long time check
+            self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+
+        # consume the delete messages client-side
+        delete_msg = MockClient().receive_from_server()[:2]
+        self.assertIsListOf(delete_msg, 2, DaveProcess.DeleteMessage)
+
+        ################## daveCommands::2 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            # Check we receive the right amount of containers
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+
+            # Now, delete again using the IDs
+            self.debugger().execute(f"dave delete container")
+            self.debugger().execute(f"dave delete container_ref")
+
+        # consume the delete messages client-side
+        delete_msg = MockClient().receive_from_server()[:2]
+        self.assertIsListOf(delete_msg, 2, DaveProcess.DeleteMessage)
+
+        ################## daveCommands::3 - Update ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            # At this point we shoudln't receive anything
+            received = MockClient().receive_from_server()
+            self.assertEqual(len(received), 0)
 
     @patch_client_popen
     def test_freeze_parsable_no_processus(self, _):
