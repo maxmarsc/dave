@@ -1,10 +1,7 @@
 #include <array>
 #include <cmath>
-#include <complex>
 
 #include <juce_dsp/juce_dsp.h>
-
-#include "numerics.hpp"
 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
