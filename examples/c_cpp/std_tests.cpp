@@ -46,18 +46,16 @@ static void arrayAndStaticSpan() {
 static void arrayAndStaticSpan2D() {
   /// arrayAndStaticSpan2D::0
   constexpr auto kChannels = 2;
-  // array of array
+  // std::arrays
   auto array_array_f = std::array{std::array<float, kBlockSize>{},
                                   std::array<float, kBlockSize>{}};
-  // array of static spans
   auto array_span_f =
       std::array{std::span(array_array_f[0]), std::span(array_array_f[1])};
-  // array of vectors
   auto array_vector_d = std::array<std::vector<double>, kChannels>{
       std::vector<double>(kBlockSize), std::vector<double>(kBlockSize)};
-  // arrays of dyn spans
   auto array_dynspan_d =
       std::array{std::span(array_vector_d[0]), std::span(array_vector_d[1])};
+  // 2d static spans
   [[maybe_unused]] auto span_array_f   = std::span(array_array_f);
   [[maybe_unused]] auto span_span_f    = std::span(array_span_f);
   [[maybe_unused]] auto span_vector_d  = std::span(array_vector_d);
@@ -68,6 +66,33 @@ static void arrayAndStaticSpan2D() {
   array_array_f[1][1]  = -1.F;
   array_vector_d[1][1] = -1.;
   /// arrayAndStaticSpan2D::2
+}
+
+static void vectorAndDynSpan2D() {
+  /// vectorAndDynSpan2D::0
+  constexpr auto kChannels = 2;
+  // 2D std::vector
+  auto vector_array_f = std::vector<std::array<float, kBlockSize>>(kChannels);
+  // vector of static spans
+  auto vector_span_f = std::vector<std::span<float, kBlockSize>>{
+      std::span(vector_array_f[0]), std::span(vector_array_f[1])};
+  // vector of vectors
+  auto vector_vector_d = std::vector<std::vector<double>>(
+      kChannels, std::vector<double>(kBlockSize));
+  // vector of dyn spans
+  auto vector_span_d = std::vector<std::span<double>>{
+      std::span(vector_vector_d[0]), std::span(vector_vector_d[1])};
+  // 2D dyn spans
+  [[maybe_unused]] auto span_array_f  = std::span(vector_array_f);
+  [[maybe_unused]] auto span_span_f   = std::span(vector_span_f);
+  [[maybe_unused]] auto span_vector_d = std::span(vector_vector_d);
+  [[maybe_unused]] auto span_span_d   = std::span(vector_span_d);
+  /// vectorAndDynSpan2D::1
+  vector_array_f[1][0]  = 1.F;
+  vector_vector_d[1][0] = 1.;
+  vector_array_f[1][1]  = -1.F;
+  vector_vector_d[1][1] = -1.;
+  /// vectorAndDynSpan2D::2
 }
 
 static void cArray() {
@@ -161,5 +186,6 @@ int main() {
   numericValues();
   vectorAndDynSpan();
   arrayAndStaticSpan2D();
+  vectorAndDynSpan2D();
   return 0;
 }
