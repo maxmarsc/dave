@@ -2,6 +2,7 @@ from typing import List, Tuple
 import struct
 
 from common import TestCaseBase, C_CPP_BUILD_DIR
+from dave.common.raw_iir import RawIir
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntity, RawEntityList, RawEntityUpdates
@@ -348,3 +349,139 @@ class TestCppJuce(TestCaseBase.TYPE):
                 "2 channels 3 samples, min -1.0000E+00, max 1.0000E+00",
                 [("dSparkline[0]", '"[0(3)]"'), ("dSparkline[1]", '"[‾x0]"')],
             )
+
+    @patch_client_popen
+    def test_iir_coeffs(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("iirSOS", [1])
+
+        ################## iirSOS::1 - Initial state ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show coeffs_f_fo")
+            self.debugger().execute("dave show coeffs_d_fo")
+            self.debugger().execute("dave show coeffs_f_so")
+            self.debugger().execute("dave show coeffs_d_so")
+
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 4, RawEntityList)
+
+            # coeffs_f_fo
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawIir)
+            raw_coeffs_f_fo: RawIir = received[0].raw_entities[0]
+            self.assertIsInstance(raw_coeffs_f_fo.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_coeffs_f_fo.coeffs.values), 1)
+            self.assertEqual(len(raw_coeffs_f_fo.coeffs.values[0]), 6)
+            # First order filter => b2 == 0 & a2 == 0
+            self.assertLess(abs(raw_coeffs_f_fo.coeffs.values[0][2]), 1e-12)
+            self.assertLess(abs(raw_coeffs_f_fo.coeffs.values[0][5]), 1e-12)
+
+            # coeffs_d_fo
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[1].raw_entities[0], RawIir)
+            raw_coeffs_d_fo: RawIir = received[1].raw_entities[0]
+            self.assertIsInstance(raw_coeffs_d_fo.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_coeffs_d_fo.coeffs.values), 1)
+            self.assertEqual(len(raw_coeffs_d_fo.coeffs.values[0]), 6)
+            # First order filter => b2 == 0 & a2 == 0
+            self.assertLess(abs(raw_coeffs_d_fo.coeffs.values[0][2]), 1e-12)
+            self.assertLess(abs(raw_coeffs_d_fo.coeffs.values[0][5]), 1e-12)
+
+            # coeffs_f_so
+            self.assertEqual(len(received[2].raw_entities), 1)
+            self.assertIsInstance(received[2].raw_entities[0], RawIir)
+            raw_coeffs_f_so: RawIir = received[2].raw_entities[0]
+            self.assertIsInstance(raw_coeffs_f_so.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_coeffs_f_so.coeffs.values), 1)
+            self.assertEqual(len(raw_coeffs_f_so.coeffs.values[0]), 6)
+            # Second order filter => b2 != 0 || a2 != 0
+            try:
+                self.assertGreater(abs(raw_coeffs_f_so.coeffs.values[0][2]), 1e-12)
+            except AssertionError:
+                self.assertGreater(abs(raw_coeffs_f_so.coeffs.values[0][5]), 1e-12)
+
+            # coeffs_d_so
+            self.assertEqual(len(received[3].raw_entities), 1)
+            self.assertIsInstance(received[3].raw_entities[0], RawIir)
+            raw_coeffs_d_so: RawIir = received[3].raw_entities[0]
+            self.assertIsInstance(raw_coeffs_d_so.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_coeffs_d_so.coeffs.values), 1)
+            self.assertEqual(len(raw_coeffs_d_so.coeffs.values[0]), 6)
+            # Second order filter => b2 != 0 || a2 != 0
+            try:
+                self.assertGreater(abs(raw_coeffs_d_so.coeffs.values[0][2]), 1e-12)
+            except AssertionError:
+                self.assertGreater(abs(raw_coeffs_d_so.coeffs.values[0][5]), 1e-12)
+
+    @patch_client_popen
+    def test_iir_filter(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("iirSOS", [1])
+
+        ################## iirSOS::1 - Initial state ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show filter_f_fo")
+            self.debugger().execute("dave show filter_d_fo")
+            self.debugger().execute("dave show filter_f_so")
+            self.debugger().execute("dave show filter_d_so")
+
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 4, RawEntityList)
+
+            # filter_f_fo
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawIir)
+            raw_filter_f_fo: RawIir = received[0].raw_entities[0]
+            self.assertIsInstance(raw_filter_f_fo.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_filter_f_fo.coeffs.values), 1)
+            self.assertEqual(len(raw_filter_f_fo.coeffs.values[0]), 6)
+            # First order filter => b2 == 0 & a2 == 0
+            self.assertLess(abs(raw_filter_f_fo.coeffs.values[0][2]), 1e-12)
+            self.assertLess(abs(raw_filter_f_fo.coeffs.values[0][5]), 1e-12)
+
+            # filter_d_fo
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[1].raw_entities[0], RawIir)
+            raw_filter_d_fo: RawIir = received[1].raw_entities[0]
+            self.assertIsInstance(raw_filter_d_fo.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_filter_d_fo.coeffs.values), 1)
+            self.assertEqual(len(raw_filter_d_fo.coeffs.values[0]), 6)
+            # First order filter => b2 == 0 & a2 == 0
+            self.assertLess(abs(raw_filter_d_fo.coeffs.values[0][2]), 1e-12)
+            self.assertLess(abs(raw_filter_d_fo.coeffs.values[0][5]), 1e-12)
+
+            # filter_f_so
+            self.assertEqual(len(received[2].raw_entities), 1)
+            self.assertIsInstance(received[2].raw_entities[0], RawIir)
+            raw_filter_f_so: RawIir = received[2].raw_entities[0]
+            self.assertIsInstance(raw_filter_f_so.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_filter_f_so.coeffs.values), 1)
+            self.assertEqual(len(raw_filter_f_so.coeffs.values[0]), 6)
+            # Second order filter => b2 != 0 || a2 != 0
+            try:
+                self.assertGreater(abs(raw_filter_f_so.coeffs.values[0][2]), 1e-12)
+            except AssertionError:
+                self.assertGreater(abs(raw_filter_f_so.coeffs.values[0][5]), 1e-12)
+
+            # filter_d_so
+            self.assertEqual(len(received[3].raw_entities), 1)
+            self.assertIsInstance(received[3].raw_entities[0], RawIir)
+            raw_filter_d_so: RawIir = received[3].raw_entities[0]
+            self.assertIsInstance(raw_filter_d_so.coeffs, RawIir.SOSCoeffs)
+            # Make sure we have the right number of sections
+            self.assertEqual(len(raw_filter_d_so.coeffs.values), 1)
+            self.assertEqual(len(raw_filter_d_so.coeffs.values[0]), 6)
+            # Second order filter => b2 != 0 || a2 != 0
+            try:
+                self.assertGreater(abs(raw_filter_d_so.coeffs.values[0][2]), 1e-12)
+            except AssertionError:
+                self.assertGreater(abs(raw_filter_d_so.coeffs.values[0][5]), 1e-12)

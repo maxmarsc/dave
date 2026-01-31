@@ -63,7 +63,7 @@ class RawIir(RawEntity):
         """
 
         id: int
-        coeffs: RawIirCoeffs
+        coeffs: Union[RawIir.SOSCoeffs, RawIir.ZPKCoeffs, RawIir.SVFTPTCoeffs]
 
     def update(self, update: InScopeUpdate):
         assert self.id == update.id
