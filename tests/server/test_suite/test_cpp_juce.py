@@ -485,3 +485,171 @@ class TestCppJuce(TestCaseBase.TYPE):
                 self.assertGreater(abs(raw_filter_d_so.coeffs.values[0][2]), 1e-12)
             except AssertionError:
                 self.assertGreater(abs(raw_filter_d_so.coeffs.values[0][5]), 1e-12)
+
+    @patch_client_popen
+    def test_iir_svf_old(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("iirSVF", [1, 2, 3])
+
+        ################## iirSVF::1 - Low Pass ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show old_filter_f")
+            self.debugger().execute("dave show old_filter_d")
+
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawEntityList)
+
+            # old_filter_f
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawIir)
+            raw_old_filter_f: RawIir = received[0].raw_entities[0]
+            self.assertIsInstance(raw_old_filter_f.coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                raw_old_filter_f.coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.LP,
+            )
+
+            # old_filter_d
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[1].raw_entities[0], RawIir)
+            raw_old_filter_d: RawIir = received[1].raw_entities[0]
+            self.assertIsInstance(raw_old_filter_d.coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                raw_old_filter_d.coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.LP,
+            )
+
+        ################## iirSVF::2 - Band Pass ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawIir.InScopeUpdate)
+
+            # old_filter_f
+            self.assertEqual(received[0].id, raw_old_filter_f.id)
+            self.assertIsInstance(received[0].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[0].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.BP,
+            )
+
+            # old_filter_d
+            self.assertEqual(received[1].id, raw_old_filter_d.id)
+            self.assertIsInstance(received[1].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[1].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.BP,
+            )
+
+        ################## iirSVF::3 - High Pass ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawIir.InScopeUpdate)
+
+            # old_filter_f
+            self.assertEqual(received[0].id, raw_old_filter_f.id)
+            self.assertIsInstance(received[0].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[0].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.HP,
+            )
+
+            # old_filter_d
+            self.assertEqual(received[1].id, raw_old_filter_d.id)
+            self.assertIsInstance(received[1].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[1].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.HP,
+            )
+
+    @patch_client_popen
+    def test_iir_svf(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("iirSVF", [1, 2, 3])
+
+        ################## iirSVF::1 - Low Pass ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show filter_f")
+            self.debugger().execute("dave show filter_d")
+
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawEntityList)
+
+            # filter_f
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawIir)
+            raw_filter_f: RawIir = received[0].raw_entities[0]
+            self.assertIsInstance(raw_filter_f.coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                raw_filter_f.coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.LP,
+            )
+
+            # filter_d
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[1].raw_entities[0], RawIir)
+            raw_filter_d: RawIir = received[1].raw_entities[0]
+            self.assertIsInstance(raw_filter_d.coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                raw_filter_d.coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.LP,
+            )
+
+        ################## iirSVF::2 - Band Pass ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawIir.InScopeUpdate)
+
+            # filter_f
+            self.assertEqual(received[0].id, raw_filter_f.id)
+            self.assertIsInstance(received[0].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[0].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.BP,
+            )
+
+            # filter_d
+            self.assertEqual(received[1].id, raw_filter_d.id)
+            self.assertIsInstance(received[1].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[1].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.BP,
+            )
+
+        ################## iirSVF::3 - High Pass ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawIir.InScopeUpdate)
+
+            # filter_f
+            self.assertEqual(received[0].id, raw_filter_f.id)
+            self.assertIsInstance(received[0].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[0].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.HP,
+            )
+
+            # filter_d
+            self.assertEqual(received[1].id, raw_filter_d.id)
+            self.assertIsInstance(received[1].coeffs, RawIir.SVFTPTCoeffs)
+            # check filter type
+            self.assertEqual(
+                received[1].coeffs.ftype,
+                RawIir.SVFTPTCoeffs.FilterType.HP,
+            )

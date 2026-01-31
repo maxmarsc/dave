@@ -6,6 +6,8 @@
 
 #include "numerics.hpp"
 
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 constexpr auto kBlockSize = 3;
 
 static void audioBufferMono() {
@@ -130,11 +132,53 @@ static void iirSOS() {
   /// iirSOS::1
 }
 
+static void iirSVF() {
+  /// iirSVF::0
+  constexpr auto kChannels   = 1;
+  constexpr auto kSampleRate = 44100.0;
+  constexpr auto kCutoff     = 6000.F;
+  constexpr auto kSpec =
+      juce::dsp::ProcessSpec{kSampleRate, kBlockSize, kChannels};
+
+  auto old_filter_f = juce::dsp::StateVariableFilter::Filter<float>();
+  auto old_filter_d = juce::dsp::StateVariableFilter::Filter<double>();
+  auto filter_f     = juce::dsp::StateVariableTPTFilter<float>();
+  auto filter_d     = juce::dsp::StateVariableTPTFilter<double>();
+  old_filter_f.parameters->setCutOffFrequency(kSampleRate, kCutoff);
+  old_filter_f.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+  old_filter_d.parameters->setCutOffFrequency(kSampleRate, kCutoff);
+  old_filter_d.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::lowPass;
+  filter_f.setType(juce::dsp::StateVariableTPTFilter<float>::Type::lowpass);
+  filter_d.setType(juce::dsp::StateVariableTPTFilter<double>::Type::lowpass);
+  old_filter_f.prepare(kSpec);
+  old_filter_d.prepare(kSpec);
+  filter_f.prepare(kSpec);
+  filter_d.prepare(kSpec);
+  /// iirSVF::1
+  old_filter_f.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+  old_filter_d.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
+  filter_f.setType(juce::dsp::StateVariableTPTFilter<float>::Type::bandpass);
+  filter_d.setType(juce::dsp::StateVariableTPTFilter<double>::Type::bandpass);
+  /// iirSVF::2
+  old_filter_f.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+  old_filter_d.parameters->type =
+      juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
+  filter_f.setType(juce::dsp::StateVariableTPTFilter<float>::Type::highpass);
+  filter_d.setType(juce::dsp::StateVariableTPTFilter<double>::Type::highpass);
+  /// iirSVF::3
+}
+
 int main() {
   audioBufferMono();
   audioBufferMultiChannel();
   audioBlock();
   iirSOS();
+  iirSVF();
 
   return 0;
 }
