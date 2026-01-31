@@ -157,7 +157,7 @@ class TestCaseBase(unittest.TestCase, ABC):
             else:
                 to_check_fmt = to_check
             raise AssertionError(
-                f"\n\t{to_check_fmt[:]}\n does not match with \n\t{pattern}"
+                f"The regex:\n\t{to_check_fmt[:]}\n does not match with:\n\t{pattern}"
             )
         return ret
 

@@ -59,12 +59,26 @@ class MockClient(metaclass=SingletonMeta):
         self.__connection.send(msg)
 
     def receive_from_server(self, timeout=0.01) -> List[Any]:
+        """
+        Returns all the messages received from the server. This will also
+        trigger internal reactions to messages (like DeleteMessage)
+        """
         if self.__connection is None:
             raise RuntimeError("Try to receive on a non-connected mock client")
         received = list()
         while self.__connection.poll(timeout):
-            received.append(self.__connection.recv())
+            new_msg = self.__connection.recv()
+            self.__react_to_msg(new_msg)
+            received.append(new_msg)
         return received
+
+    def __react_to_msg(self, msg):
+        match msg:
+            case DaveProcess.DeleteMessage(id=id):
+                # Signal we deleted the entity
+                self.__connection.send(DaveProcess.DeleteMessage(id=id))
+            case _:
+                pass
 
     def wait(self):
         """
