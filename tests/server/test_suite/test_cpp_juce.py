@@ -274,3 +274,77 @@ class TestCppJuce(TestCaseBase.TYPE):
                 "2 channels 3 samples, min -1.0000E+00, max 1.0000E+00",
                 [("dSparkline[0]", '"[0(3)]"'), ("dSparkline[1]", '"[‾x0]"')],
             )
+
+    @patch_client_popen
+    def test_audio_block(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("audioBlock", [1, 2])
+
+        ################## audioBlock::0 - All zeros ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show block_f")
+            self.debugger().execute("dave show block_d")
+
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawEntityList)
+
+            # block_f
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+            raw_block_f: RawContainer = received[0].raw_entities[0]
+            self.assertJuceContainerInvariants(raw_block_f)
+            self.assertTupleEqual(raw_block_f.original_shape, (2, 3))
+            self.assertEqual(raw_block_f.sample_type, SampleType.FLOAT)
+            self.assertEqual(raw_block_f.default_layout, RawContainer.Layout.REAL_2D)
+            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_block_f)
+            self.assertPrettyPrinterEqual(
+                "block_f",
+                "2 channels 3 samples, min 0.0000E+00, max 0.0000E+00",
+                [("dSparkline[0]", '"[0(3)]"'), ("dSparkline[1]", '"[0(3)]"')],
+            )
+
+            # block_d
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[1].raw_entities[0], RawContainer)
+            raw_block_d: RawContainer = received[1].raw_entities[0]
+            self.assertJuceContainerInvariants(raw_block_d)
+            self.assertTupleEqual(raw_block_d.original_shape, (2, 3))
+            self.assertEqual(raw_block_d.sample_type, SampleType.DOUBLE)
+            self.assertEqual(raw_block_d.default_layout, RawContainer.Layout.REAL_2D)
+            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_block_d)
+            self.assertPrettyPrinterEqual(
+                "block_d",
+                "2 channels 3 samples, min 0.0000E+00, max 0.0000E+00",
+                [("dSparkline[0]", '"[0(3)]"'), ("dSparkline[1]", '"[0(3)]"')],
+            )
+
+        ############ audioBlock::2 - (0,0,0),(1.0,-1.0,0.0) ############
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, RawContainer.InScopeUpdate)
+
+            # block_f
+            self.assertEqual(received[0].id, raw_block_f.id)
+            self.assertTupleEqual(received[0].shape, raw_block_f.original_shape)
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 1.0, -1.0, 0.0), raw_block_f, received[0]
+            )
+            self.assertPrettyPrinterEqual(
+                "block_f",
+                "2 channels 3 samples, min -1.0000E+00, max 1.0000E+00",
+                [("dSparkline[0]", '"[0(3)]"'), ("dSparkline[1]", '"[‾x0]"')],
+            )
+
+            # block_d
+            self.assertEqual(received[1].id, raw_block_d.id)
+            self.assertTupleEqual(received[1].shape, raw_block_d.original_shape)
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 1.0, -1.0, 0.0), raw_block_d, received[1]
+            )
+            self.assertPrettyPrinterEqual(
+                "block_d",
+                "2 channels 3 samples, min -1.0000E+00, max 1.0000E+00",
+                [("dSparkline[0]", '"[0(3)]"'), ("dSparkline[1]", '"[‾x0]"')],
+            )
