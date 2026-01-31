@@ -600,6 +600,103 @@ class TestCommands(TestCaseBase.TYPE):
         self.assertIsCommandErrorWith(cm.exception, "usage: dave freeze [-h]")
 
     @patch_client_popen
+    def test_freeze_not_parsable(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # too many args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave freeze ID_1 ID_2")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave freeze [-h]")
+
+            # not enough args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave freeze")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave freeze [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave freeze --leroy-jenkins ID_1")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave freeze [-h]")
+
+            # invalid short flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave freeze -z ID_1")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave freeze [-h]")
+
+    @patch_client_popen
+    def test_freeze_with_id(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # First, show to get the IDs
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            container_id = matched.group(2)
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            container_ref_id = matched.group(2)
+
+            # Clean the received data
+            MockClient().receive_from_server()
+
+            # Now, freeze using the ID
+            self.debugger().execute(f"dave freeze {container_id}")
+            self.debugger().execute(f"dave freeze {container_ref_id}")
+
+            # Make sure we received the freeze messages
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, DaveProcess.FreezeMessage)
+            self.assertEqual(f"{received[0].id}", container_id)
+            self.assertEqual(f"{received[1].id}", container_ref_id)
+
+    @patch_client_popen
+    def test_freeze_with_name(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # First, show to get the IDs
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            container_id = matched.group(2)
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            container_ref_id = matched.group(2)
+
+            # Clean the received data
+            MockClient().receive_from_server()
+
+            # Now, freeze using the name
+            self.debugger().execute(f"dave freeze container")
+            self.debugger().execute(f"dave freeze container_ref")
+
+            # Make sure we received the freeze messages
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, DaveProcess.FreezeMessage)
+            self.assertEqual(f"{received[0].id}", container_id)
+            self.assertEqual(f"{received[1].id}", container_ref_id)
+
+    @patch_client_popen
     def test_concat_parsable_no_processus(self, _):
         # Args
         with self.assertRaises(CommandError) as cm:
@@ -635,3 +732,100 @@ class TestCommands(TestCaseBase.TYPE):
         with self.assertRaises(CommandError) as cm:
             self.debugger().execute("dave concat -z a")
         self.assertIsCommandErrorWith(cm.exception, "usage: dave concat [-h]")
+
+    @patch_client_popen
+    def test_concat_not_parsable(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # too many args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave concat ID_1 ID_2")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave concat [-h]")
+
+            # not enough args
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave concat")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave concat [-h]")
+
+            # invalid long flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave concat --leroy-jenkins ID_1")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave concat [-h]")
+
+            # invalid short flag
+            with self.assertRaises(CommandError) as cm:
+                self.debugger().execute("dave concat -z ID_1")
+            self.assertIsCommandErrorWith(cm.exception, "usage: dave concat [-h]")
+
+    @patch_client_popen
+    def test_concat_with_id(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # First, show to get the IDs
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            container_id = matched.group(2)
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            container_ref_id = matched.group(2)
+
+            # Clean the received data
+            MockClient().receive_from_server()
+
+            # Now, concat using the ID
+            self.debugger().execute(f"dave concat {container_id}")
+            self.debugger().execute(f"dave concat {container_ref_id}")
+
+            # Make sure we received the freeze messages
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, DaveProcess.ConcatMessage)
+            self.assertEqual(f"{received[0].id}", container_id)
+            self.assertEqual(f"{received[1].id}", container_ref_id)
+
+    @patch_client_popen
+    def test_concat_with_name(self, _):
+        # Set the breakpoint
+        self.debugger().set_breakpoints_at_tags("daveCommands", [1])
+
+        SHOW_REGEX = r"Added (\w+) with ID ([0-9]+)"
+
+        ################## daveCommands::1 - Show ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            # First, show to get the IDs
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container"),
+                SHOW_REGEX,
+            )
+            container_id = matched.group(2)
+            matched = self.assertMatchsRegex(
+                self.debugger().execute("dave show container_ref"),
+                SHOW_REGEX,
+            )
+            container_ref_id = matched.group(2)
+
+            # Clean the received data
+            MockClient().receive_from_server()
+
+            # Now, concat using the name
+            self.debugger().execute(f"dave concat container")
+            self.debugger().execute(f"dave concat container_ref")
+
+            # Make sure we received the freeze messages
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 2, DaveProcess.ConcatMessage)
+            self.assertEqual(f"{received[0].id}", container_id)
+            self.assertEqual(f"{received[1].id}", container_ref_id)
