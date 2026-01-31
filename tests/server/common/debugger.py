@@ -70,7 +70,7 @@ class DebuggerAbstraction(ABC):
                     crt_line += 1
                 except StopIteration:
                     raise RuntimeError(
-                        f"Could not find tag {function_name}{tag} in {filepath}"
+                        f"Could not find tag {function_name}::{tag} in {filepath}"
                     )
         return tags_lines
 
