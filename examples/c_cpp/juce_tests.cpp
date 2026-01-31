@@ -7,10 +7,6 @@
 #include "numerics.hpp"
 
 constexpr auto kBlockSize = 3;
-// constexpr auto kChannels  = 2;
-// constexpr auto kSampleRate = 44100.0;
-// constexpr auto kCutoff     = 6000.F;
-// constexpr auto kQ          = 0.7F;
 
 static void audioBufferMono() {
   /// audioBufferMono::0
@@ -77,9 +73,33 @@ static void audioBufferMultiChannel() {
   /// audioBufferMultiChannel::2
 }
 
+static void audioBlock() {
+  /// audioBlock::0
+  constexpr auto kChannels = 2;
+  auto block_f_data  = std::array<std::array<float, kBlockSize>, kChannels>{};
+  auto block_f_p_arr = std::array<float*, kChannels>{block_f_data[0].data(),
+                                                     block_f_data[1].data()};
+  auto block_d_data  = std::array<std::array<double, kBlockSize>, kChannels>{};
+  auto block_d_p_arr = std::array<double*, kChannels>{block_d_data[0].data(),
+                                                      block_d_data[1].data()};
+
+  auto block_f =
+      juce::dsp::AudioBlock<float>(block_f_p_arr.data(), kChannels, kBlockSize);
+  auto block_d = juce::dsp::AudioBlock<double>(block_d_p_arr.data(), kChannels,
+                                               kBlockSize);
+
+  /// audioBlock::1
+  block_f.getChannelPointer(1)[0] = 1.F;
+  block_d.getChannelPointer(1)[0] = 1.F;
+  block_f.getChannelPointer(1)[1] = -1.F;
+  block_d.getChannelPointer(1)[1] = -1.F;
+  /// audioBlock::2
+}
+
 int main() {
   audioBufferMono();
   audioBufferMultiChannel();
+  audioBlock();
 
   return 0;
 }
