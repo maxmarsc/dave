@@ -209,9 +209,9 @@ class TestCppStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_c_array(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoints_at_tags("cArray", [1, 2])
+        self.debugger().set_breakpoints_at_tags("cArrayAndPtr", [1, 2])
 
-        ################## cArray::1 - All zeros ##################
+        ################## cArrayAndPtr::1 - All zeros ##################
         self.debugger().run()
         with self.failFastSubTestAtLocation():
             self.debugger().execute("dave show array_f")
@@ -262,7 +262,7 @@ class TestCppStd(TestCaseBase.TYPE):
             self.assertEqual(raw_array_cd.default_layout, RawContainer.Layout.CPX_1D)
             self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_array_cd)
 
-        ################## cArray::2 - (1, -1, 0) ##################
+        ################## cArrayAndPtr::2 - (1, -1, 0) ##################
         self.debugger().continue_()
         with self.failFastSubTestAtLocation():
             received = MockClient().receive_from_server()
@@ -290,6 +290,92 @@ class TestCppStd(TestCaseBase.TYPE):
             self.assertTupleEqual(received[3].shape, raw_array_cd.original_shape)
             self.assertContainerContent(
                 (1 + 1j, -1 - 1j, 0 + 0j), raw_array_cd, received[3]
+            )
+
+    @patch_client_popen
+    def test_pointer(self, _):
+        # Set the breakpoints
+        self.debugger().set_breakpoints_at_tags("cArrayAndPtr", [1, 2])
+
+        ################## cArrayAndPtr::1 - All zeros ##################
+        self.debugger().run()
+        with self.failFastSubTestAtLocation():
+            self.debugger().execute("dave show ptr_f --dims 3")
+            self.debugger().execute("dave show ptr_c --dims 3")
+            self.debugger().execute("dave show ptr_d --dims 3")
+            self.debugger().execute("dave show ptr_cd --dims 3")
+
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 4, RawEntityList)
+
+            # ptr_f
+            self.assertEqual(len(received[0].raw_entities), 1)
+            self.assertIsInstance(received[0].raw_entities[0], RawContainer)
+            raw_ptr_f: RawContainer = received[0].raw_entities[0]
+            self.assertContainer1DInvariants(raw_ptr_f)
+            self.assertTupleEqual(raw_ptr_f.original_shape, (1, 3))
+            self.assertEqual(raw_ptr_f.sample_type, SampleType.FLOAT)
+            self.assertEqual(raw_ptr_f.default_layout, RawContainer.Layout.REAL_1D)
+            self.assertContainerContent((0.0, 0.0, 0.0), raw_ptr_f)
+
+            # ptr_c
+            self.assertEqual(len(received[1].raw_entities), 1)
+            self.assertIsInstance(received[1].raw_entities[0], RawContainer)
+            raw_ptr_c: RawContainer = received[1].raw_entities[0]
+            self.assertContainer1DInvariants(raw_ptr_c)
+            self.assertTupleEqual(raw_ptr_c.original_shape, (1, 3))
+            self.assertEqual(raw_ptr_c.sample_type, SampleType.CPX_F)
+            self.assertEqual(raw_ptr_c.default_layout, RawContainer.Layout.CPX_1D)
+            self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_ptr_c)
+
+            # ptr_d
+            self.assertEqual(len(received[2].raw_entities), 1)
+            self.assertIsInstance(received[2].raw_entities[0], RawContainer)
+            raw_ptr_d: RawContainer = received[2].raw_entities[0]
+            self.assertContainer1DInvariants(raw_ptr_d)
+            self.assertTupleEqual(raw_ptr_d.original_shape, (1, 3))
+            self.assertEqual(raw_ptr_d.sample_type, SampleType.DOUBLE)
+            self.assertEqual(raw_ptr_d.default_layout, RawContainer.Layout.REAL_1D)
+            self.assertContainerContent((0.0, 0.0, 0.0), raw_ptr_d)
+
+            # ptr_cd
+            self.assertEqual(len(received[3].raw_entities), 1)
+            self.assertIsInstance(received[3].raw_entities[0], RawContainer)
+            raw_ptr_cd: RawContainer = received[3].raw_entities[0]
+            self.assertContainer1DInvariants(raw_ptr_cd)
+            self.assertTupleEqual(raw_ptr_cd.original_shape, (1, 3))
+            self.assertEqual(raw_ptr_cd.sample_type, SampleType.CPX_D)
+            self.assertEqual(raw_ptr_cd.default_layout, RawContainer.Layout.CPX_1D)
+            self.assertContainerContent((0 + 0j, 0 + 0j, 0 + 0j), raw_ptr_cd)
+
+        ################## cArrayAndPtr::2 - (1, -1, 0) ##################
+        self.debugger().continue_()
+        with self.failFastSubTestAtLocation():
+            received = MockClient().receive_from_server()
+            self.assertIsListOf(received, 4, RawContainer.InScopeUpdate)
+
+            # ptr_f
+            self.assertEqual(received[0].id, raw_ptr_f.id)
+            self.assertTupleEqual(received[0].shape, raw_ptr_f.original_shape)
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_ptr_f, received[0])
+
+            # ptr_c
+            self.assertEqual(received[1].id, raw_ptr_c.id)
+            self.assertTupleEqual(received[1].shape, raw_ptr_c.original_shape)
+            self.assertContainerContent(
+                (1 + 1j, -1 - 1j, 0 + 0j), raw_ptr_c, received[1]
+            )
+
+            # ptr_f
+            self.assertEqual(received[2].id, raw_ptr_d.id)
+            self.assertTupleEqual(received[2].shape, raw_ptr_d.original_shape)
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_ptr_d, received[2])
+
+            # ptr_c
+            self.assertEqual(received[3].id, raw_ptr_cd.id)
+            self.assertTupleEqual(received[3].shape, raw_ptr_cd.original_shape)
+            self.assertContainerContent(
+                (1 + 1j, -1 - 1j, 0 + 0j), raw_ptr_cd, received[3]
             )
 
     @patch_client_popen
