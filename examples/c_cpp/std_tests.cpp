@@ -95,14 +95,18 @@ static void vectorAndDynSpan2D() {
   /// vectorAndDynSpan2D::2
 }
 
-static void cArray() {
-  /// cArray::0
+static void cArrayAndPtr() {
+  /// cArrayAndPtr::0
   float array_f[kBlockSize]        = {0.F, 0.F, 0.F};
   std::complex<float> array_c[3]   = {kCpxZeroF, kCpxZeroF, kCpxZeroF};
   double array_d[kBlockSize]       = {0., 0., 0.};
   std::complex<double> array_cd[3] = {kCpxZeroD, kCpxZeroD, kCpxZeroD};
+  float* ptr_f                     = array_f;
+  double* ptr_d                    = array_d;
+  std::complex<float>* ptr_c       = array_c;
+  std::complex<double>* ptr_cd     = array_cd;
 
-  /// cArray::1
+  /// cArrayAndPtr::1
   array_f[0]  = 1.F;
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
@@ -111,7 +115,7 @@ static void cArray() {
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
-  /// cArray::2
+  /// cArrayAndPtr::2
 }
 
 static void numericValues() {
@@ -182,7 +186,7 @@ static void vectorAndDynSpan() {
 
 int main() {
   arrayAndStaticSpan();
-  cArray();
+  cArrayAndPtr();
   numericValues();
   vectorAndDynSpan();
   arrayAndStaticSpan2D();
