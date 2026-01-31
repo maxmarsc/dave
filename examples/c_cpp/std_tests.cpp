@@ -15,19 +15,21 @@
  * be very careful and update the hash in the tests.
  */
 
+constexpr auto kBlockSize = 3;
+
 //==============================================================================
-void arrayAndStaticSpan() {
+static void arrayAndStaticSpan() {
   /// arrayAndStaticSpan::0
-  std::array<float, 3> array_f                 = {0.F, 0.F, 0.F};
-  std::array<std::complex<float>, 3> array_c   = {kCpxZeroF, kCpxZeroF,
-                                                  kCpxZeroF};
-  std::array<double, 3> array_d                = {0., 0., 0.};
-  std::array<std::complex<double>, 3> array_cd = {kCpxZeroD, kCpxZeroD,
-                                                  kCpxZeroD};
-  auto span_f                                  = std::span(array_f);
-  auto span_c                                  = std::span(array_c);
-  auto span_d                                  = std::span(array_d);
-  auto span_cd                                 = std::span(array_cd);
+  std::array<float, kBlockSize> array_f                 = {0.F, 0.F, 0.F};
+  std::array<std::complex<float>, kBlockSize> array_c   = {kCpxZeroF, kCpxZeroF,
+                                                           kCpxZeroF};
+  std::array<double, kBlockSize> array_d                = {0., 0., 0.};
+  std::array<std::complex<double>, kBlockSize> array_cd = {kCpxZeroD, kCpxZeroD,
+                                                           kCpxZeroD};
+  auto span_f                                           = std::span(array_f);
+  auto span_c                                           = std::span(array_c);
+  auto span_d                                           = std::span(array_d);
+  auto span_cd                                          = std::span(array_cd);
 
   /// arrayAndStaticSpan::1
   array_f[0]  = 1.F;
@@ -41,11 +43,38 @@ void arrayAndStaticSpan() {
   /// arrayAndStaticSpan::2
 }
 
-void cArray() {
+static void arrayAndStaticSpan2D() {
+  /// arrayAndStaticSpan2D::0
+  constexpr auto kChannels = 2;
+  // array of array
+  auto array_array_f = std::array{std::array<float, kBlockSize>{},
+                                  std::array<float, kBlockSize>{}};
+  // array of static spans
+  auto array_span_f =
+      std::array{std::span(array_array_f[0]), std::span(array_array_f[1])};
+  // array of vectors
+  auto array_vector_d = std::array<std::vector<double>, kChannels>{
+      std::vector<double>(kBlockSize), std::vector<double>(kBlockSize)};
+  // arrays of dyn spans
+  auto array_dynspan_d =
+      std::array{std::span(array_vector_d[0]), std::span(array_vector_d[1])};
+  [[maybe_unused]] auto span_array_f   = std::span(array_array_f);
+  [[maybe_unused]] auto span_span_f    = std::span(array_span_f);
+  [[maybe_unused]] auto span_vector_d  = std::span(array_vector_d);
+  [[maybe_unused]] auto span_dynspan_d = std::span(array_dynspan_d);
+  /// arrayAndStaticSpan2D::1
+  array_array_f[1][0]  = 1.F;
+  array_vector_d[1][0] = 1.;
+  array_array_f[1][1]  = -1.F;
+  array_vector_d[1][1] = -1.;
+  /// arrayAndStaticSpan2D::2
+}
+
+static void cArray() {
   /// cArray::0
-  float array_f[3]                 = {0.F, 0.F, 0.F};
+  float array_f[kBlockSize]        = {0.F, 0.F, 0.F};
   std::complex<float> array_c[3]   = {kCpxZeroF, kCpxZeroF, kCpxZeroF};
-  double array_d[3]                = {0., 0., 0.};
+  double array_d[kBlockSize]       = {0., 0., 0.};
   std::complex<double> array_cd[3] = {kCpxZeroD, kCpxZeroD, kCpxZeroD};
 
   /// cArray::1
@@ -60,14 +89,14 @@ void cArray() {
   /// cArray::2
 }
 
-void numericValues() {
+static void numericValues() {
   /// numericValues::0
-  std::array<float, 3> array_f                 = {0.F, 0.F, 0.F};
-  std::array<std::complex<float>, 3> array_c   = {kCpxZeroF, kCpxZeroF,
-                                                  kCpxZeroF};
-  std::array<double, 3> array_d                = {0., 0., 0.};
-  std::array<std::complex<double>, 3> array_cd = {kCpxZeroD, kCpxZeroD,
-                                                  kCpxZeroD};
+  std::array<float, kBlockSize> array_f                 = {0.F, 0.F, 0.F};
+  std::array<std::complex<float>, kBlockSize> array_c   = {kCpxZeroF, kCpxZeroF,
+                                                           kCpxZeroF};
+  std::array<double, kBlockSize> array_d                = {0., 0., 0.};
+  std::array<std::complex<double>, kBlockSize> array_cd = {kCpxZeroD, kCpxZeroD,
+                                                           kCpxZeroD};
 
   /// numericValues::1
   array_f[0]  = kNanF;
@@ -85,12 +114,12 @@ void numericValues() {
   /// numericValues::2
 }
 
-void vectorAndDynSpan() {
+static void vectorAndDynSpan() {
   /// vectorAndDynSpan::0
-  auto vector_f  = std::vector(3, 0.F);
-  auto vector_c  = std::vector(3, kCpxZeroF);
-  auto vector_d  = std::vector(3, 0.);
-  auto vector_cd = std::vector(3, kCpxZeroD);
+  auto vector_f  = std::vector(kBlockSize, 0.F);
+  auto vector_c  = std::vector(kBlockSize, kCpxZeroF);
+  auto vector_d  = std::vector(kBlockSize, 0.);
+  auto vector_cd = std::vector(kBlockSize, kCpxZeroD);
   auto span_f    = std::span(vector_f);
   auto span_c    = std::span(vector_c);
   auto span_d    = std::span(vector_d);
@@ -131,5 +160,6 @@ int main() {
   cArray();
   numericValues();
   vectorAndDynSpan();
+  arrayAndStaticSpan2D();
   return 0;
 }
