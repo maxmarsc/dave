@@ -118,6 +118,24 @@ static void cArrayAndPtr() {
   /// cArrayAndPtr::2
 }
 
+static void cArrayAndPtr2D() {
+  /// cArrayAndPtr2D::0
+  constexpr auto kChannels                    = 2;
+  float array_array_f[kChannels][kBlockSize]  = {};
+  double array_array_d[kChannels][kBlockSize] = {};
+  float* array_ptrs_f[kChannels]  = {array_array_f[0], array_array_f[1]};
+  double* array_ptrs_d[kChannels] = {array_array_d[0], array_array_d[1]};
+  float** ptr_ptrs_f              = array_ptrs_f;
+  double** ptr_ptrs_d             = array_ptrs_d;
+
+  /// cArrayAndPtr2D::1
+  array_array_f[1][0] = 1.F;
+  array_array_d[1][0] = 1.;
+  array_array_f[1][1] = -1.F;
+  array_array_d[1][1] = -1.;
+  /// cArrayAndPtr2D::2
+}
+
 static void numericValues() {
   /// numericValues::0
   std::array<float, kBlockSize> array_f                 = {0.F, 0.F, 0.F};
@@ -191,5 +209,6 @@ int main() {
   vectorAndDynSpan();
   arrayAndStaticSpan2D();
   vectorAndDynSpan2D();
+  cArrayAndPtr2D();
   return 0;
 }
