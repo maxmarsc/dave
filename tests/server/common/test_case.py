@@ -31,12 +31,18 @@ class TestCaseBase(unittest.TestCase, ABC):
 
     TYPE: type[TestCaseBase] = None
     BINARY: Path = None
-    BINARY_HASH: str = None
 
     @staticmethod
     @abstractmethod
     def debugger() -> DebuggerAbstraction:
         pass
+
+    def __check_for_binary(self):
+        if not self.BINARY:
+            self.fail("Missing BINARY class attribute")
+
+        # Check the binary file exists
+        self.assertTrue(self.BINARY.is_file(), f"Binary {self.BINARY} does not exist")
 
     @classmethod
     def declare_as_base_test_class(cls):

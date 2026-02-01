@@ -16,12 +16,9 @@ class LldbTestCase(TestCaseBase):
         return LldbTestCase.__DEBUGGER
 
     def setUp(self):
-        if not self.BINARY or not self.BINARY_HASH:
-            self.fail("Missing BINARY or BINARY_HASH class attributes")
+        self.__check_for_binary()
 
-        # TODO: check hash matches
-        self.assertTrue(self.BINARY.is_file(), f"Binary {self.BINARY} does not exist")
-
+        # Load the binary into LLDB
         self.__sbdebugger: lldb.SBDebugger = lldb.debugger
         target: lldb.SBTarget = self.__sbdebugger.CreateTarget(str(self.BINARY))
         if not target.IsValid():

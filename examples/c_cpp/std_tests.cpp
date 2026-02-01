@@ -13,12 +13,12 @@
 #include "numerics.hpp"
 
 /**
- * @brief File used to unit test the STD features of DAVE
- * @warning DO NOT MODIFY THIS FILE
- *
- * @note Since the tests are relying on precise line numbers, a hash check is
- * performed on the content of this file. If you modify this file in any way
- * be very careful and update the hash in the tests.
+ * @brief File used to unit test the server-side features of DAVE
+ * @warning BE CAREFUL WHEN EDITING THIS FILE
+ * 
+ * @details The tests uses automatic parsing of the source code to identify
+ * "tags" ie: /// <tag>::<index>
+ * A tag is used to indicate a relevant location to place a breakpoint.
  */
 
 constexpr auto kBlockSize = 3;

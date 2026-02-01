@@ -1,6 +1,15 @@
 #include "custom_containers.hpp"
 #include "numerics.hpp"
 
+/**
+ * @brief File used to unit test the server-side features of DAVE
+ * @warning BE CAREFUL WHEN EDITING THIS FILE
+ * 
+ * @details The tests uses automatic parsing of the source code to identify
+ * "tags" ie: /// <tag>::<index>
+ * A tag is used to indicate a relevant location to place a breakpoint.
+ */
+
 static void containerPrettyPrinters() {
   /// containerPrettyPrinters::0
   constexpr auto kBlockSize = 11;
