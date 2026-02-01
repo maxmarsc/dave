@@ -1,7 +1,5 @@
-from common import TestCaseBase, C_CPP_BUILD_DIR, CommandError
+from common import TestCaseBase, C_CPP_BUILD_DIR
 from dave.common.raw_container import RawContainer
-from dave.common.server_type import SERVER_TYPE, ServerType
-from dave.server.process import DaveProcess
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList

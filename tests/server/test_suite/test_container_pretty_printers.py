@@ -1,5 +1,5 @@
 from common import TestCaseBase, C_CPP_BUILD_DIR
-from mocked import MockClient, patch_client_popen
+from mocked import patch_client_popen
 
 
 class TestContainerPrettyPrinters(TestCaseBase.TYPE):
