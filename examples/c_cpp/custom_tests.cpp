@@ -35,6 +35,29 @@ static void containerPrettyPrinters() {
   //// containerPrettyPrinters::3
 }
 
+static void containerPrettyPrintersInterleaved() {
+  //// containerPrettyPrintersInterleaved::0
+  constexpr auto kBlockSize = 11;
+  constexpr auto kChannels  = 2;
+  auto container            = DaveCustomInterleavedContainerVec{
+      std::vector<float>(kBlockSize * kChannels), kBlockSize, kChannels};
+  //// containerPrettyPrintersInterleaved::1
+  auto val        = 1.F;
+  const auto step = 0.2F;
+  for (auto i = 0; i < 11; ++i) {
+    container.vec_[i * kChannels + 0] = val;
+    container.vec_[i * kChannels + 1] = -val;
+    val -= step;
+  }
+  //// containerPrettyPrintersInterleaved::2
+  container.vec_[0 * kChannels + 0]  = kPInfF;
+  container.vec_[1 * kChannels + 0]  = 1.5F;
+  container.vec_[5 * kChannels + 0]  = kNanF;
+  container.vec_[9 * kChannels + 0]  = -1.5F;
+  container.vec_[10 * kChannels + 0] = kNInfF;
+  //// containerPrettyPrintersInterleaved::3
+}
+
 static void daveCommands() {
   //// daveCommands::0
   constexpr auto kBlockSize = 3;
@@ -90,6 +113,7 @@ static void scope() {
 
 int main() {
   containerPrettyPrinters();
+  containerPrettyPrintersInterleaved();
   daveCommands();
   scope();
 
