@@ -18,12 +18,12 @@ script.
 ## Examples compilation
 ### C/C++
 ```bash
-cmake -B build -S examples/c_cpp
+cmake -B build_cpp -S examples/c_cpp
 ```
 
 ### Rust
 ```bash
-cargo build --manifest-path examples/rust/Cargo.toml
+CARGO_TARGET_DIR="build_rust" cargo build --manifest-path examples/rust/Cargo.toml
 ```
 
 
