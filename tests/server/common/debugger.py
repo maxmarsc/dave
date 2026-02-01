@@ -61,7 +61,7 @@ class DebuggerAbstraction(ABC):
             crt_line = start_line
 
             for tag in tags:
-                pattern = f"/// {function_name}::{tag}"
+                pattern = f"//// {function_name}::{tag}"
                 try:
                     while lines.__next__().find(pattern) == -1:
                         crt_line += 1
