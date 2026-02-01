@@ -23,7 +23,7 @@ class TestCaseBase(unittest.TestCase, ABC):
     """
     A custom TestCase class to use for DAVE server's unit tests
 
-    The caller must provide a BINARY and BINARY_HASH for each subclass implementation
+    The caller must provide a BINARY path attribute for each subclass implementation
 
     Both setup() and tearDown() methods are already implemented and will
     automatically cleanup the debugger's state and load the given binary
@@ -37,7 +37,7 @@ class TestCaseBase(unittest.TestCase, ABC):
     def debugger() -> DebuggerAbstraction:
         pass
 
-    def __check_for_binary(self):
+    def _check_for_binary(self):
         if not self.BINARY:
             self.fail("Missing BINARY class attribute")
 

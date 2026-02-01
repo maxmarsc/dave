@@ -49,9 +49,49 @@ static void daveCommands() {
   /// daveCommands::3
 }
 
+static void scope() {
+  constexpr auto kBlockSize = 3;
+  constexpr auto kChannels  = 2;
+
+  struct Foo {
+    Foo(int block_size, int channels)
+        : container_{std::vector<float>(block_size * channels), block_size,
+                     channels} {}
+    void foo() {
+      container_.vec_[0] = 1.0F;
+      /// scope::0
+    }
+
+    static int bar() {
+      auto ret = 42;
+      /// scope::1
+      return ret;
+    }
+
+    DaveCustomInterleavedContainerVec container_;
+  };
+
+  // frame up
+  {
+    auto top_foo = Foo(kBlockSize, kChannels);
+    top_foo.foo();
+    /// scope::2
+  }
+
+  // frame down
+  {
+    auto top_container = DaveCustomInterleavedContainerVec{
+        std::vector<float>(kBlockSize * kChannels), kBlockSize, kChannels};
+    /// scope::3
+    Foo::bar();
+  }
+  /// scope::4
+}
+
 int main() {
   containerPrettyPrinters();
   daveCommands();
+  scope();
 
   return 0;
 }

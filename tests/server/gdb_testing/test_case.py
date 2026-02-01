@@ -14,7 +14,7 @@ class GdbTestCase(TestCaseBase):
         return GdbTestCase.__DEBUGGER
 
     def setUp(self):
-        self.__check_for_binary()
+        self._check_for_binary()
 
         # Check for any previous running threads
         if gdb.selected_inferior().threads():
