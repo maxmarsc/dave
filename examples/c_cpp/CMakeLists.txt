@@ -170,6 +170,15 @@ add_executable(
 set_target_properties(hart PROPERTIES CXX_STANDARD 11)
 target_link_libraries(hart PRIVATE HART::HART)
 
+if (DAVE_BUILD_TESTS)
+add_executable(
+  hart_tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/hart_tests.cpp
+)
+set_target_properties(hart_tests PROPERTIES CXX_STANDARD 11)
+target_link_libraries(hart_tests PRIVATE HART::HART)
+endif()
+
 ################################################################################
 ###                          Custom containers example
 ################################################################################
