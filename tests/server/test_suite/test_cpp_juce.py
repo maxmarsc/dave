@@ -14,7 +14,6 @@ CONTAINER_2D_LAYOUTS = [
 
 class TestCppJuce(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "juce_tests"
-    BINARY_HASH = "hihou"
 
     def assertJuceContainerInvariants(self, array: RawContainer):
         self.assertListEqual(array.possible_layout, CONTAINER_2D_LAYOUTS)

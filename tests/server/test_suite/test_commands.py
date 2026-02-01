@@ -1,6 +1,3 @@
-from typing import List, Tuple
-import struct
-
 from common import TestCaseBase, C_CPP_BUILD_DIR, CommandError
 from dave.common.raw_container import RawContainer
 from dave.common.server_type import SERVER_TYPE, ServerType
@@ -14,7 +11,6 @@ NO_PROCESSUS_DETECTED = CommandError("No processus detected")
 
 class TestCommands(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "custom_tests"
-    BINARY_HASH = "hihou"
 
     @patch_client_popen
     def test_show_parsable_no_processus(self, _):

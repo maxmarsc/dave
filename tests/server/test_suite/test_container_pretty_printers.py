@@ -1,13 +1,9 @@
-from typing import List, Tuple
-import struct
-
 from common import TestCaseBase, C_CPP_BUILD_DIR
 from mocked import MockClient, patch_client_popen
 
 
 class TestContainerPrettyPrinters(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "custom_tests"
-    BINARY_HASH = "hihou"
 
     @patch_client_popen
     def test_pretty_container_planar(self, _):

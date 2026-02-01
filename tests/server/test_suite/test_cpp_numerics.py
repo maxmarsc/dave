@@ -1,6 +1,3 @@
-from typing import List, Tuple
-import struct
-
 from common import TestCaseBase, C_CPP_BUILD_DIR
 from mocked import MockClient, patch_client_popen
 
@@ -23,7 +20,6 @@ NINF = -float("inf")
 
 class TestCppNumerics(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "std_tests"
-    BINARY_HASH = "hihou"
 
     @patch_client_popen
     def test_nan_infs(self, _):
