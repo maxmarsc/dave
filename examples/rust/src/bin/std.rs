@@ -1,6 +1,4 @@
 use core::f32;
-// use num;
-// use num_complex;
 
 const BLOCK_SIZE: usize = 4096;
 const CHANNELS: usize = 2;
