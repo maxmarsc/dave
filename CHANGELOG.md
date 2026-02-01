@@ -4,6 +4,7 @@
 ## Fixed
 - Various bugs in sparklines with special values (NaN, Infs...)
 - Logging level selection
+- Rust: arrays of slices could not be parsed
 
 # v0.14.0
 ## Added
