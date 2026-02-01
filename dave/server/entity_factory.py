@@ -75,7 +75,7 @@ class EntityFactory(metaclass=SingletonMeta):
 
     def check_valid_simple(self, typename: str) -> Union[type[Entity], None]:
         """
-        Returns true if the given typename matches a registered simple entity class
+        Returns the matched class if the given typename matches a registered simple entity class
         """
         for simple_entity_set in self.__simple_entity_classes.values():
             for simple_entity_cls in simple_entity_set:
