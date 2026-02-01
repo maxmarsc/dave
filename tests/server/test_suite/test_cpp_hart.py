@@ -14,7 +14,6 @@ CONTAINER_2D_LAYOUTS = [
 
 class TestCppHart(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "hart_tests"
-    BINARY_HASH = "hihou"
 
     def assertHartContainerInvariants(self, array: RawContainer):
         self.assertListEqual(array.possible_layout, CONTAINER_2D_LAYOUTS)

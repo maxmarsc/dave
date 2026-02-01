@@ -1,6 +1,3 @@
-from typing import List, Tuple
-import struct
-
 from common import TestCaseBase, C_CPP_BUILD_DIR
 from mocked import MockClient, patch_client_popen
 
@@ -22,7 +19,6 @@ CONTAINER_2D_LAYOUTS = [
 
 class TestCppStd(TestCaseBase.TYPE):
     BINARY = C_CPP_BUILD_DIR / "std_tests"
-    BINARY_HASH = "hihou"
 
     def assertContainer1DInvariants(self, array: RawContainer):
         self.assertListEqual(array.possible_layout, CONTAINER_1D_LAYOUTS)
