@@ -1,6 +1,3 @@
-from typing import List, Tuple
-import struct
-
 from common import TestCaseBase, C_CPP_BUILD_DIR
 from dave.common.raw_iir import RawIir
 from mocked import MockClient, patch_client_popen
