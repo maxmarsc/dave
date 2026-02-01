@@ -225,15 +225,24 @@ class RustSliceAny2D(Container2D):
             self.__nested_containers[0].size,
         )
 
+    @staticmethod
+    def name_parser(typename: str) -> bool:
+        pattern = re.compile(RustSliceAny2D.__REGEX)
+        matched = pattern.match(typename)
+        if matched is not None:
+            inner = matched.group(1)
+            return EntityFactory().check_valid_simple(inner) is not None
+        return False
+
     @classmethod
-    def typename_matcher(cls) -> re.Pattern:
-        return re.compile(cls.__REGEX)
+    def typename_matcher(cls) -> Callable[[str], bool]:
+        return RustSliceAny2D.name_parser
 
     @classmethod
     def _parse_typename(
         cls, typename: str, **_
     ) -> Tuple[SampleType, int, Optional[int]]:
-        re_match = cls.typename_matcher().match(typename)
+        re_match = re.compile(RustSliceAny2D.__REGEX).match(typename)
         if re_match is None:
             raise TypeError(
                 f"RustSliceAny2D could not parse {typename} as a valid Rust vector type"
