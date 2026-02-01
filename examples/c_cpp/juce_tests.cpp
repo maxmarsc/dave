@@ -10,14 +10,14 @@
  * @warning BE CAREFUL WHEN EDITING THIS FILE
  * 
  * @details The tests uses automatic parsing of the source code to identify
- * "tags" ie: /// <tag>::<index>
+ * "tags" ie: //// <tag>::<index>
  * A tag is used to indicate a relevant location to place a breakpoint.
  */
 
 constexpr auto kBlockSize = 3;
 
 static void audioBufferMono() {
-  /// audioBufferMono::0
+  //// audioBufferMono::0
   auto buffer_f_data  = std::array<std::array<float, kBlockSize>, 1>{};
   auto buffer_f_p_arr = std::array<float*, 1>{buffer_f_data[0].data()};
   auto buffer_d_data  = std::array<std::array<double, kBlockSize>, 1>{};
@@ -33,7 +33,7 @@ static void audioBufferMono() {
   buffer_d.clear();
   buffer_d_p.clear();
 
-  /// audioBufferMono::1
+  //// audioBufferMono::1
   buffer_f.getWritePointer(0)[0]   = 1.F;
   buffer_f_p.getWritePointer(0)[0] = 1.F;
   buffer_d.getWritePointer(0)[0]   = 1.F;
@@ -42,11 +42,11 @@ static void audioBufferMono() {
   buffer_f_p.getWritePointer(0)[1] = -1.F;
   buffer_d.getWritePointer(0)[1]   = -1.F;
   buffer_d_p.getWritePointer(0)[1] = -1.F;
-  /// audioBufferMono::2
+  //// audioBufferMono::2
 }
 
 static void audioBufferMultiChannel() {
-  /// audioBufferMultiChannel::0
+  //// audioBufferMultiChannel::0
   constexpr auto kChannels = 2;
   auto buffer_f_data =
       std::array<std::array<float, kBlockSize * kChannels>, kChannels>{};
@@ -69,7 +69,7 @@ static void audioBufferMultiChannel() {
   buffer_d.clear();
   buffer_d_p.clear();
 
-  /// audioBufferMultiChannel::1
+  //// audioBufferMultiChannel::1
   buffer_f.getWritePointer(1)[0]   = 1.F;
   buffer_f_p.getWritePointer(1)[0] = 1.F;
   buffer_d.getWritePointer(1)[0]   = 1.F;
@@ -78,11 +78,11 @@ static void audioBufferMultiChannel() {
   buffer_f_p.getWritePointer(1)[1] = -1.F;
   buffer_d.getWritePointer(1)[1]   = -1.F;
   buffer_d_p.getWritePointer(1)[1] = -1.F;
-  /// audioBufferMultiChannel::2
+  //// audioBufferMultiChannel::2
 }
 
 static void audioBlock() {
-  /// audioBlock::0
+  //// audioBlock::0
   constexpr auto kChannels = 2;
   auto block_f_data  = std::array<std::array<float, kBlockSize>, kChannels>{};
   auto block_f_p_arr = std::array<float*, kChannels>{block_f_data[0].data(),
@@ -96,16 +96,16 @@ static void audioBlock() {
   auto block_d = juce::dsp::AudioBlock<double>(block_d_p_arr.data(), kChannels,
                                                kBlockSize);
 
-  /// audioBlock::1
+  //// audioBlock::1
   block_f.getChannelPointer(1)[0] = 1.F;
   block_d.getChannelPointer(1)[0] = 1.F;
   block_f.getChannelPointer(1)[1] = -1.F;
   block_d.getChannelPointer(1)[1] = -1.F;
-  /// audioBlock::2
+  //// audioBlock::2
 }
 
 static void iirSOS() {
-  /// iirSOS::0
+  //// iirSOS::0
   constexpr auto kChannels   = 1;
   constexpr auto kSampleRate = 44100.0;
   constexpr auto kCutoff     = 6000.F;
@@ -135,11 +135,11 @@ static void iirSOS() {
   filter_d_fo.prepare(kSpec);
   filter_f_so.prepare(kSpec);
   filter_d_so.prepare(kSpec);
-  /// iirSOS::1
+  //// iirSOS::1
 }
 
 static void iirSVF() {
-  /// iirSVF::0
+  //// iirSVF::0
   constexpr auto kChannels   = 1;
   constexpr auto kSampleRate = 44100.0;
   constexpr auto kCutoff     = 6000.F;
@@ -162,21 +162,21 @@ static void iirSVF() {
   old_filter_d.prepare(kSpec);
   filter_f.prepare(kSpec);
   filter_d.prepare(kSpec);
-  /// iirSVF::1
+  //// iirSVF::1
   old_filter_f.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
   old_filter_d.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::bandPass;
   filter_f.setType(juce::dsp::StateVariableTPTFilter<float>::Type::bandpass);
   filter_d.setType(juce::dsp::StateVariableTPTFilter<double>::Type::bandpass);
-  /// iirSVF::2
+  //// iirSVF::2
   old_filter_f.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
   old_filter_d.parameters->type =
       juce::dsp::StateVariableFilter::StateVariableFilterType::highPass;
   filter_f.setType(juce::dsp::StateVariableTPTFilter<float>::Type::highpass);
   filter_d.setType(juce::dsp::StateVariableTPTFilter<double>::Type::highpass);
-  /// iirSVF::3
+  //// iirSVF::3
 }
 
 int main() {

@@ -17,7 +17,7 @@
  * @warning BE CAREFUL WHEN EDITING THIS FILE
  * 
  * @details The tests uses automatic parsing of the source code to identify
- * "tags" ie: /// <tag>::<index>
+ * "tags" ie: //// <tag>::<index>
  * A tag is used to indicate a relevant location to place a breakpoint.
  */
 
@@ -25,7 +25,7 @@ constexpr auto kBlockSize = 3;
 
 //==============================================================================
 static void arrayAndStaticSpan() {
-  /// arrayAndStaticSpan::0
+  //// arrayAndStaticSpan::0
   std::array<float, kBlockSize> array_f                 = {0.F, 0.F, 0.F};
   std::array<std::complex<float>, kBlockSize> array_c   = {kCpxZeroF, kCpxZeroF,
                                                            kCpxZeroF};
@@ -37,7 +37,7 @@ static void arrayAndStaticSpan() {
   auto span_d  = SPAN_SRC::span(array_d);
   auto span_cd = SPAN_SRC::span(array_cd);
 
-  /// arrayAndStaticSpan::1
+  //// arrayAndStaticSpan::1
   array_f[0]  = 1.F;
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
@@ -46,11 +46,11 @@ static void arrayAndStaticSpan() {
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
-  /// arrayAndStaticSpan::2
+  //// arrayAndStaticSpan::2
 }
 
 static void arrayAndStaticSpan2D() {
-  /// arrayAndStaticSpan2D::0
+  //// arrayAndStaticSpan2D::0
   constexpr auto kChannels = 2;
   // std::arrays
   auto array_array_f  = std::array{std::array<float, kBlockSize>{},
@@ -66,16 +66,16 @@ static void arrayAndStaticSpan2D() {
   [[maybe_unused]] auto span_span_f    = SPAN_SRC::span(array_span_f);
   [[maybe_unused]] auto span_vector_d  = SPAN_SRC::span(array_vector_d);
   [[maybe_unused]] auto span_dynspan_d = SPAN_SRC::span(array_dynspan_d);
-  /// arrayAndStaticSpan2D::1
+  //// arrayAndStaticSpan2D::1
   array_array_f[1][0]  = 1.F;
   array_vector_d[1][0] = 1.;
   array_array_f[1][1]  = -1.F;
   array_vector_d[1][1] = -1.;
-  /// arrayAndStaticSpan2D::2
+  //// arrayAndStaticSpan2D::2
 }
 
 static void vectorAndDynSpan2D() {
-  /// vectorAndDynSpan2D::0
+  //// vectorAndDynSpan2D::0
   constexpr auto kChannels = 2;
   // 2D std::vector
   auto vector_array_f = std::vector<std::array<float, kBlockSize>>(kChannels);
@@ -93,16 +93,16 @@ static void vectorAndDynSpan2D() {
   [[maybe_unused]] auto span_span_f   = SPAN_SRC::span(vector_span_f);
   [[maybe_unused]] auto span_vector_d = SPAN_SRC::span(vector_vector_d);
   [[maybe_unused]] auto span_span_d   = SPAN_SRC::span(vector_span_d);
-  /// vectorAndDynSpan2D::1
+  //// vectorAndDynSpan2D::1
   vector_array_f[1][0]  = 1.F;
   vector_vector_d[1][0] = 1.;
   vector_array_f[1][1]  = -1.F;
   vector_vector_d[1][1] = -1.;
-  /// vectorAndDynSpan2D::2
+  //// vectorAndDynSpan2D::2
 }
 
 static void cArrayAndPtr() {
-  /// cArrayAndPtr::0
+  //// cArrayAndPtr::0
   float array_f[kBlockSize]        = {0.F, 0.F, 0.F};
   std::complex<float> array_c[3]   = {kCpxZeroF, kCpxZeroF, kCpxZeroF};
   double array_d[kBlockSize]       = {0., 0., 0.};
@@ -112,7 +112,7 @@ static void cArrayAndPtr() {
   std::complex<float>* ptr_c       = array_c;
   std::complex<double>* ptr_cd     = array_cd;
 
-  /// cArrayAndPtr::1
+  //// cArrayAndPtr::1
   array_f[0]  = 1.F;
   array_d[0]  = 1.;
   array_c[0]  = kCpxOneF;
@@ -121,11 +121,11 @@ static void cArrayAndPtr() {
   array_d[1]  = -1.;
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
-  /// cArrayAndPtr::2
+  //// cArrayAndPtr::2
 }
 
 static void cArrayAndPtr2D() {
-  /// cArrayAndPtr2D::0
+  //// cArrayAndPtr2D::0
   constexpr auto kChannels                    = 2;
   float array_array_f[kChannels][kBlockSize]  = {};
   double array_array_d[kChannels][kBlockSize] = {};
@@ -134,16 +134,16 @@ static void cArrayAndPtr2D() {
   float** ptr_ptrs_f              = array_ptrs_f;
   double** ptr_ptrs_d             = array_ptrs_d;
 
-  /// cArrayAndPtr2D::1
+  //// cArrayAndPtr2D::1
   array_array_f[1][0] = 1.F;
   array_array_d[1][0] = 1.;
   array_array_f[1][1] = -1.F;
   array_array_d[1][1] = -1.;
-  /// cArrayAndPtr2D::2
+  //// cArrayAndPtr2D::2
 }
 
 static void numericValues() {
-  /// numericValues::0
+  //// numericValues::0
   std::array<float, kBlockSize> array_f                 = {0.F, 0.F, 0.F};
   std::array<std::complex<float>, kBlockSize> array_c   = {kCpxZeroF, kCpxZeroF,
                                                            kCpxZeroF};
@@ -151,7 +151,7 @@ static void numericValues() {
   std::array<std::complex<double>, kBlockSize> array_cd = {kCpxZeroD, kCpxZeroD,
                                                            kCpxZeroD};
 
-  /// numericValues::1
+  //// numericValues::1
   array_f[0]  = kNanF;
   array_d[0]  = kNanD;
   array_c[0]  = std::complex(kNanF, 0.F);
@@ -164,11 +164,11 @@ static void numericValues() {
   array_d[2]  = kNInfD;
   array_c[2]  = std::complex(kNInfF, 0.F);
   array_cd[2] = std::complex(kNInfD, 0.0);
-  /// numericValues::2
+  //// numericValues::2
 }
 
 static void vectorAndDynSpan() {
-  /// vectorAndDynSpan::0
+  //// vectorAndDynSpan::0
   auto vector_f  = std::vector(kBlockSize, 0.F);
   auto vector_c  = std::vector(kBlockSize, kCpxZeroF);
   auto vector_d  = std::vector(kBlockSize, 0.);
@@ -178,7 +178,7 @@ static void vectorAndDynSpan() {
   auto span_d    = SPAN_SRC::span(vector_d);
   auto span_cd   = SPAN_SRC::span(vector_cd);
 
-  /// vectorAndDynSpan::1
+  //// vectorAndDynSpan::1
   vector_f[0]  = 1.F;
   vector_d[0]  = 1.;
   vector_c[0]  = kCpxOneF;
@@ -187,7 +187,7 @@ static void vectorAndDynSpan() {
   vector_d[1]  = -1.;
   vector_c[1]  = kCpxMinusOneF;
   vector_cd[1] = kCpxMinusOneD;
-  /// vectorAndDynSpan::2
+  //// vectorAndDynSpan::2
   vector_f.resize(2);
   vector_c.resize(2);
   vector_d.resize(2);
@@ -196,7 +196,7 @@ static void vectorAndDynSpan() {
   span_c  = SPAN_SRC::span(vector_c);
   span_d  = SPAN_SRC::span(vector_d);
   span_cd = SPAN_SRC::span(vector_cd);
-  /// vectorAndDynSpan::3
+  //// vectorAndDynSpan::3
   vector_f.resize(4);
   vector_c.resize(4);
   vector_d.resize(4);
@@ -205,7 +205,7 @@ static void vectorAndDynSpan() {
   span_c  = SPAN_SRC::span(vector_c);
   span_d  = SPAN_SRC::span(vector_d);
   span_cd = SPAN_SRC::span(vector_cd);
-  /// vectorAndDynSpan::4
+  //// vectorAndDynSpan::4
 }
 
 int main() {
