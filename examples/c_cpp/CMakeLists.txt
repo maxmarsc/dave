@@ -138,6 +138,17 @@ set_target_properties(gsl PROPERTIES CXX_STANDARD 17)
 
 target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)
 
+if (DAVE_BUILD_TESTS)
+add_executable(gsl_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/std_tests.cpp
+)
+
+set_target_properties(gsl_tests PROPERTIES CXX_STANDARD 20)
+target_link_libraries(gsl_tests PUBLIC Microsoft.GSL::GSL)
+target_compile_definitions(gsl_tests PUBLIC USE_GSL)
+
+endif()
+
 ################################################################################
 ###                               CHOC
 ################################################################################
