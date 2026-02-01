@@ -1,5 +1,4 @@
 #include <array>
-#include <memory>
 #include <vector>
 
 constexpr auto kBlockSize = 4096;
@@ -15,7 +14,7 @@ class A {
 
  private:
   std::array<float, kBlockSize> array_{};
-  std::vector<float> vector_{};
+  std::vector<float> vector_;
 };
 
 int main() {
