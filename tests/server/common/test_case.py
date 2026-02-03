@@ -44,7 +44,8 @@ class TestCaseBase(unittest.TestCase, ABC):
 
         # Check the binary file exists
         self.assertTrue(
-            self.BINARY.resolve().is_file(), f"Binary {self.BINARY} does not exist"
+            self.BINARY.resolve().is_file(),
+            f"Binary {self.BINARY.resolve()} does not exist",
         )
 
     @classmethod
