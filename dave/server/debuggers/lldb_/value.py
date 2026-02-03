@@ -59,28 +59,65 @@ class LldbValue(AbstractValue):
         cu: lldb.SBCompileUnit = frame.GetCompileUnit()
         lang = cu.GetLanguage()
 
-        match lang:
-            case (
-                lldb.eLanguageTypeC
-                | lldb.eLanguageTypeC11
-                | lldb.eLanguageTypeC17
-                | lldb.eLanguageTypeC89
-                | lldb.eLanguageTypeC99
-            ):
-                return LanguageType.C
-            case (
-                lldb.eLanguageTypeC_plus_plus
-                | lldb.eLanguageTypeC_plus_plus_03
-                | lldb.eLanguageTypeC_plus_plus_11
-                | lldb.eLanguageTypeC_plus_plus_14
-                | lldb.eLanguageTypeC_plus_plus_17
-                | lldb.eLanguageTypeC_plus_plus_20
-            ):
-                return LanguageType.CPP
-            case lldb.eLanguageTypeRust:
-                return LanguageType.RUST
-            case _:
-                return LanguageType.UNSUPPORTED
+        if lang in LldbValue.__c_lang_list():
+            return LanguageType.C
+        elif lang in LldbValue.__cpp_lang_list():
+            return LanguageType.CPP
+        elif lang == lldb.eLanguageTypeRust:
+            return LanguageType.RUST
+        else:
+            return LanguageType.UNSUPPORTED
+            
+    @staticmethod
+    def __c_lang_list() -> List[int]:
+        ret = [lldb.eLanguageTypeC, ]
+        try:
+            ret.append(lldb.eLanguageTypeC11)
+        except AttributeError:
+            pass
+        try:            
+            ret.append(lldb.eLanguageTypeC17)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC89)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC99)
+        except AttributeError:
+            pass
+        return ret
+    
+    @staticmethod
+    def __cpp_lang_list() -> List[int]:
+        ret = [lldb.eLanguageTypeC_plus_plus, ]
+        try:
+            ret.append(lldb.eLanguageTypeC_plus_plus_03)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC_plus_plus_11)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC_plus_plus_14)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC_plus_plus_17)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC_plus_plus_20)
+        except AttributeError:
+            pass
+        try:
+            ret.append(lldb.eLanguageTypeC_plus_plus_23)
+        except AttributeError:
+            pass
+        return ret
+
 
     def typename(self) -> str:
         return self.__value.type.GetCanonicalType().name

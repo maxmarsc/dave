@@ -1,6 +1,8 @@
 #include "custom_containers.hpp"
 #include "numerics.hpp"
 
+#include "test_utils.hpp"
+
 /**
  * @brief File used to unit test the server-side features of DAVE
  * @warning BE CAREFUL WHEN EDITING THIS FILE
@@ -33,6 +35,7 @@ static void containerPrettyPrinters() {
   ptr_carray[0][9]  = -1.5F;
   ptr_carray[0][10] = kNInfF;
   //// containerPrettyPrinters::3
+  BREAKABLE_END;
 }
 
 static void containerPrettyPrintersInterleaved() {
@@ -56,6 +59,7 @@ static void containerPrettyPrintersInterleaved() {
   container.vec_[9 * kChannels + 0]  = -1.5F;
   container.vec_[10 * kChannels + 0] = kNInfF;
   //// containerPrettyPrintersInterleaved::3
+  BREAKABLE_END;
 }
 
 static void daveCommands() {
@@ -70,6 +74,7 @@ static void daveCommands() {
   //// daveCommands::2
   container.vec_[0] = -1.0;
   //// daveCommands::3
+  BREAKABLE_END;
 }
 
 static void scope() {
@@ -109,6 +114,7 @@ static void scope() {
     Foo::bar();
   }
   //// scope::4
+  BREAKABLE_END;
 }
 
 int main() {

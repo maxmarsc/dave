@@ -11,6 +11,7 @@
 #endif
 
 #include "numerics.hpp"
+#include "test_utils.hpp"
 
 /**
  * @brief File used to unit test the server-side features of DAVE
@@ -47,6 +48,7 @@ static void arrayAndStaticSpan() {
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
   //// arrayAndStaticSpan::2
+  BREAKABLE_END;
 }
 
 static void arrayAndStaticSpan2D() {
@@ -72,6 +74,7 @@ static void arrayAndStaticSpan2D() {
   array_array_f[1][1]  = -1.F;
   array_vector_d[1][1] = -1.;
   //// arrayAndStaticSpan2D::2
+  BREAKABLE_END;
 }
 
 static void vectorAndDynSpan2D() {
@@ -99,6 +102,7 @@ static void vectorAndDynSpan2D() {
   vector_array_f[1][1]  = -1.F;
   vector_vector_d[1][1] = -1.;
   //// vectorAndDynSpan2D::2
+  BREAKABLE_END;
 }
 
 static void cArrayAndPtr() {
@@ -122,6 +126,7 @@ static void cArrayAndPtr() {
   array_c[1]  = kCpxMinusOneF;
   array_cd[1] = kCpxMinusOneD;
   //// cArrayAndPtr::2
+  BREAKABLE_END;
 }
 
 static void cArrayAndPtr2D() {
@@ -140,6 +145,7 @@ static void cArrayAndPtr2D() {
   array_array_f[1][1] = -1.F;
   array_array_d[1][1] = -1.;
   //// cArrayAndPtr2D::2
+  BREAKABLE_END;
 }
 
 static void numericValues() {
@@ -165,6 +171,7 @@ static void numericValues() {
   array_c[2]  = std::complex(kNInfF, 0.F);
   array_cd[2] = std::complex(kNInfD, 0.0);
   //// numericValues::2
+  BREAKABLE_END;
 }
 
 static void vectorAndDynSpan() {
@@ -206,6 +213,7 @@ static void vectorAndDynSpan() {
   span_d  = SPAN_SRC::span(vector_d);
   span_cd = SPAN_SRC::span(vector_cd);
   //// vectorAndDynSpan::4
+  BREAKABLE_END;
 }
 
 int main() {

@@ -1,6 +1,8 @@
 #define HART_IMPLEMENTATION
 #include "hart_audio_buffer.hpp"
 
+#include "test_utils.hpp"
+
 /**
  * @brief File used to unit test the server-side features of DAVE
  * @warning BE CAREFUL WHEN EDITING THIS FILE
@@ -23,6 +25,7 @@ static void audioBuffer() {
   buffer_f.getArrayOfWritePointers()[1][1] = -1.F;
   buffer_d.getArrayOfWritePointers()[1][1] = -1.;
   //// audioBuffer::2
+  BREAKABLE_END;
 }
 
 int main() {

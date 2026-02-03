@@ -1,0 +1,191 @@
+name: DAVE Server - Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-matrix:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # --- GDB TRACK ---
+          - name: "GDB 14"
+            flavor: GNU
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "gcc_linux-64=13 gxx_linux-64=13"
+            debug_tool: "gdb=14.2"
+            python_version: "3.11"
+            
+          - name: "GDB 15"
+            flavor: GNU
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "gcc_linux-64=14 gxx_linux-64=14"
+            debug_tool: "gdb=15.1"
+            python_version: "3.12"
+          
+          - name: "GDB 16"
+            flavor: GNU
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "gcc_linux-64=14 gxx_linux-64=14"
+            debug_tool: "gdb=16.3"
+            python_version: "3.13"
+
+          - name: "GDB 17"
+            flavor: GNU
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "gcc_linux-64=14 gxx_linux-64=14"
+            debug_tool: "gdb=17.1"
+            python_version: "3.13"
+
+          # --- LLDB TRACK ---
+          - name: "LLDB 16"
+            flavor: LLVM
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "clang=16 clangxx=16 gcc_linux-64" 
+            debug_tool: "lldb=16"
+            python_version: "3.10"
+          
+          - name: "LLDB 17"
+            flavor: LLVM
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "clang=17 clangxx=17 gcc_linux-64" 
+            debug_tool: "lldb=17"
+            python_version: "3.11"
+            
+          - name: "LLDB 18"
+            flavor: LLVM
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "clang=18 clangxx=18 gcc_linux-64"
+            debug_tool: "lldb=18"
+            python_version: "3.11"
+
+          - name: "LLDB 19"
+            flavor: LLVM
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "clang=19 clangxx=19 gcc_linux-64"
+            debug_tool: "lldb=19"
+            python_version: "3.13"
+
+          - name: "LLDB 20"
+            flavor: LLVM
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "clang=20 clangxx=20 gcc_linux-64"
+            debug_tool: "lldb=20"
+            python_version: "3.13"
+
+          - name: "LLDB 21"
+            flavor: LLVM
+            os: ubuntu-24.04
+            # Mamba package names
+            compilers: "clang=20 clangxx=20 gcc_linux-64"
+            debug_tool: "lldb=21"
+            python_version: "3.13"
+
+          # Apple Silicon Runners
+          - name: "LLDB 17 (MacOS)"
+            os: macos-14
+            flavor: LLVM
+            compilers: "clang=17 clangxx=17 libcxx" 
+            debug_tool: "lldb=17"
+            python_version: "3.11"
+
+          - name: "LLDB 18 (MacOS)"
+            os: macos-14
+            flavor: LLVM
+            compilers: "clang=18 clangxx=18 libcxx"
+            debug_tool: "lldb=18"
+            python_version: "3.11"
+            
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Setup Micromamba
+      - name: Setup Mamba Environment
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: dev-env
+          create-args: >-
+            python=${{ matrix.python_version }}
+            ninja
+            cmake
+            ${{ matrix.compilers }}
+            ${{ matrix.debug_tool }}
+          init-shell: bash
+
+      # Create DAVE venv
+      - name: Create Venv & Install Deps
+        shell: bash -el {0} 
+        run: |
+          python -m venv .venv
+          pip install -e .
+
+      # Setup Rust
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.91.1
+
+      # Build C/C++
+      - name: Build C/C++
+        shell: bash -el {0} 
+        run: |
+          if [ "${{ matrix.flavor }}" == "GNU" ]; then
+             export "CC=gcc"
+             export "CXX=g++"
+          fi
+
+          if [ "${{ matrix.flavor }}" == "LLVM" ]; then
+             export "CC=clang"
+             export "CXX=clang++"
+          fi
+          
+          cmake -B build_c_cpp -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDAVE_BUILD_TESTS=ON \
+            -DDAVE_BUILD_EXAMPLES=OFF \
+            -DCMAKE_C_COMPILER="$CC" \
+            -DCMAKE_CXX_COMPILER="$CXX" \
+            -DCMAKE_C_FLAGS_DEBUG="-g -O0" \
+            -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" \
+            -S examples/c_cpp
+            
+          cmake --build build_c_cpp --target all
+
+      # Build Rust Binaries
+      - name: Build Rust
+        run: |
+          export CARGO_TARGET_DIR="build_rust"
+          cargo build --manifest-path examples/rust/Cargo.toml
+
+      # Run Tests
+      - name: Run Tests
+        shell: bash -el {0}
+        env:
+           DAVE_VENV_FOLDER: ${{ github.workspace }}/.venv
+           C_CPP_BIN_DIR: ${{ github.workspace }}/build_c_cpp
+           RUST_BIN_DIR: ${{ github.workspace }}/build_rust/debug
+        run: |
+          if [ "${{ matrix.flavor }}" == "GNU" ]; then
+             echo "Using GDB Version: $(gdb --version | head -n 1)"
+             gdb -q --batch -nx -x tests/server/gdb_testing/run_tests.py
+          fi
+
+          if [ "${{ matrix.flavor }}" == "LLVM" ]; then
+             echo "Using LLDB Version: $(lldb --version | head -n 1)"
+             # In Mamba, the binary is usually just 'lldb', not 'lldb-15'
+             lldb -b -x -o 'command script import tests/server/lldb_testing/run_tests.py'
+          fi

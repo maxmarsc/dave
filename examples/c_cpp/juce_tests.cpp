@@ -3,6 +3,8 @@
 
 #include <juce_dsp/juce_dsp.h>
 
+#include "test_utils.hpp"
+
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 /**
@@ -43,6 +45,7 @@ static void audioBufferMono() {
   buffer_d.getWritePointer(0)[1]   = -1.F;
   buffer_d_p.getWritePointer(0)[1] = -1.F;
   //// audioBufferMono::2
+  BREAKABLE_END;
 }
 
 static void audioBufferMultiChannel() {
@@ -79,6 +82,7 @@ static void audioBufferMultiChannel() {
   buffer_d.getWritePointer(1)[1]   = -1.F;
   buffer_d_p.getWritePointer(1)[1] = -1.F;
   //// audioBufferMultiChannel::2
+  BREAKABLE_END;
 }
 
 static void audioBlock() {
@@ -102,6 +106,7 @@ static void audioBlock() {
   block_f.getChannelPointer(1)[1] = -1.F;
   block_d.getChannelPointer(1)[1] = -1.F;
   //// audioBlock::2
+  BREAKABLE_END;
 }
 
 static void iirSOS() {
@@ -136,6 +141,7 @@ static void iirSOS() {
   filter_f_so.prepare(kSpec);
   filter_d_so.prepare(kSpec);
   //// iirSOS::1
+  BREAKABLE_END;
 }
 
 static void iirSVF() {
@@ -177,6 +183,7 @@ static void iirSVF() {
   filter_f.setType(juce::dsp::StateVariableTPTFilter<float>::Type::highpass);
   filter_d.setType(juce::dsp::StateVariableTPTFilter<double>::Type::highpass);
   //// iirSVF::3
+  BREAKABLE_END;
 }
 
 int main() {
