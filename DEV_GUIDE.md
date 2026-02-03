@@ -26,6 +26,38 @@ cmake -B build_cpp -S examples/c_cpp
 CARGO_TARGET_DIR="build_rust" cargo build --manifest-path examples/rust/Cargo.toml
 ```
 
+## Testing
+For now only the code running on the server side (the debugger, not the gui) is tested
+
+### Server testing
+#### Environment variable
+You can use the following environment variables to control the tests
+- `FILTER="pattern"`: run only the test with `pattern` in their name
+- `C_CPP_BIN_DIR`: Required if executing the C/C++ tests. Must be set to the folder
+containing the test binaries.
+- `RUST_BIN_DIR`: Required if executing the Rust tests. Must be set to the folder
+containing the test binaries.
+
+#### Run the tests
+To run all tests for a set of versions of GDB/LLDB run:
+```bash
+# First build the C/C++ binaries
+cmake -B build_c_cpp -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDAVE_BUILD_TESTS=ON -S examples/c_cpp
+cmake --build build_c_cpp --target all
+# Then build the RUST binaries
+CARGO_TARGET_DIR="build_rust" cargo build --manifest-path examples/rust/Cargo.toml
+
+# Set the env
+export C_CPP_BIN_DIR="$(pwd)/build_c_cpp" 
+export RUST_BIN_DIR="$(pwd)/nuild_rust"
+
+# Run GDB tests
+gdb -q --batch -nx -x tests/server/gdb_testing/run_tests.py
+
+# Run LLDB tests
+lldb -b -x -o 'command script import tests/server/lldb_testing/run_tests.py'
+```
+
 
 ## common/server/client
 Both LLDB and GDB uses a python intepreter to provide a python API. Depending
