@@ -353,8 +353,9 @@ class StdVector2D(Container2D):
     @staticmethod
     def name_parser(typename: str) -> bool:
         types = parse_template(typename)
-        if types[0].strip() == "std::vector" and len(types) == 3:
-            return True
+        if types[0].strip() in ("std::vector", "std::__1::vector") and len(types) == 3:
+            inner = types[1]
+            return EntityFactory().check_valid_simple(inner) is not None
         return False
 
     def read_from_debugger(self) -> bytearray:
