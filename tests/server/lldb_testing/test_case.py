@@ -20,7 +20,9 @@ class LldbTestCase(TestCaseBase):
 
         # Load the binary into LLDB
         self.__sbdebugger: lldb.SBDebugger = lldb.debugger
-        target: lldb.SBTarget = self.__sbdebugger.CreateTarget(str(self.BINARY))
+        target: lldb.SBTarget = self.__sbdebugger.CreateTarget(
+            str(self.BINARY.resolve())
+        )
         if not target.IsValid():
             self.fail(f"Failed to create LLDB target for {self.BINARY}")
 

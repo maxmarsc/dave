@@ -10,6 +10,7 @@ import cmath
 import re
 
 from common.debugger import CommandError, DebuggerAbstraction
+from common.binary_dirs import Binary
 
 
 __unittest = True  # Make sure custom test functions does not show up in the stack trace
@@ -30,7 +31,7 @@ class TestCaseBase(unittest.TestCase, ABC):
     """
 
     TYPE: type[TestCaseBase] = None
-    BINARY: Path = None
+    BINARY: Binary = None
 
     @staticmethod
     @abstractmethod
@@ -42,7 +43,9 @@ class TestCaseBase(unittest.TestCase, ABC):
             self.fail("Missing BINARY class attribute")
 
         # Check the binary file exists
-        self.assertTrue(self.BINARY.is_file(), f"Binary {self.BINARY} does not exist")
+        self.assertTrue(
+            self.BINARY.resolve().is_file(), f"Binary {self.BINARY} does not exist"
+        )
 
     @classmethod
     def declare_as_base_test_class(cls):

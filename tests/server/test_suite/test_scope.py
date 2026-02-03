@@ -1,4 +1,4 @@
-from common import TestCaseBase, C_CPP_BUILD_DIR
+from common import TestCaseBase, CCppBinary
 from dave.common.raw_container import RawContainer
 from mocked import MockClient, patch_client_popen
 
@@ -6,7 +6,7 @@ from dave.common.raw_entity import RawEntityList
 
 
 class TestScope(TestCaseBase.TYPE):
-    BINARY = C_CPP_BUILD_DIR / "custom_tests"
+    BINARY = CCppBinary("custom_tests")
 
     @patch_client_popen
     def test_scope_up(self, _):

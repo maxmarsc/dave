@@ -1,4 +1,4 @@
-from common import TestCaseBase, RUST_BUILD_DIR
+from common import TestCaseBase, RustBinary
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList
@@ -16,8 +16,9 @@ CONTAINER_2D_LAYOUTS = [
     RawContainer.Layout.REAL_2D,
 ]
 
+
 class TestRustStd(TestCaseBase.TYPE):
-    BINARY = RUST_BUILD_DIR / "std_tests"
+    BINARY = RustBinary("std_tests")
 
     def assertContainer1DInvariants(self, array: RawContainer):
         self.assertListEqual(array.possible_layout, CONTAINER_1D_LAYOUTS)
@@ -94,9 +95,7 @@ class TestRustStd(TestCaseBase.TYPE):
             # vector_f
             self.assertEqual(received[0].id, raw_vector_f.id)
             self.assertTupleEqual(received[0].shape, raw_vector_f.original_shape)
-            self.assertContainerContent(
-                (1.0, -1.0, 0.0), raw_vector_f, received[0]
-            )
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_vector_f, received[0])
 
             # vector_c
             self.assertEqual(received[1].id, raw_vector_c.id)
@@ -108,9 +107,7 @@ class TestRustStd(TestCaseBase.TYPE):
             # vector_d
             self.assertEqual(received[2].id, raw_vector_d.id)
             self.assertTupleEqual(received[2].shape, raw_vector_d.original_shape)
-            self.assertContainerContent(
-                (1.0, -1.0, 0.0), raw_vector_d, received[2]
-            )
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_vector_d, received[2])
 
             # vector_cd
             self.assertEqual(received[3].id, raw_vector_cd.id)
@@ -153,9 +150,7 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertTupleEqual(raw_array_c.original_shape, (1, 3))
             self.assertEqual(raw_array_c.sample_type, SampleType.CPX_F)
             self.assertEqual(raw_array_c.default_layout, RawContainer.Layout.CPX_1D)
-            self.assertContainerContent(
-                (0.0 + 0j, 0.0 + 0j, 0.0 + 0j), raw_array_c
-            )
+            self.assertContainerContent((0.0 + 0j, 0.0 + 0j, 0.0 + 0j), raw_array_c)
 
             # array_d
             self.assertEqual(len(received[2].raw_entities), 1)
@@ -175,10 +170,8 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertTupleEqual(raw_array_cd.original_shape, (1, 3))
             self.assertEqual(raw_array_cd.sample_type, SampleType.CPX_D)
             self.assertEqual(raw_array_cd.default_layout, RawContainer.Layout.CPX_1D)
-            self.assertContainerContent(
-                (0.0 + 0j, 0.0 + 0j, 0.0 + 0j), raw_array_cd
-            )
-        
+            self.assertContainerContent((0.0 + 0j, 0.0 + 0j, 0.0 + 0j), raw_array_cd)
+
         ################## array::2 - (1, -1, 0) ##################
         self.debugger().continue_()
         with self.failFastSubTestAtLocation():
@@ -188,9 +181,7 @@ class TestRustStd(TestCaseBase.TYPE):
             # array_f
             self.assertEqual(received[0].id, raw_array_f.id)
             self.assertTupleEqual(received[0].shape, raw_array_f.original_shape)
-            self.assertContainerContent(
-                (1.0, -1.0, 0.0), raw_array_f, received[0]
-            )
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_array_f, received[0])
 
             # array_c
             self.assertEqual(received[1].id, raw_array_c.id)
@@ -202,9 +193,7 @@ class TestRustStd(TestCaseBase.TYPE):
             # array_d
             self.assertEqual(received[2].id, raw_array_d.id)
             self.assertTupleEqual(received[2].shape, raw_array_d.original_shape)
-            self.assertContainerContent(
-                (1.0, -1.0, 0.0), raw_array_d, received[2]
-            )
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_array_d, received[2])
 
             # array_cd
             self.assertEqual(received[3].id, raw_array_cd.id)
@@ -278,9 +267,7 @@ class TestRustStd(TestCaseBase.TYPE):
             # slice_f
             self.assertEqual(received[0].id, raw_slice_f.id)
             self.assertTupleEqual(received[0].shape, raw_slice_f.original_shape)
-            self.assertContainerContent(
-                (1.0, -1.0, 0.0), raw_slice_f, received[0]
-            )
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_slice_f, received[0])
 
             # slice_c
             self.assertEqual(received[1].id, raw_slice_c.id)
@@ -292,9 +279,7 @@ class TestRustStd(TestCaseBase.TYPE):
             # slice_d
             self.assertEqual(received[2].id, raw_slice_d.id)
             self.assertTupleEqual(received[2].shape, raw_slice_d.original_shape)
-            self.assertContainerContent(
-                (1.0, -1.0, 0.0), raw_slice_d, received[2]
-            )
+            self.assertContainerContent((1.0, -1.0, 0.0), raw_slice_d, received[2])
 
             # slice_cd
             self.assertEqual(received[3].id, raw_slice_cd.id)
@@ -325,8 +310,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_array_array_f)
             self.assertTupleEqual(raw_array_array_f.original_shape, (2, 3))
             self.assertEqual(raw_array_array_f.sample_type, SampleType.FLOAT)
-            self.assertEqual(raw_array_array_f.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_array_array_f)
+            self.assertEqual(
+                raw_array_array_f.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_array_array_f
+            )
 
             # _array_slice_f
             self.assertEqual(len(received[1].raw_entities), 1)
@@ -335,8 +324,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_array_slice_f)
             self.assertTupleEqual(raw_array_slice_f.original_shape, (2, 3))
             self.assertEqual(raw_array_slice_f.sample_type, SampleType.FLOAT)
-            self.assertEqual(raw_array_slice_f.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_array_slice_f)
+            self.assertEqual(
+                raw_array_slice_f.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_array_slice_f
+            )
 
             # array_vector_d
             self.assertEqual(len(received[2].raw_entities), 1)
@@ -345,8 +338,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_array_vector_d)
             self.assertTupleEqual(raw_array_vector_d.original_shape, (2, 3))
             self.assertEqual(raw_array_vector_d.sample_type, SampleType.DOUBLE)
-            self.assertEqual(raw_array_vector_d.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_array_vector_d)
+            self.assertEqual(
+                raw_array_vector_d.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_array_vector_d
+            )
 
         ################## array_2d::2 - ((0, 0, 0), (1, -1, 0)) ##################
         self.debugger().continue_()
@@ -378,7 +375,9 @@ class TestRustStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_vector_2d(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoints_at_tags("std_tests::vector_and_slice_2d", [1, 2])
+        self.debugger().set_breakpoints_at_tags(
+            "std_tests::vector_and_slice_2d", [1, 2]
+        )
 
         ############ vector_and_slice_2d::1 - All zeros ############
         self.debugger().run()
@@ -397,8 +396,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_vector_array_f)
             self.assertTupleEqual(raw_vector_array_f.original_shape, (2, 3))
             self.assertEqual(raw_vector_array_f.sample_type, SampleType.FLOAT)
-            self.assertEqual(raw_vector_array_f.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_vector_array_f)
+            self.assertEqual(
+                raw_vector_array_f.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_vector_array_f
+            )
 
             # _vector_slice_f
             self.assertEqual(len(received[1].raw_entities), 1)
@@ -407,8 +410,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_vector_slice_f)
             self.assertTupleEqual(raw_vector_slice_f.original_shape, (2, 3))
             self.assertEqual(raw_vector_slice_f.sample_type, SampleType.FLOAT)
-            self.assertEqual(raw_vector_slice_f.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_vector_slice_f)
+            self.assertEqual(
+                raw_vector_slice_f.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_vector_slice_f
+            )
 
             # vector_vector_d
             self.assertEqual(len(received[2].raw_entities), 1)
@@ -417,8 +424,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_vector_vector_d)
             self.assertTupleEqual(raw_vector_vector_d.original_shape, (2, 3))
             self.assertEqual(raw_vector_vector_d.sample_type, SampleType.DOUBLE)
-            self.assertEqual(raw_vector_vector_d.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_vector_vector_d)
+            self.assertEqual(
+                raw_vector_vector_d.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_vector_vector_d
+            )
 
         ############ vector_and_slice_2d::2 - ((0, 0, 0), (1, -1, 0)) ############
         self.debugger().continue_()
@@ -450,7 +461,9 @@ class TestRustStd(TestCaseBase.TYPE):
     @patch_client_popen
     def test_slice_2d(self, _):
         # Set the breakpoints
-        self.debugger().set_breakpoints_at_tags("std_tests::vector_and_slice_2d", [1, 2])
+        self.debugger().set_breakpoints_at_tags(
+            "std_tests::vector_and_slice_2d", [1, 2]
+        )
 
         ############ vector_and_slice_2d::1 - All zeros ############
         self.debugger().run()
@@ -469,8 +482,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_slice_array_f)
             self.assertTupleEqual(raw_slice_array_f.original_shape, (2, 3))
             self.assertEqual(raw_slice_array_f.sample_type, SampleType.FLOAT)
-            self.assertEqual(raw_slice_array_f.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_slice_array_f)
+            self.assertEqual(
+                raw_slice_array_f.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_slice_array_f
+            )
 
             # _slice_slice_f
             self.assertEqual(len(received[1].raw_entities), 1)
@@ -479,8 +496,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_slice_slice_f)
             self.assertTupleEqual(raw_slice_slice_f.original_shape, (2, 3))
             self.assertEqual(raw_slice_slice_f.sample_type, SampleType.FLOAT)
-            self.assertEqual(raw_slice_slice_f.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_slice_slice_f)
+            self.assertEqual(
+                raw_slice_slice_f.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_slice_slice_f
+            )
 
             # _slice_vector_d
             self.assertEqual(len(received[2].raw_entities), 1)
@@ -489,8 +510,12 @@ class TestRustStd(TestCaseBase.TYPE):
             self.assertContainer2DInvariants(raw_slice_vector_d)
             self.assertTupleEqual(raw_slice_vector_d.original_shape, (2, 3))
             self.assertEqual(raw_slice_vector_d.sample_type, SampleType.DOUBLE)
-            self.assertEqual(raw_slice_vector_d.default_layout, RawContainer.Layout.REAL_2D)
-            self.assertContainerContent((0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_slice_vector_d)
+            self.assertEqual(
+                raw_slice_vector_d.default_layout, RawContainer.Layout.REAL_2D
+            )
+            self.assertContainerContent(
+                (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), raw_slice_vector_d
+            )
 
         ############ vector_and_slice_2d::2 - ((0, 0, 0), (1, -1, 0)) ############
         self.debugger().continue_()
