@@ -11,13 +11,14 @@ class SampleType(Enum):
 
     @staticmethod
     def regex() -> str:
-        return r"(float|double|complex\s+float|complex\s+double|std::complex<float>|std::complex<double>|f32|f64|num_complex::Complex<float>|num_complex::Complex<double>|num_complex::Complex<f32>|num_complex::Complex<f64>)"
+        return r"(float|double|complex\s+float|complex\s+double|std::complex<float>|std::__1::complex<float>|std::complex<double>|std::__1::complex<double>|f32|f64|num_complex::Complex<float>|num_complex::Complex<double>|num_complex::Complex<f32>|num_complex::Complex<f64>)"
 
     @staticmethod
     def parse(name: str) -> SampleType:
         match name:
             case (
                 "std::complex<float>"
+                | "std::__1::complex<float>"
                 | "complex float"
                 | "num_complex::Complex<float>"
                 | "num_complex::Complex<f32>"
@@ -25,6 +26,7 @@ class SampleType(Enum):
                 return SampleType.CPX_F
             case (
                 "std::complex<double>"
+                | "std::__1::complex<double>"
                 | "complex double"
                 | "num_complex::Complex<double>"
                 | "num_complex::Complex<f64>"
