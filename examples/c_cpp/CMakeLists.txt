@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(dave_examples VERSION 0.0.1)
 
 option(DAVE_BUILD_TESTS OFF)
+option(DAVE_BUILD_EXAMPLES ON)
 option(DAVE_LINK_LIBCPP OFF)
 
 if(DAVE_LINK_LIBCPP)
@@ -57,148 +58,163 @@ FetchContent_MakeAvailable(HART)
 ################################################################################
 ###                             stdlib
 ################################################################################
-add_executable(std
-    ${CMAKE_CURRENT_SOURCE_DIR}/std.cpp
-)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(std
+      ${CMAKE_CURRENT_SOURCE_DIR}/std.cpp
+  )
 
-set_target_properties(std PROPERTIES CXX_STANDARD 20)
+  set_target_properties(std PROPERTIES CXX_STANDARD 20)
+endif()
 
 if (DAVE_BUILD_TESTS)
-add_executable(std_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/std_tests.cpp
-)
+  add_executable(std_tests
+      ${CMAKE_CURRENT_SOURCE_DIR}/std_tests.cpp
+  )
 
-set_target_properties(std_tests PROPERTIES CXX_STANDARD 20)
+  set_target_properties(std_tests PROPERTIES CXX_STANDARD 20)
 endif()
 
 ################################################################################
 ###                             scope
 ################################################################################
-add_executable(cpp_scope
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp_scope.cpp
-)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(cpp_scope
+      ${CMAKE_CURRENT_SOURCE_DIR}/cpp_scope.cpp
+  )
 
-set_target_properties(cpp_scope PROPERTIES CXX_STANDARD 20)
+  set_target_properties(cpp_scope PROPERTIES CXX_STANDARD 20)
+endif()
 
 
 ################################################################################
 ###                               C
 ################################################################################
-add_executable(c_example
-    ${CMAKE_CURRENT_SOURCE_DIR}/c_example.c
-)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(c_example
+      ${CMAKE_CURRENT_SOURCE_DIR}/c_example.c
+  )
+endif()
+
 
 ################################################################################
 ###                               JUCE
 ################################################################################
-add_executable(juce_example
-    ${CMAKE_CURRENT_SOURCE_DIR}/juce.cpp
-)
-set_target_properties(juce_example PROPERTIES CXX_STANDARD 20)
-target_link_libraries(
-  juce_example
-  PUBLIC juce::juce_recommended_config_flags
-         juce::juce_recommended_warning_flags juce::juce_dsp
-)
-target_compile_definitions(
-  juce_example
-  PUBLIC JUCE_USE_CURL=0
-)
-target_compile_options(
-  juce_example
-  PRIVATE
-  -Wno-deprecated-declarations
-  -Wno-unknown-pragmas
-)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(juce_example
+      ${CMAKE_CURRENT_SOURCE_DIR}/juce.cpp
+  )
+  set_target_properties(juce_example PROPERTIES CXX_STANDARD 20)
+  target_link_libraries(
+    juce_example
+    PUBLIC juce::juce_recommended_config_flags
+          juce::juce_recommended_warning_flags juce::juce_dsp
+  )
+  target_compile_definitions(
+    juce_example
+    PUBLIC JUCE_USE_CURL=0
+  )
+  target_compile_options(
+    juce_example
+    PRIVATE
+    -Wno-deprecated-declarations
+    -Wno-unknown-pragmas
+  )
+endif()
 
 if (DAVE_BUILD_TESTS)
-add_executable(juce_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/juce_tests.cpp
-)
+  add_executable(juce_tests
+      ${CMAKE_CURRENT_SOURCE_DIR}/juce_tests.cpp
+  )
 
-set_target_properties(juce_tests PROPERTIES CXX_STANDARD 20)
-target_link_libraries(
-  juce_tests
-  PUBLIC juce::juce_recommended_config_flags
-         juce::juce_recommended_warning_flags juce::juce_dsp
-)
-target_compile_definitions(
-  juce_tests
-  PUBLIC JUCE_USE_CURL=0
-)
-target_compile_options(
-  juce_tests
-  PRIVATE
-  -Wno-deprecated-declarations
-  -Wno-unknown-pragmas
-)
+  set_target_properties(juce_tests PROPERTIES CXX_STANDARD 20)
+  target_link_libraries(
+    juce_tests
+    PUBLIC juce::juce_recommended_config_flags
+          juce::juce_recommended_warning_flags juce::juce_dsp
+  )
+  target_compile_definitions(
+    juce_tests
+    PUBLIC JUCE_USE_CURL=0
+  )
+  target_compile_options(
+    juce_tests
+    PRIVATE
+    -Wno-deprecated-declarations
+    -Wno-unknown-pragmas
+  )
 endif()
 
 ################################################################################
 ###                               Microsoft's GSL
 ################################################################################
-add_executable(
-  gsl
-  ${CMAKE_CURRENT_SOURCE_DIR}/gsl.cpp
-)
-set_target_properties(gsl PROPERTIES CXX_STANDARD 17)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(
+    gsl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gsl.cpp
+  )
+  set_target_properties(gsl PROPERTIES CXX_STANDARD 17)
 
-target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)
+  target_link_libraries(gsl PUBLIC Microsoft.GSL::GSL)
+endif()
 
 if (DAVE_BUILD_TESTS)
-add_executable(gsl_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/std_tests.cpp
-)
+  add_executable(gsl_tests
+      ${CMAKE_CURRENT_SOURCE_DIR}/std_tests.cpp
+  )
 
-set_target_properties(gsl_tests PROPERTIES CXX_STANDARD 20)
-target_link_libraries(gsl_tests PUBLIC Microsoft.GSL::GSL)
-target_compile_definitions(gsl_tests PUBLIC USE_GSL)
-
+  set_target_properties(gsl_tests PROPERTIES CXX_STANDARD 20)
+  target_link_libraries(gsl_tests PUBLIC Microsoft.GSL::GSL)
+  target_compile_definitions(gsl_tests PUBLIC USE_GSL)
 endif()
 
 ################################################################################
 ###                               CHOC
 ################################################################################
-add_executable(
-  choc_example
-  ${CMAKE_CURRENT_SOURCE_DIR}/choc.cpp
-)
-set_target_properties(choc_example PROPERTIES CXX_STANDARD 17)
-target_link_libraries(choc_example PUBLIC choc::choc)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(
+    choc_example
+    ${CMAKE_CURRENT_SOURCE_DIR}/choc.cpp
+  )
+  set_target_properties(choc_example PROPERTIES CXX_STANDARD 17)
+  target_link_libraries(choc_example PUBLIC choc::choc)
+endif()
 
 ################################################################################
 ###                               HART
 ################################################################################
-
-add_executable(
-  hart
-  ${CMAKE_CURRENT_SOURCE_DIR}/hart.cpp
-)
-set_target_properties(hart PROPERTIES CXX_STANDARD 11)
-target_link_libraries(hart PRIVATE HART::HART)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(
+    hart
+    ${CMAKE_CURRENT_SOURCE_DIR}/hart.cpp
+  )
+  set_target_properties(hart PROPERTIES CXX_STANDARD 11)
+  target_link_libraries(hart PRIVATE HART::HART)
+endif()
 
 if (DAVE_BUILD_TESTS)
-add_executable(
-  hart_tests
-  ${CMAKE_CURRENT_SOURCE_DIR}/hart_tests.cpp
-)
-set_target_properties(hart_tests PROPERTIES CXX_STANDARD 11)
-target_link_libraries(hart_tests PRIVATE HART::HART)
+  add_executable(
+    hart_tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/hart_tests.cpp
+  )
+  set_target_properties(hart_tests PROPERTIES CXX_STANDARD 11)
+  target_link_libraries(hart_tests PRIVATE HART::HART)
 endif()
 
 ################################################################################
 ###                          Custom containers example
 ################################################################################
-add_executable(
-  custom_containers
-  ${CMAKE_CURRENT_SOURCE_DIR}/custom_containers.cpp
-)
-set_target_properties(custom_containers PROPERTIES CXX_STANDARD 20)
+if(DAVE_BUILD_EXAMPLES)
+  add_executable(
+    custom_containers
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_containers.cpp
+  )
+  set_target_properties(custom_containers PROPERTIES CXX_STANDARD 20)
+endif()
 
 if (DAVE_BUILD_TESTS)
-add_executable(custom_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_tests.cpp
-)
+  add_executable(custom_tests
+      ${CMAKE_CURRENT_SOURCE_DIR}/custom_tests.cpp
+  )
 
-set_target_properties(custom_tests PROPERTIES CXX_STANDARD 20)
+  set_target_properties(custom_tests PROPERTIES CXX_STANDARD 20)
 endif()

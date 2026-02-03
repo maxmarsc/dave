@@ -8,6 +8,7 @@ import struct
 from abc import ABC, abstractmethod
 import cmath
 import re
+import sys
 
 from common.debugger import CommandError, DebuggerAbstraction
 from common.binary_dirs import Binary
@@ -58,7 +59,8 @@ class TestCaseBase(unittest.TestCase, ABC):
         A custom re-implementation of Subtest which always failfast and set the
         current file line in the context message
         """
-        params["line"] = self.debugger().get_current_line()
+        # TODO: fix this
+        # params["line"] = self.debugger().get_current_line()
         if self._outcome is None or not self._outcome.result_supports_subtests:
             yield
             return
@@ -69,8 +71,12 @@ class TestCaseBase(unittest.TestCase, ABC):
             params_map = parent.params.new_child(params)
         self._subtest = _SubTest(self, msg, params_map)
         try:
-            with self._outcome.testPartExecutor(self._subtest, subTest=True):
-                yield
+            if sys.version_info.minor == 10:
+                with self._outcome.testPartExecutor(self._subtest, isTest=True):
+                    yield
+            else:
+                with self._outcome.testPartExecutor(self._subtest, subTest=True):
+                    yield
             if not self._outcome.success:
                 result = self._outcome.result
                 if result is not None:

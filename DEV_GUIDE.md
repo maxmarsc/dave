@@ -42,14 +42,14 @@ containing the test binaries.
 To run all tests for a set of versions of GDB/LLDB run:
 ```bash
 # First build the C/C++ binaries
-cmake -B build_c_cpp -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDAVE_BUILD_TESTS=ON -S examples/c_cpp
+cmake -B build_c_cpp -G Ninja -DCMAKE_BUILD_TYPE=Debug -DDAVE_BUILD_TESTS=ON -DDAVE_BUILD_EXAMPLES=OFF -S examples/c_cpp
 cmake --build build_c_cpp --target all
 # Then build the RUST binaries
 CARGO_TARGET_DIR="build_rust" cargo build --manifest-path examples/rust/Cargo.toml
 
 # Set the env
 export C_CPP_BIN_DIR="$(pwd)/build_c_cpp" 
-export RUST_BIN_DIR="$(pwd)/nuild_rust"
+export RUST_BIN_DIR="$(pwd)/build_rust/debug"
 
 # Run GDB tests
 gdb -q --batch -nx -x tests/server/gdb_testing/run_tests.py

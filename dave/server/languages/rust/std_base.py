@@ -1,6 +1,8 @@
 from ...debuggers.value import AbstractValue
 from ..c_cpp.template_parser import parse_template
 
+import dave.common.server_type as st
+
 
 class RustSlice:
     def __init__(self, dbg_value: AbstractValue):
@@ -62,7 +64,7 @@ class RustVector:
         RuntimeError
             Should not happen
         """
-        try:
+        if st.SERVER_TYPE == st.ServerType.LLDB:
             import lldb
             from ...debuggers.lldb_.value import LldbValue
 
@@ -75,10 +77,7 @@ class RustVector:
             return LldbValue(
                 lldb_char_value.Cast(pointer_type), char_ptr_value.varname()
             )
-        except ImportError:
-            pass
-
-        try:
+        elif st.SERVER_TYPE == st.ServerType.GDB:
             import gdb  # type: ignore
             from ...debuggers.gdb_.value import GdbValue
 
@@ -91,11 +90,8 @@ class RustVector:
                 char_ptr_value.varname(),
                 char_ptr_value.language(),
             )
-
-        except ImportError:
-            pass
-
-        raise RuntimeError("DAVE only supports GDB & LLDB")
+        else:
+            raise RuntimeError("DAVE only supports GDB & LLDB")
 
     @property
     def size(self) -> int:

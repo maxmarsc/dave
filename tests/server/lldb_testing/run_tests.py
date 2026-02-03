@@ -47,7 +47,7 @@ def main():
     if result.wasSuccessful():
         sys.exit(0)
     else:
-        sys.exit(1)
+        os._exit(1)
 
 
 def __lldb_init_module(debugger, internal_dict):
@@ -58,4 +58,4 @@ def __lldb_init_module(debugger, internal_dict):
 
         traceback.print_tb(e.__traceback__)
         print(f"ERROR: Test suite failed to run: {e}\n", file=sys.stderr)
-        sys.exit(1)
+        os._exit(1)
