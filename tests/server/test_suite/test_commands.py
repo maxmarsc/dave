@@ -1,8 +1,8 @@
-from common import TestCaseBase, C_CPP_BUILD_DIR, CommandError
+from mocked import MockClient, patch_client_popen
+from common import TestCaseBase, CommandError, CCppBinary
 from dave.common.raw_container import RawContainer
 from dave.common.server_type import SERVER_TYPE, ServerType
 from dave.server.process import DaveProcess
-from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList
 
@@ -10,7 +10,7 @@ NO_PROCESSUS_DETECTED = CommandError("No processus detected")
 
 
 class TestCommands(TestCaseBase.TYPE):
-    BINARY = C_CPP_BUILD_DIR / "custom_tests"
+    BINARY = CCppBinary("custom_tests")
 
     @patch_client_popen
     def test_show_parsable_no_processus(self, _):

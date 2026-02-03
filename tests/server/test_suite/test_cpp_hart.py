@@ -1,4 +1,4 @@
-from common import TestCaseBase, C_CPP_BUILD_DIR
+from common import TestCaseBase, CCppBinary
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList
@@ -12,7 +12,7 @@ CONTAINER_2D_LAYOUTS = [
 
 
 class TestCppHart(TestCaseBase.TYPE):
-    BINARY = C_CPP_BUILD_DIR / "hart_tests"
+    BINARY = CCppBinary("hart_tests")
 
     def assertHartContainerInvariants(self, array: RawContainer):
         self.assertListEqual(array.possible_layout, CONTAINER_2D_LAYOUTS)

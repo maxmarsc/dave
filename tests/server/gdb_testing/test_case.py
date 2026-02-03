@@ -21,7 +21,7 @@ class GdbTestCase(TestCaseBase):
             self.fail("There are leftover running threads from a previous test")
 
         # Load the binary
-        gdb.execute(f"file {self.BINARY}", to_string=True)
+        gdb.execute(f"file {self.BINARY.resolve()}", to_string=True)
 
         from mocked import MockClient
 

@@ -1,4 +1,4 @@
-from common import TestCaseBase, C_CPP_BUILD_DIR
+from common import TestCaseBase, CCppBinary
 from mocked import MockClient, patch_client_popen
 
 from dave.common.raw_entity import RawEntityList
@@ -19,7 +19,7 @@ NINF = -float("inf")
 
 
 class TestCppNumerics(TestCaseBase.TYPE):
-    BINARY = C_CPP_BUILD_DIR / "std_tests"
+    BINARY = CCppBinary("std_tests")
 
     @patch_client_popen
     def test_nan_infs(self, _):

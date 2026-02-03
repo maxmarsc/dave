@@ -1,9 +1,9 @@
-from common import TestCaseBase, C_CPP_BUILD_DIR
+from common import TestCaseBase, CCppBinary
 from mocked import patch_client_popen
 
 
 class TestContainerPrettyPrinters(TestCaseBase.TYPE):
-    BINARY = C_CPP_BUILD_DIR / "custom_tests"
+    BINARY = CCppBinary("custom_tests")
 
     @patch_client_popen
     def test_pretty_container_planar(self, _):
