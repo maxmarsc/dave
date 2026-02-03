@@ -122,7 +122,7 @@ class TestCommands(TestCaseBase.TYPE):
             self.assertEqual(raw_container_ref.id, received[1].id)
 
     @patch_client_popen
-    def test_show_not_itialized(self, _):
+    def test_show_not_initialized(self, _):
         # Set the breakpoints
         self.debugger().set_breakpoints_at_tags("daveCommands", [0, 1])
 
@@ -215,7 +215,7 @@ class TestCommands(TestCaseBase.TYPE):
             self.assertEqual(raw_second.id, received[1].id)
 
     @patch_client_popen
-    def test_show_all_not_itialized(self, _):
+    def test_show_all_not_initialized(self, _):
         # Set the breakpoints
         self.debugger().set_breakpoints_at_tags("daveCommands", [0, 1])
 
