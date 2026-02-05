@@ -153,7 +153,7 @@ If you want to completely remove dave from your system run
 dave uninstall
 ```
 
-### Python support
+### [Deprecated] Python support
 Python support is limited because both python debuggers I have investigated
 (pdb and debugpy) does not provide an API complete enough to provide full DAVE support.
 Most importantly **Python debugger does not provide automatic update on breakpoints**.
