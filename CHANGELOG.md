@@ -1,10 +1,12 @@
 # `main`
 ## Added
+- Automated CI test for the server code
 ## Changed
 ## Fixed
 - Various bugs in sparklines with special values (NaN, Infs...)
 - Logging level selection
 - Rust: arrays of slices could not be parsed
+- LLDB python 3.10 support
 
 # v0.14.0
 ## Added
