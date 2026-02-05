@@ -67,22 +67,28 @@ Currently supported IIR filter/coefficients are :
 **You can also add supports for your own entity classes**
 
 ### Current support
+#### Debuggers
+- LLDB: versions 16 to 21
+- GDB: version 14 to 17
+
+#### Operating System
 | Operating System  | Status       |
 |-------------------|--------------|
 | Linux             | ✅           |
 | MacOS             | ✅           |
 | Windows           | ❌           |
 
-| Debugger platform | GDB          | LLDB         |
-|-------------------|--------------|--------------|
-| CLI               | ✅           | ✅           |
-| VSCode            | ✅ (*)       | ❓ need testing  |
-| CLion             | ✅ (*)       | ✅ (*) |
-| XCode             | N/A          | ✅ (*)|
-| Visual Studio     | ❌           | ❌           |
+#### Interface
+| Debugger platform | Status       |
+|-------------------|--------------|
+| CLI               | ✅           |
+| VSCode            | *Partial* *    |
+| CLion             | *Partial* *    | 
+| XCode             | ❌           |
+| Visual Studio     | ❌           | 
 
-(*) -  DAVE is not able to react when you go up/down in
-the stack using the IDE ui.
+\* *DAVE is not able to react when you go up/down in
+the stack using the IDE ui.*
 
 ---
 
