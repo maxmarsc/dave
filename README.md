@@ -1,3 +1,5 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Tests](https://github.com/maxmarsc/dave/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/maxmarsc/dave/actions/workflows/tests.yml)
+
 # Debugger Audio Visualization Extension
 ![logo](.pictures/dave_logo_long_v6.png  )
 
