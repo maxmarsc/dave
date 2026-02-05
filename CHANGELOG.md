@@ -1,7 +1,11 @@
 # `main`
 ## Added
-- Automated CI test for the server code
 ## Changed
+## Fixed
+
+# v0.15.0
+## Added
+- Automated CI test for the server code
 ## Fixed
 - Various bugs in sparklines with special values (NaN, Infs...)
 - Logging level selection
